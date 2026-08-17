@@ -569,8 +569,8 @@ body {
   gap: 10px;
 }
 
-.spectate-page .card {
-  max-width: 420px;
+.spectate-page .card-list {
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
 }
 
 .replay-page {

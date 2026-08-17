@@ -18,13 +18,16 @@ export function spectateScreen(root: HTMLElement): void {
       host.append(el('p', { class: 'hint', text: '当前没有进行中的对战' }));
       return;
     }
+    // 网格布局: 随窗口宽度自适应列数, 避免卡片只堆在左侧
+    const list = el('div', { class: 'card-list' });
     for (const r of rooms) {
       const row = el('div', { class: 'card' }, [
         el('div', { class: 'card-name', text: r.players.join(' vs ') }),
-        el('div', { class: 'card-meta', text: r.status === 'running' ? '对局中' : r.status === 'finished' ? '已结束' : '准备中' }),
+        el('div', { class: 'card-meta', text: r.status === 'running' ? '对局中' : '准备中' }),
         button('观看', () => (location.hash = `#/battle?roomId=${r.id}&spectate=1`), { class: 'btn btn-small' }),
       ]);
-      host.append(row);
+      list.append(row);
     }
+    host.append(list);
   })();
 }

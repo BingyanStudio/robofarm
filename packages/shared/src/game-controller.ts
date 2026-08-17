@@ -7,9 +7,10 @@ import {
   GameMode,
   PlayerView,
   WorldState,
+  Frame,
 } from './types';
 import { createCombatWorld, createSingleWorld } from './maps';
-import { buildPlayerView, snapshotOf } from './view';
+import { buildPlayerView, snapshotOf, fromLocal } from './view';
 import { stepTurn } from './engine';
 import { normalizeOp } from './ops';
 
@@ -42,6 +43,17 @@ export interface GameControllerOptions {
   mode: GameMode;
   players: GamePlayer[];
   maxTurns: number;
+}
+
+/**
+ * 玩家在本地坐标系编程 (竞技模式 P2 为 mirror), 操作中的坐标
+ * (移动目标/拦截目标) 需映射回绝对坐标后再交给引擎; normal 帧为恒等变换。
+ */
+function toAbsolute(op: InternalOperation | null, frame: Frame, width: number): InternalOperation | null {
+  if (!op) return op;
+  if (op.type === 'move') return { type: 'move', to: fromLocal(op.to, width, frame) };
+  if (op.type === 'intercept') return { type: 'intercept', at: fromLocal(op.at, width, frame) };
+  return op;
 }
 
 export class GameController {
@@ -114,7 +126,10 @@ export class GameController {
           this.world.turn += 1;
           return events;
         }
-        actions[ids[di]] = { op: normalized.op, durationMs: result.durationMs };
+        actions[ids[di]] = {
+          op: toAbsolute(normalized.op, player.frame, this.world.map[0].length),
+          durationMs: result.durationMs,
+        };
       }
     }
 

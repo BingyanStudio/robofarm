@@ -230,11 +230,14 @@ export function listRooms(): {
   players: string[];
   status: Room['status'];
 }[] {
-  return [...rooms.values()].map((r) => ({
-    id: r.id,
-    players: r.players.map((p) => p.name),
-    status: r.status,
-  }));
+  // 只列出可实时观战的房间 (编译中/推演中); 已结束的从观战列表移除
+  return [...rooms.values()]
+    .filter((r) => r.status === 'compiling' || r.status === 'running')
+    .map((r) => ({
+      id: r.id,
+      players: r.players.map((p) => p.name),
+      status: r.status,
+    }));
 }
 
 export function combatList(userId: number) {

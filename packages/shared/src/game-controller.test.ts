@@ -119,6 +119,37 @@ describe('GameController: 竞技模式视图坐标系', () => {
     expect(v.self.isOpponent).toBe(false);
   });
 
+  it('P2 (mirror 帧) 的 Move 目标坐标会被映射回绝对坐标', async () => {
+    const controller = new GameController({
+      mode: 'combat',
+      maxTurns: 3,
+      players: [
+        me((_d, _v) => null),
+        {
+          name: '对手',
+          frame: 'mirror',
+          program: new ScriptedProgram((droneId, view) => {
+            // 本地坐标系: 自己的无人机在左侧 (本地 x ∈ [0,6]);
+            // 返回本地坐标中的相邻格移动
+            const self = view.drones[droneId];
+            return new Move([self.position[0] + 1, self.position[1]]);
+          }),
+        },
+      ],
+    });
+    const { events } = await runToEnd(controller);
+    const moveEvents = events.filter((e) => e.type === 'move');
+    expect(moveEvents.length).toBeGreaterThan(0);
+    for (const m of moveEvents) {
+      const dx = Math.abs(m.to[0] - m.from[0]);
+      const dy = Math.abs(m.to[1] - m.from[1]);
+      // 绝对坐标下目标与出发地相邻 (若不转换, 目标落在 x<7 的对方半场, 距离>1 被拒绝)
+      expect(dx + dy).toBe(1);
+      // 目标仍在 P2 半场 (绝对 x >= 7)
+      expect(m.to[0]).toBeGreaterThanOrEqual(7);
+    }
+  });
+
   it('竞技模式收获对方半场作物时 money 不变 (进入 bounty)', async () => {
     const controller = new GameController({
       mode: 'combat',
