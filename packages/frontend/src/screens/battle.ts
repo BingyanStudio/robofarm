@@ -30,6 +30,14 @@ export function battleScreen(root: HTMLElement, params: URLSearchParams): void {
   let started = false;
   let btnStart: HTMLButtonElement | null = null;
 
+  // 路由跳转 (屏幕卸载) 时立即关闭 WebSocket:
+  // 否则残留连接仍订阅着房间, 之后观战再连一条, 同一房间会收到多份广播 (重复弹窗)。
+  const onHashChange = () => {
+    ws?.close();
+    window.removeEventListener('hashchange', onHashChange);
+  };
+  window.addEventListener('hashchange', onHashChange);
+
   const view = new GameView({
     renderer,
     onStatus: (t) => (statusText.textContent = t),
@@ -92,6 +100,8 @@ export function battleScreen(root: HTMLElement, params: URLSearchParams): void {
   }
 
   function connect(rid: string): void {
+    // 关闭旧连接, 防止同一屏幕内重复连同一房间 (双保险)
+    ws?.close();
     ws = openRoomWs(rid);
     ws.onmessage = (e) => {
       const msg = JSON.parse(e.data as string) as

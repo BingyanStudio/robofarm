@@ -8,3 +8,4 @@ release/
 public/esbuild.wasm
 
 .crush
+*.tgz
