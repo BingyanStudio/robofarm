@@ -32,6 +32,14 @@ export function startMatch(
   opponentId: number
 ): { roomId: string } | { error: string } {
   if (challengerId === opponentId) return { error: '不能挑战自己' };
+  // 限制: 一个玩家同时最多主动发起 1 个对战 (防止重复点击连开多个房间)。
+  // 发起方恒为房间的 P1 (frame normal), 对局中 (编译/推演) 不允许再开新房间。
+  const activeOwn = [...rooms.values()].find(
+    (r) =>
+      (r.status === 'compiling' || r.status === 'running') &&
+      r.players[0]?.userId === challengerId
+  );
+  if (activeOwn) return { error: '你已有一场进行中的对战, 请等待其结束后再发起新挑战' };
   const mine = getCombatCode(challengerId);
   const theirs = getCombatCode(opponentId);
   if (!mine) return { error: '请先上传自己的出战代码' };

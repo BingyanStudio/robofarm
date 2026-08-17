@@ -28,6 +28,7 @@ export function battleScreen(root: HTMLElement, params: URLSearchParams): void {
 
   let ws: WebSocket | null = null;
   let started = false;
+  let btnStart: HTMLButtonElement | null = null;
 
   const view = new GameView({
     renderer,
@@ -63,7 +64,7 @@ export function battleScreen(root: HTMLElement, params: URLSearchParams): void {
       if (data?.code) createEditor(codeHost, { initial: data.code, readonly: true });
     })();
     if (roomId && !spectate) connect(roomId);
-    const btnStart = button('开始', () => void startMatch());
+    btnStart = button('开始', () => void startMatch());
     layout.controlsHost.append(btnStart);
   }
 
@@ -72,8 +73,17 @@ export function battleScreen(root: HTMLElement, params: URLSearchParams): void {
       modal('错误', el('p', { text: '缺少对手信息' }));
       return;
     }
+    // 防止重复点击连开多个房间: 请求期间禁用按钮
+    if (btnStart) {
+      btnStart.disabled = true;
+      btnStart.textContent = '开始中…';
+    }
     const res = await api.post('/combat/start', { id: Number(opponentId) });
     if (res.status !== 200) {
+      if (btnStart) {
+        btnStart.disabled = false;
+        btnStart.textContent = '开始';
+      }
       modal('无法开始', el('p', { text: res.data?.error ?? '开始失败' }));
       return;
     }
