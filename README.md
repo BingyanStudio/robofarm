@@ -127,7 +127,7 @@ node dist/index.js        # 自动托管 packages/frontend/dist
 
 **提供的内容**:
 - 资源 `robofarm://docs/{overview|operations|functions|types|crops|rules|all}` (Markdown)
-- 工具: `list_docs` / `get_doc(section)` / `get_crop(crop)` (作物参数 JSON)
+- 工具: `list_docs` / `get_doc(section)` / `get_crop(crop)` (作物参数 JSON) / `get_map(mode)` (单人/竞技地图 JSON)
 - Prompt: `write_player_code` (编写玩家代码的指引模板)
 
 前端开始界面、主菜单与 API 手册顶部也内置了 MCP 接入说明。
@@ -188,7 +188,7 @@ node dist/index.js        # 自动托管 packages/frontend/dist
 | HTTP (streamable HTTP) | `POST /mcp` (会话经 `Mcp-Session-Id` 头; `GET` 返回 405, `DELETE` 关闭会话) |
 
 内容: 资源 `robofarm://docs/{overview\|operations\|functions\|types\|crops\|rules\|all}`;
-工具 `list_docs` / `get_doc(section)` / `get_crop(crop)`;
+工具 `list_docs` / `get_doc(section)` / `get_crop(crop)` / `get_map(mode)`;
 提示词 `write_player_code`。
 
 ## 环境变量 (backend)

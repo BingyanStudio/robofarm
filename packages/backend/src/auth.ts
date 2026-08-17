@@ -22,7 +22,30 @@ export interface AuthUser {
 
 const clientId = () => process.env.GITHUB_CLIENT_ID ?? '';
 const clientSecret = () => process.env.GITHUB_CLIENT_SECRET ?? '';
-const redirectUri = () => process.env.GITHUB_REDIRECT_URI ?? `${process.env.BACKEND_ORIGIN ?? 'http://localhost:3001'}/auth/github/callback`;
+
+/** 请求来源协议, 兼容直连与常见反向代理 (X-Forwarded-Proto) */
+function requestProto(req: Request): string {
+  const fwd = req.get('x-forwarded-proto');
+  return fwd ? fwd.split(',')[0]!.trim() : req.protocol;
+}
+
+/** 后端对外地址: 优先 BACKEND_ORIGIN, 否则由请求 Host 推导 (不硬编码 localhost) */
+function backendOrigin(req: Request): string {
+  const explicit = process.env.BACKEND_ORIGIN?.trim();
+  return explicit ? explicit : `${requestProto(req)}://${req.get('host')}`;
+}
+
+/** 登录后跳转的前端地址: 优先 FRONTEND_ORIGIN, 否则与请求同源 (发布版前后端同端口) */
+function frontendOrigin(req: Request): string {
+  const explicit = process.env.FRONTEND_ORIGIN?.trim();
+  return explicit ? explicit : `${requestProto(req)}://${req.get('host')}`;
+}
+
+/** GitHub 回调地址: 优先显式配置, 否则按请求推导 (需与 GitHub OAuth 应用注册值一致) */
+function redirectUri(req: Request): string {
+  const explicit = process.env.GITHUB_REDIRECT_URI?.trim();
+  return explicit ? explicit : `${backendOrigin(req)}/auth/github/callback`;
+}
 
 export function devMode(): boolean {
   return !process.env.GITHUB_CLIENT_ID;
@@ -68,7 +91,7 @@ export function currentUser(req: Request): AuthUser | null {
 export function createAuthRouter(): Router {
   const router = Router();
 
-  router.get('/github', (_req, res) => {
+  router.get('/github', (req, res) => {
     if (devMode()) {
       res.redirect('/#/menu');
       return;
@@ -77,7 +100,7 @@ export function createAuthRouter(): Router {
     pendingStates.set(state, { state, createdAt: Date.now() });
     const url =
       `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(clientId())}` +
-      `&redirect_uri=${encodeURIComponent(redirectUri())}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri(req))}` +
       `&scope=read:user&state=${state}`;
     res.redirect(url);
   });
@@ -91,11 +114,11 @@ export function createAuthRouter(): Router {
     }
     pendingStates.delete(state as string);
     try {
-      const login = await fetchGithubLogin(code);
+      const login = await fetchGithubLogin(code, req);
       const user = upsertUserByLogin(login);
       const token = createSession(user.id);
       res.setHeader('Set-Cookie', cookie(SESSION_COOKIE, token));
-      res.redirect(`${process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173'}/#/menu`);
+      res.redirect(`${frontendOrigin(req)}/#/menu`);
     } catch (err) {
       res.status(500).send(`GitHub 登录失败: ${err instanceof Error ? err.message : String(err)}`);
     }
@@ -113,7 +136,7 @@ export function createAuthRouter(): Router {
   return router;
 }
 
-async function fetchGithubLogin(code: string): Promise<string> {
+async function fetchGithubLogin(code: string, req: Request): Promise<string> {
   const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
     method: 'POST',
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
@@ -121,7 +144,7 @@ async function fetchGithubLogin(code: string): Promise<string> {
       client_id: clientId(),
       client_secret: clientSecret(),
       code,
-      redirect_uri: redirectUri(),
+      redirect_uri: redirectUri(req),
     }),
   });
   const tokenData = (await tokenRes.json()) as { access_token?: string; error?: string };

@@ -41,13 +41,18 @@ if (process.env.ROBOFARM_EMBEDDED_WASM === '1') {
 }
 
 const port = Number(process.env.PORT ?? 3001);
-const server = createApp().listen(port, () => {
-  console.log(`[robofarm-backend] listening on http://localhost:${port}`);
+const host = process.env.HOST; // 绑定地址, 默认监听所有网卡
+const server = host
+  ? createApp().listen(port, host, onListen)
+  : createApp().listen(port, onListen);
+attachWebSocket(server);
+
+function onListen(): void {
+  console.log(`[robofarm-backend] listening on ${host ?? '0.0.0.0'}:${port}`);
   if (!process.env.GITHUB_CLIENT_ID) {
     console.log('[robofarm-backend] 未配置 GITHUB_CLIENT_ID, 已启用开发模式 (自动登录 local-dev)');
   }
-});
-attachWebSocket(server);
+}
 
 function tryLoadDotEnv(): void {
   const file = join(process.cwd(), '.env');

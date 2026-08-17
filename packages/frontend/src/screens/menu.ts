@@ -1,7 +1,7 @@
 // 主菜单。
-import { el, button, modal } from '../ui';
+import { el, button } from '../ui';
 import { fetchUser } from '../net';
-import { apiManualContent, mcpGuide } from '../api-manual';
+import { mcpGuide } from '../api-manual';
 
 export function menuScreen(root: HTMLElement): void {
   root.replaceChildren();
@@ -12,7 +12,6 @@ export function menuScreen(root: HTMLElement): void {
     button('模拟竞技', () => (location.hash = '#/simulate'), { class: 'btn btn-big' }),
     button('多人竞技', () => (location.hash = '#/match'), { class: 'btn btn-big' }),
     button('观战', () => (location.hash = '#/spectate'), { class: 'btn btn-big' }),
-    button('API 手册', () => showManual(), { class: 'btn btn-big' }),
   ]);
 
   const box = el('div', { class: 'menu-box' }, [
@@ -31,12 +30,5 @@ export function menuScreen(root: HTMLElement): void {
     userBox.textContent = user ? `👤 ${user.name}${user.dev ? ' (本地模式)' : ''}` : '未登录 (点击登录)';
     userBox.className = 'user-chip' + (user ? ' user-on' : '');
     if (!user) userBox.onclick = () => (location.href = '/auth/github');
-    else if (!user.dev) {
-      // 已登录 GitHub: 显示为按钮点击无操作
-    }
   })();
-}
-
-function showManual(): void {
-  modal('API 手册', apiManualContent());
 }

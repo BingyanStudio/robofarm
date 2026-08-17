@@ -13,7 +13,7 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import { CROPS, DOC_SECTIONS, isCropType, sectionMarkdown, cropDocEntries } from '@robofarm/shared';
+import { CROPS, DOC_SECTIONS, isCropType, sectionMarkdown, cropDocEntries, createSingleWorld, createCombatWorld } from '@robofarm/shared';
 
 const DOC_TITLES: Record<string, string> = {
   overview: '游戏概览',
@@ -88,6 +88,21 @@ export function createMcpServer(): Server {
           required: ['crop'],
         },
       },
+      {
+        name: 'get_map',
+        description: '获取指定游戏模式的地图: 尺寸、地块布局 (soil/water)、无人机出生点, 返回 JSON',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            mode: {
+              type: 'string',
+              enum: ['single', 'combat'],
+              description: '游戏模式: single 单人 / combat 竞技',
+            },
+          },
+          required: ['mode'],
+        },
+      },
     ],
   }));
 
@@ -134,6 +149,37 @@ export function createMcpServer(): Server {
               thirstInterval: cfg.thirstInterval,
               habitats: cfg.habitats,
               description: cfg.description,
+            }, null, 2),
+          }],
+        };
+      }
+      case 'get_map': {
+        const mode = args?.mode;
+        if (mode !== 'single' && mode !== 'combat') {
+          return {
+            content: [{ type: 'text', text: `未知模式: ${mode}。可用模式: single (单人), combat (竞技)` }],
+            isError: true,
+          };
+        }
+        const world = mode === 'single' ? createSingleWorld(0) : createCombatWorld(0);
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              mode,
+              width: world.map[0].length,
+              height: world.map.length,
+              tiles: world.map.map((row) => row.map((t) => t.type)),
+              spawns: world.drones.map((d) => ({
+                droneId: d.id,
+                player: d.player,
+                x: d.position[0],
+                y: d.position[1],
+              })),
+              note:
+                mode === 'combat'
+                  ? '竞技地图 14x7: 左半为 P1 半场, 右半为左半镜像 (P2 半场); P2 以镜像本地坐标系编程 (自己的半场在左侧)。'
+                  : '单人地图 7x7, 出生点 (3,3)。',
             }, null, 2),
           }],
         };

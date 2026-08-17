@@ -10,7 +10,7 @@
 //   start.sh / start.cmd      启动脚本 ("可执行文件")
 //   .env.example              环境变量示例
 //
-// 启动:  ./release/start.sh   (默认 http://localhost:3001)
+// 启动:  ./release/start.sh   (默认端口 3001)
 import { build } from 'esbuild';
 import { execSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync, chmodSync } from 'node:fs';
@@ -57,7 +57,9 @@ PORT=3001
 # GitHub OAuth (不配置则进入开发模式, 自动登录 local-dev)
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
-GITHUB_REDIRECT_URI=http://localhost:3001/auth/github/callback
+# 部署在独立域名时设置以下两项 (默认按访问请求的 Host 自动推导, 无需配置):
+# FRONTEND_ORIGIN=https://farm.example.com
+# GITHUB_REDIRECT_URI=https://farm.example.com/auth/github/callback
 
 # 数据库文件路径 (默认 ./data.db)
 DB_PATH=data.db
@@ -96,7 +98,7 @@ chmodSync(join(release, 'server.cjs'), 0o755);
 
 const size = await dirSize(release);
 console.log('==> 打包完成: ./release/ (' + (size / 1024 / 1024).toFixed(1) + ' MB)');
-console.log('    启动: ./release/start.sh  →  http://localhost:3001');
+console.log('    启动: ./release/start.sh  (默认端口 3001, 可用 PORT/HOST 环境变量覆盖)');
 console.log('    或:   node release/server.cjs');
 
 async function dirSize(dir) {

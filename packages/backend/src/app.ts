@@ -190,8 +190,7 @@ function resolveFrontendDist(): string | null {
 export function attachWebSocket(server: Server): void {
   const wss = new WebSocketServer({ server });
   wss.on('connection', (ws: WebSocket, req) => {
-    const url = new URL(req.url ?? '/', 'http://localhost');
-    const m = url.pathname.match(/^\/ws\/combat\/room\/([^/]+)$/);
+    const m = (req.url ?? '').replace(/\?.*$/, '').match(/^\/ws\/combat\/room\/([^/]+)$/);
     if (!m) {
       ws.close(1008, 'invalid path');
       return;
