@@ -1,0 +1,10 @@
+node_modules/
+dist/
+release/
+*.db
+*.db-shm
+*.db-wal
+.env
+public/esbuild.wasm
+
+.crush

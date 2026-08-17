@@ -1,0 +1,21 @@
+{
+  "name": "robofarm",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @robofarm/shared && npm run build -w @robofarm/backend && npm run build -w @robofarm/frontend",
+    "package": "node scripts/package.mjs",
+    "test": "npm run test -w @robofarm/shared && npm run test -w @robofarm/backend",
+    "typecheck": "npm run typecheck -ws --if-present",
+    "dev:shared": "npm run dev -w @robofarm/shared",
+    "dev:backend": "npm run dev -w @robofarm/backend",
+    "dev:frontend": "npm run dev -w @robofarm/frontend"
+  },
+  "dependencies": {
+    "@babel/runtime": "^8.0.0",
+    "@uiw/codemirror-theme-tokyo-night": "^4.25.11"
+  }
+}
