@@ -70,8 +70,8 @@ export function mcpGuide(): HTMLElement {
     void navigator.clipboard?.writeText(httpUrl);
   });
   return el('div', { class: 'manual mcp-guide' }, [
-    el('p', { text: '让任意支持 MCP 的 AI Agent (Claude Desktop / Cursor 等) 直接读取本游戏的 API 文档, 帮你编写无人机代码。' }),
-    el('p', {}, [el('b', { text: '接入地址 (在 MCP 客户端中添加 HTTP 服务器):' })]),
+    el('p', { text: '让任意支持 MCP 的 Agent 直接读取本游戏的 API 文档, 帮你编写无人机代码。' }),
+    el('p', {}, [el('b', { text: '接入地址:' })]),
     urlBlock,
   ]);
 }
@@ -105,7 +105,7 @@ function buildSections(): HTMLElement[] {
     el('div', { class: 'api-panel', id: 'tab-ops' }, [
       section(
         '无人机操作',
-        el('p', { class: 'hint', text: '`run(droneId)` 函数必须返回本文档的类型，表示无人机执行特定操作，或返回 null 表示本回合不动。' }),
+        el('p', { class: 'hint', text: '`run(droneId)` 函数必须返回本章指定的类型，表示无人机执行特定操作; 或返回 null 表示本回合不动。' }),
         ...DOC_OPERATIONS.map(docEntry)
       ),
     ]),
@@ -215,7 +215,7 @@ function apiManualTabs(): HTMLElement {
     if (i !== 0) p.style.display = 'none';
   });
   const mcpStrip = el('details', { class: 'mcp-strip' }, [
-    el('summary', { text: '🤖 MCP 接入 · 让 AI Agent 读取本手册' }),
+    el('summary', { text: '🎉 MCP 接入' }),
     mcpGuide(),
   ]);
   const root = el('div', { class: 'api-tabs-root' }, [mcpStrip, tabBar, ...panels]);

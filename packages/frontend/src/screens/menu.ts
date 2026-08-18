@@ -18,7 +18,7 @@ export function menuScreen(root: HTMLElement): void {
     el('h1', { class: 'start-title', text: '🤖 RoboFarm' }),
     buttons,
     el('details', { class: 'mcp-card', style: 'width: 460px; max-width: 92vw' }, [
-      el('summary', { text: '🤖 让 AI 帮你写代码 · MCP 接入' }),
+      el('summary', { text: '🎉 MCP 接入' }),
       mcpGuide(),
     ]),
     el('div', { class: 'menu-user' }, [userBox]),
