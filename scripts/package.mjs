@@ -61,7 +61,7 @@ GITHUB_CLIENT_SECRET=
 # FRONTEND_ORIGIN=https://farm.example.com
 # GITHUB_REDIRECT_URI=https://farm.example.com/auth/github/callback
 
-# 数据库文件路径 (默认 ./data.db)
+# 数据库文件路径 (默认 data.db, 放在启动时所在目录 pwd 下, 即 pwd/data.db)
 DB_PATH=data.db
 
 # 竞技对战回合间隔 (毫秒)
@@ -72,25 +72,27 @@ writeFileSync(
   join(release, 'start.sh'),
   `#!/usr/bin/env bash
 # RoboFarm 服务启动脚本 (Linux / macOS)
-# 用法: ./start.sh   (可用环境变量覆盖配置, 或编辑同目录 .env)
+# 用法: ./start.sh   (可在任意目录执行)
+# .env 与 data.db 均基于当前工作目录 (pwd), 不随脚本位置变化。
 set -e
-cd "$(dirname "$0")"
-if [ -f .env ]; then
+DIR="$(cd "$(dirname "$0")" && pwd)"
+if [ -f ./.env ]; then
   set -a
   # shellcheck disable=SC1091
   . ./.env
   set +a
 fi
-exec node server.cjs "$@"
+exec node "$DIR/server.cjs" "$@"
 `
 );
 writeFileSync(
   join(release, 'start.cmd'),
   `@echo off
 rem RoboFarm 服务启动脚本 (Windows)
-cd /d %~dp0
+rem 在任意目录执行; .env 与 data.db 基于当前工作目录
+set "DIR=%~dp0"
 if exist .env call .env
-node server.cjs %*
+node "%DIR%server.cjs" %*
 `
 );
 chmodSync(join(release, 'start.sh'), 0o755);

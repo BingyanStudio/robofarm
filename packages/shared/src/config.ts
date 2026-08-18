@@ -20,7 +20,7 @@ export const TURN_INTERVAL_MS = 800;
 export const TURN_INTERVALS_MS = [TURN_INTERVAL_MS, 400, 200] as const;
 
 /** 玩家初始金钱 */
-export const START_MONEY = 100;
+export const START_MONEY = 20;
 
 /** 每个玩家程序最多保留的日志行数 */
 export const MAX_LOG_LINES = 200;

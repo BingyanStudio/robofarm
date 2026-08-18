@@ -153,10 +153,17 @@ export class GameView {
           this.cb.onStatus(`${e.state.turn} / ${e.state.maxTurns}`);
           if (this.cb.moneyEl) {
             const ps = e.state.players;
-            this.cb.moneyEl.textContent =
-              e.state.mode === 'combat' && ps.length >= 2
-                ? `💰 我方 ${ps[0].money} · 对方 ${ps[1].money}`
-                : `💰 ${ps[0]?.money ?? 0}`;
+            if (e.state.mode === 'combat' && ps.length >= 2) {
+              // 竞技模式: 我方金钱为默认金色, 对方金钱用淡红色区分
+              this.cb.moneyEl.replaceChildren(
+                el('span', { text: '💰 我方 ' }),
+                el('span', { text: String(ps[0].money) }),
+                el('span', { text: ' · 对方 ' }),
+                el('span', { class: 'money-enemy', text: String(ps[1].money) })
+              );
+            } else {
+              this.cb.moneyEl.replaceChildren(el('span', { text: `💰 ${ps[0]?.money ?? 0}` }));
+            }
           }
           break;
         case 'log':

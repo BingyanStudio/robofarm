@@ -46,9 +46,14 @@ export interface MatchRow {
 
 let db: DatabaseSync | null = null;
 
-/** 数据库文件路径: 优先 DB_PATH, 默认位于服务代码目录 (不依赖可能被删除的启动 cwd) */
+/** 进程启动时的工作目录: start.sh 不再 cd 到脚本目录, .env 与相对路径都基于它 */
+const startCwd = process.cwd();
+
+/** 数据库文件路径: 优先 DB_PATH, 默认 data.db; 均相对启动目录 (pwd) 解析 */
 export function getDbPath(): string {
-  return process.env.DB_PATH ? resolve(process.env.DB_PATH) : resolve(__dirname, 'data.db');
+  return process.env.DB_PATH
+    ? resolve(startCwd, process.env.DB_PATH)
+    : resolve(startCwd, 'data.db');
 }
 
 /** 稳定工作目录: 作为 cwd 兜底, 避免启动目录被删除导致 worker/子进程 "uv_cwd ENOENT" 崩溃 */

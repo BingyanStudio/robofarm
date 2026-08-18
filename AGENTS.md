@@ -43,6 +43,9 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
   由 app.ts 的 `resolveFrontendDist()` 探测)、`start.sh`/`start.cmd`、`.env.example`。
 - 改了打包逻辑后重新 `npm run package` 并启动 `release/start.sh` 冒烟验证
   (单人验证会走内嵌 wasm 编译路径, 竞技对战会走 release/runner/ 的 worker)。
+- **start.sh 尊重 pwd**: 不再 cd 到脚本目录, `.env` 从当前目录读取, `data.db` 也存当前目录。
+  实现关键: db.ts 在模块加载时捕获 `startCwd` (此时尚未被 index.ts 的 chdir 切走),
+  `getDbPath()` 用 `resolve(startCwd, DB_PATH ?? 'data.db')` 解析 —— 改这块要小心顺序。
 
 ## 核心设计: 前后端执行一致性
 

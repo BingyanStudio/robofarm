@@ -23,7 +23,7 @@ describe('engine: 种植与收获周期', () => {
     let events = stepTurn(world, actions([0, { type: 'plant', crop: CropType.Strawberry }]));
     expect(eventsOfType(events, 'plant')).toHaveLength(1);
     expect(world.map[3][3].crop?.state).toBe(CropState.Growing);
-    expect(world.players[0].money).toBe(100); // 种植成本 0
+    expect(world.players[0].money).toBe(20); // 种植成本 0
 
     // 种植回合即算第 1 个生长周期: 之后 3 个空回合仍是 Growing (剩 1 周期)
     for (let i = 0; i < 3; i++) stepTurn(world, actions([0, null]));
@@ -37,7 +37,7 @@ describe('engine: 种植与收获周期', () => {
     events = stepTurn(world, actions([0, { type: 'harvest' }]));
     expect(eventsOfType(events, 'harvest')).toHaveLength(1);
     expect(world.map[3][3].crop).toBeNull();
-    expect(world.players[0].money).toBe(105);
+    expect(world.players[0].money).toBe(25); // 20 + 5
   });
 
   it('未成熟时收获无效', () => {
@@ -74,7 +74,7 @@ describe('engine: 种植与收获周期', () => {
     world.drones[0].position = [1, 1];
     const events = stepTurn(world, actions([0, { type: 'plant', crop: CropType.Strawberry }]));
     expect(eventsOfType(events, 'invalid-op')).toHaveLength(1);
-    expect(world.players[0].money).toBe(100);
+    expect(world.players[0].money).toBe(20);
   });
 });
 
@@ -82,17 +82,18 @@ describe('engine: 各类作物 (注册表驱动)', () => {
   it('葡萄: 20 成本, 15 回合成熟, 无需浇水, 收获 +40', () => {
     const world = single();
     stepTurn(world, actions([0, { type: 'plant', crop: CropType.Grape }]));
-    expect(world.players[0].money).toBe(80); // 100 - 20
+    expect(world.players[0].money).toBe(0); // 20 - 20
     for (let i = 0; i < 13; i++) stepTurn(world, actions([0, null]));
     expect(world.map[3][3].crop?.state).toBe(CropState.Growing); // 还差 1 周期
     stepTurn(world, actions([0, null]));
     expect(world.map[3][3].crop?.state).toBe(CropState.Grown);
     stepTurn(world, actions([0, { type: 'harvest' }]));
-    expect(world.players[0].money).toBe(120); // 80 + 40
+    expect(world.players[0].money).toBe(40); // 0 + 40
   });
 
   it('小麦: 30 成本, 25 回合生长, 缺水 2 次 (剩余 20、10 回合时)', () => {
     const world = single();
+    world.players[0].money = 100; // 初始资金不够, 直接补给
     stepTurn(world, actions([0, { type: 'plant', crop: CropType.Wheat }]));
     expect(world.players[0].money).toBe(70);
     let thirstyCount = 0;
@@ -114,13 +115,14 @@ describe('engine: 各类作物 (注册表驱动)', () => {
 
   it('荷花: 水生, 只能种在水池, 40 回合成熟, 收获 +90', () => {
     const world = single();
+    world.players[0].money = 100; // 初始资金不够, 直接补给
     // 陆地上不能种荷花
     const bad = stepTurn(world, actions([0, { type: 'plant', crop: CropType.Lotus }]));
     expect(eventsOfType(bad, 'invalid-op')).toHaveLength(1);
     // 水池上可以
     world.drones[0].position = [1, 1];
     stepTurn(world, actions([0, { type: 'plant', crop: CropType.Lotus }]));
-    expect(world.players[0].money).toBe(70); // 100 - 30
+    expect(world.players[0].money).toBe(70); // 100 - 30 (已补给)
     for (let i = 0; i < 38; i++) stepTurn(world, actions([0, null]));
     expect(world.map[1][1].crop?.state).toBe(CropState.Growing);
     stepTurn(world, actions([0, null]));
@@ -131,6 +133,7 @@ describe('engine: 各类作物 (注册表驱动)', () => {
 
   it('南瓜: 100 成本, 100 回合生长, 缺水 5 次, 收获 +300', () => {
     const world = single();
+    world.players[0].money = 100; // 初始资金不够, 直接补给
     stepTurn(world, actions([0, { type: 'plant', crop: CropType.Pumpkin }]));
     expect(world.players[0].money).toBe(0);
     let thirstyCount = 0;
@@ -300,14 +303,14 @@ describe('engine: 偷菜与拦截', () => {
     const harvest = eventsOfType(events, 'harvest')[0] as any;
     expect(harvest.stole).toBe(true);
     expect(w.drones[0].bounty).toBe(5); // 进入临时资金池
-    expect(w.players[0].money).toBe(100); // 未入账
+    expect(w.players[0].money).toBe(20); // 未入账
 
     // 返回己方半场 (5,3): 该回合结束时自动入账
     w.drones[0].position = [5, 3];
     events = stepTurn(w, actions([0, null]));
     expect(eventsOfType(events, 'stash')).toHaveLength(1);
     expect(w.drones[0].bounty).toBe(0);
-    expect(w.players[0].money).toBe(105);
+    expect(w.players[0].money).toBe(25); // 20 + 5
   });
 
   it('偷菜者被拦截: 资金池清空, 资金返还给受害方', () => {
@@ -328,8 +331,8 @@ describe('engine: 偷菜与拦截', () => {
     expect(intercepts).toHaveLength(1);
     expect(intercepts[0].bounty).toBe(5);
     expect(w.drones[0].bounty).toBe(0);
-    expect(w.players[1].money).toBe(105); // 资金返还给受害方 P2
-    expect(w.players[0].money).toBe(100);
+    expect(w.players[1].money).toBe(25); // 资金返还给受害方 P2
+    expect(w.players[0].money).toBe(20);
     // 不再产生 stash (资金已清空)
     expect(eventsOfType(events, 'stash')).toHaveLength(0);
   });
@@ -341,7 +344,7 @@ describe('engine: 偷菜与拦截', () => {
     const events = stepTurn(w, actions([0, { type: 'harvest' }]));
     const harvest = eventsOfType(events, 'harvest')[0] as any;
     expect(harvest.stole).toBe(false);
-    expect(w.players[0].money).toBe(105);
+    expect(w.players[0].money).toBe(25);
     expect(w.drones[0].bounty).toBe(0);
   });
 
@@ -353,7 +356,7 @@ describe('engine: 偷菜与拦截', () => {
     let events = stepTurn(w, actions([0, { type: 'plant', crop: CropType.Strawberry }]));
     expect(eventsOfType(events, 'plant')).toHaveLength(1);
     expect(w.map[3][8].crop).not.toBeNull();
-    expect(w.players[0].money).toBe(100); // 草莓零成本
+    expect(w.players[0].money).toBe(20); // 草莓零成本
     // 铲除仍仅限己方半场
     events = stepTurn(w, actions([0, { type: 'clear' }]));
     expect(eventsOfType(events, 'invalid-op')).toHaveLength(1);

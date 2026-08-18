@@ -62,7 +62,7 @@ describe('GameController: 单人模式', () => {
     const end = events.find((e) => e.type === 'end');
     expect(end.result.type).toBe('finished');
     // 第 1 回合种植, 成熟需 5 回合, 第 7 回合收获 (+5)
-    expect(end.result.scores[0].money).toBe(105);
+    expect(end.result.scores[0].money).toBe(25);
     // 视图回合从 1 到 10
     expect(seenTurn).toHaveLength(10);
     expect(seenTurn[0]).toBe(1);
@@ -173,7 +173,7 @@ describe('GameController: 竞技模式视图坐标系', () => {
     await runToEnd(controller);
     // 收获进入 bounty, 未返回己方半场前不计入金钱
     expect(controller.world.drones[0].bounty).toBe(5);
-    expect(controller.world.players[0].money).toBe(100);
+    expect(controller.world.players[0].money).toBe(20);
   });
 
   it('玩家操作类 (class API) 经控制器规范化后执行', async () => {

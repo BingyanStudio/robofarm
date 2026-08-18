@@ -305,7 +305,7 @@ export function singleScreen(root: HTMLElement): void {
     speedIdx = (speedIdx + 1) % SPEED_LABELS.length;
     btnSpeed.textContent = SPEED_LABELS[speedIdx];
   });
-  const btnSubmit = button('提交', () => void submitFromButton());
+  const btnSubmit = button('提交', () => void submitFromButton(), { class: 'btn btn-submit' });
   layout.controlsHost.append(btnStartStop, btnPause, btnStep, btnSpeed, btnSubmit);
   updatePauseButton();
 
@@ -341,6 +341,25 @@ export function singleScreen(root: HTMLElement): void {
       toast('请先登录 (右上角)');
       return;
     }
+    // 提交前先确认, 玩家确认后才真正提交到服务器
+    const confirmed = await new Promise<boolean>((resolve) => {
+      const body = el('div', {}, [
+        el('p', { text: '确认将代码提交到服务器验证?' }),
+        el('p', { class: 'hint', text: '服务器将运行你的代码并记录成绩, 代码在提交后仍可继续修改。' }),
+        el('div', { class: 'row' }, [
+          button('确认提交', () => {
+            m.close();
+            resolve(true);
+          }, { class: 'btn btn-submit' }),
+          button('取消', () => {
+            m.close();
+            resolve(false);
+          }),
+        ]),
+      ]);
+      const m = modal('提交确认', body);
+    });
+    if (!confirmed) return;
     const check = await api.get('/single/validate');
     if (check.data?.busy) {
       toast('已有程序正在服务器运行');

@@ -86,6 +86,20 @@ body {
   padding: 14px 28px;
 }
 
+/* 提交按钮: 金黄色 accent, 在控制条内靠右对齐并拉长 */
+.btn-submit {
+  margin-left: auto;
+  min-width: 150px;
+  background: #c9971f;
+  border-color: #e8c04a;
+  color: #241a05;
+  font-weight: 600;
+}
+
+.btn-submit:hover {
+  background: #d8a82a;
+}
+
 .hint {
   color: #8aa39a;
   font-size: 13px;
@@ -331,6 +345,11 @@ body {
 .money-line {
   font-weight: 600;
   color: #f5d76e;
+}
+
+/* 竞技模式对方的金钱: 淡红色, 与己方区分 */
+.money-line .money-enemy {
+  color: #f08a8a;
 }
 
 .game-controls {

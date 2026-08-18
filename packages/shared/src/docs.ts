@@ -36,7 +36,7 @@ export const DOC_OPERATIONS: DocEntry[] = [
     id: 'doc-Plant',
     name: 'Plant',
     def: 'class Plant extends DroneOperation',
-    desc: '在无人机当前所在格种植作物, 立即扣除种植成本。目标格需为空且可种植; 竞技模式下可在对方半场种植 (占用对方地块)。',
+    desc: '在无人机当前所在格种植作物, 立即扣除成本。目标格需为空且可种植; 竞技模式下可在对方半场种植 (占用对方地块)。',
     params: ['`crop`: `CropType` — 作物类型, 可用作物见作物文档'],
     example: 'return new Plant(\'strawberry\');',
   },
@@ -148,7 +148,7 @@ function cropTypeDocEntry(): DocEntry {
     desc: '作物类型枚举, 作为 `Plant` 的参数与 `CropInfo.type` 的值。完整属性见作物文档。',
     params: Object.values(CROPS).map(
       (c) =>
-        `\`${c.type}\`: ${c.name} — 种植成本 ${c.plantCost}, 收获 ${c.value}, ` +
+        `\`${c.type}\`: ${c.name} — 成本 ${c.plantCost}, 收获 ${c.value}, ` +
         `${c.growCycles} 回合成熟, ${c.thirstInterval === null ? '无需浇水' : `每 ${c.thirstInterval} 回合需浇水`}`
     ),
   };
@@ -224,8 +224,8 @@ export function cropDocEntries(): DocEntry[] {
     def: `代码名: \`${cfg.type}\``,
     desc: cfg.description,
     params: [
-      `种植成本: ${cfg.plantCost}`,
-      `收获: ${cfg.value} 金钱`,
+      `成本: ${cfg.plantCost}`,
+      `收获: ${cfg.value}`,
       `成熟: ${cfg.growCycles} 回合`,
       cfg.thirstInterval === null ? '需水: 无需浇水' : `需水: 每 ${cfg.thirstInterval} 回合`,
       `可种在: ${cfg.habitats.map((t) => TILES[t].name).join(' / ')}`,
@@ -272,7 +272,7 @@ export const DOC_RULES: DocParagraphSection[] = [
 export const DOC_OVERVIEW: DocParagraphSection = {
   title: '游戏概览',
   paragraphs: [
-    'RoboFarm 是一个编程农场游戏: 玩家编写 TypeScript 控制无人机, 在限定回合 (300) 内赚取最多金钱。',
+    'RoboFarm 是一个编程农场游戏: 玩家编写 TypeScript 控制无人机, 在限定回合 (300) 内赚取最多金钱。每局初始资金 20 金钱, 用于种植等开销。',
     '每回合, 游戏对每架无人机调用一次 `function run(droneId: number)`, 玩家返回一个操作类实例 (或 `null` 表示不动)。',
     '操作类继承自 `DroneOperation`, 引擎按类名识别; 参数在构造函数中传入。',
     '坐标均为 `[x, y]` 元组, x 向右, y 向下; 越界访问 API 返回 `null`。',

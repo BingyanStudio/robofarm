@@ -1,7 +1,7 @@
 # RoboFarm
 
 编程类农场游戏: 玩家编写 TypeScript 控制无人机, 在限定回合内赚取最多金钱。
-支持单人模式 (排行榜) 与多人竞技 (偷菜/拦截, 服务器推演直播)。
+支持单人模式 (排行榜) 与多人竞技 (偷菜/拦截, 服务器推演直播)。每局初始资金 20 金钱。
 
 详细设计见 [`agent/`](agent/AGENT.md) (游戏规则 `GAME.md` / 前端 `FRONTEND.md` / 后端 `BACKEND.md`)。
 
@@ -89,7 +89,8 @@ release/
 # 拷贝 release/ 到目标机器, 然后:
 ./release/start.sh                     # 默认 http://localhost:3001
 PORT=8080 ./release/start.sh           # 改端口
-# 配置 GitHub OAuth: 在 release/ 下创建 .env (参考 .env.example), 或直接 export 环境变量
+# 配置 GitHub OAuth: 在当前目录创建 .env (参考 release/.env.example), 或直接 export 环境变量;
+# .env 与 data.db 均基于启动时所在目录 (pwd)
 ```
 
 发布版完全自包含: 无需 `npm install`, 无 node_modules 依赖。

@@ -79,7 +79,7 @@ export function createMcpServer(): Server {
       },
       {
         name: 'get_crop',
-        description: '获取指定作物的完整参数 (种植成本/收获/成熟回合/需水/可种地块) 与描述, 返回 JSON',
+        description: '获取指定作物的完整参数 (成本/收获/成熟回合/需水/可种地块) 与描述, 返回 JSON',
         inputSchema: {
           type: 'object',
           properties: {
