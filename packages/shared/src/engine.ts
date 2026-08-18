@@ -44,9 +44,6 @@ const OP_HANDLERS: Record<string, OpHandler> = {
       return { ok: false, message: `${cfg.name} 不能种植在 ${TILES[tile.type].name} 上` };
     }
     if (tile.crop) return { ok: false, message: '该地块已有作物' };
-    if (world.mode === 'combat' && !isOwnHalf(world, drone)) {
-      return { ok: false, message: '只能在己方半场种植' };
-    }
     const player = world.players[drone.player];
     if (player.money < cfg.plantCost) return { ok: false, message: '金钱不足' };
     player.money -= cfg.plantCost;

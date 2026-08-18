@@ -345,13 +345,16 @@ describe('engine: 偷菜与拦截', () => {
     expect(w.drones[0].bounty).toBe(0);
   });
 
-  it('只能在己方半场种植/铲除', () => {
+  it('可在对方半场种植, 铲除仍限己方半场', () => {
     const w = combat();
     // drone0 在对方半场 (8,3)
     w.drones[0].position = [8, 3];
+    // 种植不再受半场限制
     let events = stepTurn(w, actions([0, { type: 'plant', crop: CropType.Strawberry }]));
-    expect(eventsOfType(events, 'invalid-op')).toHaveLength(1);
-    placeCrop(w, [8, 3], { type: CropType.Strawberry, state: CropState.Growing, growthRemaining: 3});
+    expect(eventsOfType(events, 'plant')).toHaveLength(1);
+    expect(w.map[3][8].crop).not.toBeNull();
+    expect(w.players[0].money).toBe(100); // 草莓零成本
+    // 铲除仍仅限己方半场
     events = stepTurn(w, actions([0, { type: 'clear' }]));
     expect(eventsOfType(events, 'invalid-op')).toHaveLength(1);
   });

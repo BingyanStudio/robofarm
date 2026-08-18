@@ -104,8 +104,8 @@ function buildSections(): HTMLElement[] {
     // ---- 1. 操作 ----
     el('div', { class: 'api-panel', id: 'tab-ops' }, [
       section(
-        '无人机操作 (class extends DroneOperation)',
-        el('p', { class: 'hint', text: '所有操作继承自 `DroneOperation`, 引擎按类名识别; 参数在构造函数中校验。`run()` 返回 null 表示本回合不动。' }),
+        '无人机操作',
+        el('p', { class: 'hint', text: '`run(droneId)` 函数必须返回本文档的类型，表示无人机执行特定操作，或返回 null 表示本回合不动。' }),
         ...DOC_OPERATIONS.map(docEntry)
       ),
     ]),

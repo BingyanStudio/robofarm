@@ -36,7 +36,7 @@ export const DOC_OPERATIONS: DocEntry[] = [
     id: 'doc-Plant',
     name: 'Plant',
     def: 'class Plant extends DroneOperation',
-    desc: '在无人机当前所在格种植作物, 立即扣除种植成本。目标格需为空、可种植且 (竞技模式下) 位于己方半场。',
+    desc: '在无人机当前所在格种植作物, 立即扣除种植成本。目标格需为空且可种植; 竞技模式下可在对方半场种植 (占用对方地块)。',
     params: ['`crop`: `CropType` — 作物类型, 可用作物见作物文档'],
     example: 'return new Plant(\'strawberry\');',
   },
@@ -258,7 +258,7 @@ export const DOC_RULES: DocParagraphSection[] = [
     paragraphs: [
       '地图 14×7, 你的半场在左侧 (与单人地图相同), 对方在右侧; 双方用同一坐标系编程 (对方视角为镜像)。',
       '偷菜: 对方半场收获的金钱进入无人机临时资金池, 返回己方半场时入账; 对方可用 Intercept 拦截, 命中则资金返还。',
-      '种植/铲除仅限己方半场。',
+      '种植不受半场限制 (可到对方半场占位种植); 铲除仅限己方半场。',
     ],
   },
   {
