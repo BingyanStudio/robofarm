@@ -641,6 +641,70 @@ body {
   color: #8aa39a;
 }
 
+/* ---------- API 文档页 ---------- */
+.api-docs-page {
+  flex: 1;
+  padding: 16px 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.api-docs-head h2 {
+  margin: 0 0 6px;
+}
+
+.api-docs-head .doc-list {
+  font-size: 13px;
+}
+
+.api-docs-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.api-card {
+  background: #1a2420;
+  border: 1px solid #2f443a;
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.api-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.api-method {
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.api-path {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e7ece9;
+}
+
+.api-auth {
+  color: #fbbf24;
+  font-size: 12px;
+}
+
+.api-card .manual-code {
+  margin: 2px 0 0 18px;
+}
+
 /* ---------- 观战 / 回放 ---------- */
 .spectate-page {
   flex: 1;

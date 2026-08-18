@@ -19,4 +19,6 @@ export type { PlayerProgram, PlayerTurnResult, GamePlayer, GameControllerOptions
 export { compilePlayerCode, setWasmUrl, setWasmModule } from './compile';
 export type { CompileResult, CompileError } from './compile';
 export { DOC_OPERATIONS, DOC_FUNCTIONS, DOC_TYPES, DOC_RULES, DOC_OVERVIEW, DOC_SECTIONS, cropDocEntries, sectionMarkdown } from './docs';
+export { API_DOC_GROUPS, API_DOC_CONVENTIONS, apiDocsMarkdown, llmTxt } from './api-docs';
+export type { ApiDocGroup, ApiDocEndpoint, ApiDocResponse } from './api-docs';
 export type { DocEntry, DocSection, DocParagraphSection, DocSectionId } from './docs';

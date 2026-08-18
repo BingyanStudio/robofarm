@@ -57,8 +57,8 @@ export function singleScreen(root: HTMLElement): void {
   let recorder: ReplayRecorder | null = null;
   let replayFile: ReplayFile | null = null;
 
-  // 速度档位标签, 与 TURN_INTERVALS_MS 对齐 (0 正常 / 1 两倍 / 2 四倍)
-  const SPEED_LABELS = ['速度: 正常', '速度: ×2', '速度: ×4'];
+  // 速度档位标签, 与 TURN_INTERVALS_MS 对齐 (0 正常 / 1 两倍 / 2 四倍 / 3 八倍)
+  const SPEED_LABELS = ['速度: 正常', '速度: ×2', '速度: ×4', '速度: ×8'];
 
   const view = new GameView({
     renderer,
@@ -201,14 +201,21 @@ export function singleScreen(root: HTMLElement): void {
     view.apply(events);
   }
 
-  function scheduleNext(): void {
+  function scheduleNext(delay: number = TURN_INTERVALS_MS[speedIdx]): void {
     if (!playing) return;
     if (timer) clearTimeout(timer);
     // 先等当前回合 (含玩家代码执行) 彻底结束后再进入下一回合, 防止回合重叠
     timer = setTimeout(async () => {
+      const t0 = performance.now();
       await stepOnce();
-      if (playing && controller && !controller.over) scheduleNext();
-    }, TURN_INTERVALS_MS[speedIdx]);
+      const dur = performance.now() - t0;
+      if (playing && controller && !controller.over) {
+        const interval = TURN_INTERVALS_MS[speedIdx];
+        // ×8: 回合间延迟取 0.1s 与程序实际执行时间的最大值 (自本回合开始计时)
+        const next = speedIdx >= 3 ? Math.max(interval - dur, 0) : interval;
+        scheduleNext(next);
+      }
+    }, delay);
   }
 
   function handleEnd(result: GameResult): void {

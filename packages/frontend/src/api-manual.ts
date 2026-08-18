@@ -60,9 +60,17 @@ function refLink(text: string, ref: string): HTMLAnchorElement {
 
 /** MCP 接入说明 (开始界面 / 主菜单 / API 手册顶部复用) */
 export function mcpGuide(): HTMLElement {
-  // MCP 地址: 优先 VITE_MCP_BASE (env), 否则默认同源 /mcp (开发环境经 vite 代理转发)
+  // 同源基址: 优先 VITE_MCP_BASE (env), 否则默认当前 origin (开发环境经 vite 代理转发)
   const envBase = (import.meta.env.VITE_MCP_BASE as string | undefined)?.trim();
-  const httpUrl = envBase ? new URL('/mcp', envBase).href : new URL('/mcp', location.origin).href;
+  const origin = envBase ? new URL(envBase).origin : location.origin;
+  const llmUrl = new URL('/llm.txt', origin).href;
+  const httpUrl = new URL('/mcp', origin).href;
+  const llmBlock = codeBlock(llmUrl);
+  llmBlock.title = '点击复制';
+  llmBlock.style.cursor = 'pointer';
+  llmBlock.addEventListener('click', () => {
+    void navigator.clipboard?.writeText(llmUrl);
+  });
   const urlBlock = codeBlock(httpUrl);
   urlBlock.title = '点击复制';
   urlBlock.style.cursor = 'pointer';
@@ -70,8 +78,10 @@ export function mcpGuide(): HTMLElement {
     void navigator.clipboard?.writeText(httpUrl);
   });
   return el('div', { class: 'manual mcp-guide' }, [
-    el('p', { text: '让任意支持 MCP 的 Agent 直接读取本游戏的 API 文档, 帮你编写无人机代码。' }),
-    el('p', {}, [el('b', { text: '接入地址:' })]),
+    el('p', { text: '让 AI 直接读取本游戏的文档与规则, 帮你编写无人机代码。支持两种方式接入:' }),
+    el('p', {}, [el('b', { text: '方式一 · llm.txt (最简单):' }), el('span', { text: ' 把下面的链接交给 AI, 它可以直接抓取全部游戏文档' })]),
+    llmBlock,
+    el('p', {}, [el('b', { text: '方式二 · MCP:' }), el('span', { text: ' 在支持 MCP 的客户端中添加 HTTP 服务器' })]),
     urlBlock,
   ]);
 }

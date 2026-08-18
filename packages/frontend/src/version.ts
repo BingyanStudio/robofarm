@@ -6,7 +6,7 @@
 //   3. 写入当前版本号 (供下次对比)
 import { el, button, modal } from './ui';
 
-export const VERSION = '0.1.3';
+export const VERSION = '0.1.4';
 export const VERSION_KEY = 'robofarm.version';
 
 export interface UpdateEntry {
@@ -17,6 +17,16 @@ export interface UpdateEntry {
 
 /** 更新日志 (按版本从新到旧) */
 export const UPDATE_LOG: UpdateEntry[] = [
+  {
+    version: '0.1.4',
+    title: 'v0.1.4',
+    items: [
+      'AI 接入: 新增 /llm.txt (全部游戏文档拼接, LLM 可直接抓取) 与 /api-docs (后端 API 文档)',
+      'MCP 卡片: 改为"支持两种方式接入" (llm.txt / MCP), 均可点击复制',
+      '加速: 新增 ×8 档位, 回合间延迟取 0.1s 与程序实际执行时间的最大值',
+      '香菇描述更新: 成熟时向上下左右四格种下新的香菇',
+    ],
+  },
   {
     version: '0.1.3',
     title: 'v0.1.3',

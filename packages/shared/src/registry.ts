@@ -164,7 +164,7 @@ export const CROPS: Record<CropType, CropTypeConfig> = {
   [CropType.Shiitake]: {
     type: CropType.Shiitake,
     name: '香菇',
-    description: '一种会自我繁殖的作物, 需要控制其繁殖范围并多轮收取以获得最大收益。',
+    description: '成熟时，向上下左右四格种下新的香菇, 可多轮收取以获得最大收益。',
     habitats: [TileType.Soil],
     plantCost: 80,
     value: 40,

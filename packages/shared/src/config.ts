@@ -16,8 +16,8 @@ export const DEFAULT_MAX_TURNS = 300;
 /** 正常播放速度下每回合间隔 (毫秒) */
 export const TURN_INTERVAL_MS = 800;
 
-/** 加速档位的每回合间隔 (毫秒): 下标 0 = 正常, 1 = 2 倍速, 2 = 4 倍速 */
-export const TURN_INTERVALS_MS = [TURN_INTERVAL_MS, 400, 200] as const;
+/** 加速档位的每回合间隔 (毫秒): 下标 0 = 正常, 1 = 2 倍速, 2 = 4 倍速, 3 = 8 倍速 */
+export const TURN_INTERVALS_MS = [TURN_INTERVAL_MS, 400, 200, 100] as const;
 
 /** 玩家初始金钱 */
 export const START_MONEY = 20;

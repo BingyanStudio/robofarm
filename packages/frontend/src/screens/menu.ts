@@ -14,6 +14,7 @@ export function menuScreen(root: HTMLElement): void {
     button('多人竞技', () => (location.hash = '#/match'), { class: 'btn btn-big' }),
     button('观战', () => (location.hash = '#/spectate'), { class: 'btn btn-big' }),
     button('回放', () => (location.hash = '#/replay'), { class: 'btn btn-big' }),
+    button('API 文档', () => (location.hash = '#/api-docs'), { class: 'btn btn-big' }),
     button('更新日志', () => showUpdateLog(), { class: 'btn btn-big' }),
   ]);
 

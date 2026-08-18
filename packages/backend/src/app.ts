@@ -7,6 +7,7 @@ import { Server } from 'node:http';
 import { WebSocketServer, WebSocket } from 'ws';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { createAuthRouter, requireUser, currentUser, AuthUser } from './auth';
+import { llmTxt, apiDocsMarkdown } from './api-docs';
 import * as single from './services/single';
 import * as combat from './services/combat';
 import { getCombatCode, upsertCombatCode } from './db';
@@ -176,6 +177,16 @@ export function createApp(): express.Express {
   // MCP over HTTP: 向任意 Agent 提供游戏 API 文档
   mountMcp(app);
 
+  // LLM 友好文档: 全部文档按章节拼接 (Base URL 按实际请求动态生成)
+  app.get('/llm.txt', (req: Request, res: Response) => {
+    res.type('text/plain; charset=utf-8').send(llmTxt(requestBaseUrl(req)));
+  });
+
+  // 后端 API 文档 (Markdown)
+  app.get('/api-docs', (req: Request, res: Response) => {
+    res.type('text/markdown; charset=utf-8').send(apiDocsMarkdown(requestBaseUrl(req)));
+  });
+
   // SPA 回退 (仅在生产模式挂载前端时)
   if (hasFrontend) {
     const indexHtml = join(frontendDist as string, 'index.html');
@@ -183,6 +194,13 @@ export function createApp(): express.Express {
   }
 
   return app;
+}
+
+/** 按实际请求推导部署地址 (兼容反向代理的 X-Forwarded-Proto) */
+function requestBaseUrl(req: Request): string {
+  const fwd = req.get('x-forwarded-proto');
+  const proto = fwd ? fwd.split(',')[0]!.trim() : req.protocol;
+  return `${proto}://${req.get('host')}`;
 }
 
 /** 定位前端静态目录: 优先 FRONTEND_DIST 环境变量, 其次发布版 public/, 再次开发版 frontend/dist */

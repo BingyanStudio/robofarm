@@ -7,6 +7,7 @@ import { matchScreen } from './screens/match';
 import { battleScreen } from './screens/battle';
 import { replayScreen } from './screens/replay';
 import { spectateScreen } from './screens/spectate';
+import { apiDocsScreen } from './screens/api-docs';
 import { mountApiManual } from './api-manual';
 import { checkVersionOnLoad } from './version';
 
@@ -47,6 +48,9 @@ function route(): void {
       break;
     case 'spectate':
       spectateScreen(app);
+      break;
+    case 'api-docs':
+      apiDocsScreen(app);
       break;
     default:
       startScreen(app);

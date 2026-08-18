@@ -2,16 +2,8 @@
 
 此处放置所有待办事项
 
-- [x] Feature: 回放导出:
-    - 实现: shared/replay.ts 定义 ReplayFile 格式 (每回合 round/drones[op]/output, JSON);
-      ReplayRecorder 包装玩家程序录制操作, replayEvents 用记录的操作重新推演 (确定性)
-      再生出事件流供回放播放。单人本地 (结束弹窗"保存回放") / 服务器验证
-      (我的成绩"下载回放", /single/replay/:id) / 竞技历史 ("下载回放", /combat/replay/:id)
-      均可导出; 回放界面新增"导入回放记录" (支持新格式与旧格式)。
-    1. 构建一种回放文件, 格式为 json, 其中记录游戏内每一回合的回合数、各个无人机的操作、程序的输出
-    例如: `[{round=0, drones=[{id=0, op={...}}], output=["[系统]: xxxx", "yyyy"]}]`
-    2. 对于每一个完成的游戏，都提供一份这样的回放文件
-        1. 如果是单人模式本地运行，则 300 回合后弹窗询问是否保存回放
-        2. 如果是单人模式提交服务器，则可以从 "我的成绩" 列表中按按钮下载
-        3. 如果是多人竞技模式，则可以从 "历史记录" 中下载
-    3. 回放播放: 在 "回放" 界面增加 "导入回放记录"，导入后，可以播放该回放
+- [x] Enhancement: `api-docs` 拆分: 纯 Markdown 进入 llm.txt, 还需要将 Markdown 渲染为符合网页整体风格的文档页面，在主菜单增加 API 按钮，跳转到这个页面。注意，美观网页需要按照功能分类，且增加tab方便人类跳转
+    - 实现: 数据源重构到 shared/api-docs.ts (结构化, 单一来源) —— Markdown (apiDocsMarkdown)
+      与网页版共用; /llm.txt 并入纯 Markdown API 文档; 新增 #/api-docs 网页页
+      (Tab 分类: 认证/单人/竞技/WebSocket/MCP/其他, Method 彩色徽标, 每个 API 含
+      端点/Method/Header/Schema/Example), 主菜单新增 "API 文档" 按钮
