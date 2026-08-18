@@ -273,15 +273,15 @@ describe('engine: 缺水机制 (无枯萎, 长期 Thirsty)', () => {
 });
 
 describe('engine: 取水', () => {
-  it('在池塘取水, 最多 5 格', () => {
+  it('在池塘取水, 一次取满 5 格, 已满时无效', () => {
     const world = single();
     world.drones[0].position = [1, 1];
-    for (let i = 0; i < 5; i++) {
-      const events = stepTurn(world, actions([0, { type: 'collectWater' }]));
-      expect(eventsOfType(events, 'collect-water')).toHaveLength(1);
-    }
+    // 一次取满
+    let events = stepTurn(world, actions([0, { type: 'collectWater' }]));
+    expect(eventsOfType(events, 'collect-water')).toHaveLength(1);
     expect(world.drones[0].water).toBe(5);
-    const events = stepTurn(world, actions([0, { type: 'collectWater' }]));
+    // 已满再取无效
+    events = stepTurn(world, actions([0, { type: 'collectWater' }]));
     expect(eventsOfType(events, 'invalid-op')).toHaveLength(1);
     expect(world.drones[0].water).toBe(5);
   });
@@ -632,7 +632,7 @@ describe('engine: 新作物 (西瓜/紫云英/香菇)', () => {
 });
 
 describe('engine: 水仙 (autoWater) 与 ChangeTile', () => {
-  it('水仙: 生长中每 3 周期按 上→右→下→左 顺序给邻格缺水作物浇水, 每回合一次', () => {
+  it('水仙: 生长中每回合按 上→右→下→左 给邻格缺水作物浇水, 每回合一次', () => {
     const w = single();
     w.players[0].money = 200;
     w.drones[0].position = [4, 4]; // 水池
@@ -641,16 +641,18 @@ describe('engine: 水仙 (autoWater) 与 ChangeTile', () => {
     // 邻格缺水作物: 上 (4,3), 右 (5,4)
     placeCrop(w, [4, 3], { type: CropType.Strawberry, state: CropState.Thirsty, growthRemaining: 10 });
     placeCrop(w, [5, 4], { type: CropType.Strawberry, state: CropState.Thirsty, growthRemaining: 10 });
-    // 第 2 周期: 无浇水
-    stepTurn(w, actions([0, null]));
-    expect(w.map[3][4].crop!.state).toBe(CropState.Thirsty);
-    // 第 3 周期: 只给 "上" 浇水 (每回合一次)
-    const events = stepTurn(w, actions([0, null]));
-    const waters = eventsOfType(events, 'water');
+    // 第 1 回合: 浇 "上" (每回合一次)
+    let events = stepTurn(w, actions([0, null]));
+    let waters = eventsOfType(events, 'water');
     expect(waters).toHaveLength(1);
     expect((waters[0] as any).pos).toEqual([4, 3]);
     expect(w.map[3][4].crop!.state).toBe(CropState.Growing);
-    expect(w.map[4][5].crop!.state).toBe(CropState.Thirsty); // 右 未浇
+    // 第 2 回合: "上" 已恢复, 浇 "右"
+    events = stepTurn(w, actions([0, null]));
+    waters = eventsOfType(events, 'water');
+    expect(waters).toHaveLength(1);
+    expect((waters[0] as any).pos).toEqual([5, 4]);
+    expect(w.map[4][5].crop!.state).toBe(CropState.Growing);
   });
 
   it('ChangeTile: 消耗 3 能量, 上下左右须有同类型地块, 有作物时不能转换', () => {

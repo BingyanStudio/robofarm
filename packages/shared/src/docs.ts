@@ -44,7 +44,7 @@ export const DOC_OPERATIONS: DocEntry[] = [
     id: 'doc-CollectWater',
     name: 'CollectWater',
     def: 'class CollectWater extends DroneOperation',
-    desc: '在池塘上取水 1 格, 储水量上限 5 格。不在池塘上或已满时操作无效。',
+    desc: '在池塘上取水, 一次取满 (上限 5 格)。不在池塘上或已满时操作无效。',
     example: 'return new CollectWater();',
   },
   {
@@ -310,7 +310,7 @@ export const DOC_RULES: DocParagraphSection[] = [
     paragraphs: [
       '作物有 生长中 / 缺水 / 成熟 三种状态; 进入缺水后长期保持, 生长不推进, 浇水后继续。',
       '缺水次数按种植时的实际生长周期动态计算 (每约 `thirstInterval` 回合一次, 总次数 = 实际周期 ÷ 间隔), 沙地等生长周期被调整的地块缺水次数相应增加。',
-      '水仙 (种在水池): 生长中每 3 个周期按 上→右→下→左 顺序自动给邻格缺水作物浇水, 每回合仅一次, 成熟后失效。',
+      '水仙 (种在水池): 生长中每回合按 上→右→下→左 顺序自动给邻格缺水作物浇水 (每次仅一株), 成熟后失效。',
     ],
   },
   {

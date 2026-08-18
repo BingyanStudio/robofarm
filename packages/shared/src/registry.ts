@@ -181,7 +181,7 @@ export const CROPS: Record<CropType, CropTypeConfig> = {
     value: 100,
     growCycles: 80,
     thirstInterval: null, // 无需浇水
-    onGrow: 'autoWater', // 生长中每 3 周期自动给邻格缺水作物浇水一次
+    onGrow: 'autoWater', // 生长中每回合自动给邻格缺水作物浇水一次
   },
 };
 

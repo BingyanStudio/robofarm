@@ -79,7 +79,8 @@ const OP_HANDLERS: Record<string, OpHandler> = {
     const tile = tileAt(world, drone.position);
     if (!TILES[tile.type].canCollectWater) return { ok: false, message: '只能在池塘上取水' };
     if (drone.water >= MAX_WATER) return { ok: false, message: `水量已满 (最多 ${MAX_WATER} 格)` };
-    drone.water += 1;
+    // 一次取满 (上限 5 格)
+    drone.water = MAX_WATER;
     events.push({
       type: 'collect-water',
       drone: drone.id,
@@ -547,13 +548,11 @@ const MATURITY_EFFECTS: Record<string, (ctx: { world: WorldState; pos: Position;
  */
 const GROWTH_EFFECTS: Record<string, (ctx: { world: WorldState; crop: CropData; pos: Position; events: GameEvent[] }) => void> = {
   /**
-   * 水仙: 生长中每 3 个周期, 按 上→右→下→左 顺序检查周围 Tile,
+   * 水仙: 生长中每回合按 上→右→下→左 顺序检查周围 Tile,
    * 若存在缺水作物则自动浇水 (每回合仅浇水一次), 成熟后无此效果。
    * 浇水效果与普通 Water 一致 (前端渲染淡蓝色特效)。
    */
-  autoWater({ world, crop, pos, events }) {
-    const elapsed = (crop.plantCycles ?? cropConfig(crop.type).growCycles) - crop.growthRemaining;
-    if (elapsed % 3 !== 0) return;
+  autoWater({ world, pos, events }) {
     for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
       const nx = pos[0] + dx;
       const ny = pos[1] + dy;

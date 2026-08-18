@@ -224,7 +224,7 @@ export function createMcpServer(): Server {
               '- 可用操作类 (均继承 DroneOperation, 按类名识别):\n' +
               '  - `new Move([x, y])` 移动到周围 8 格之一\n' +
               '  - `new Plant(crop)` 在当前位置种植 (crop 用字符串, 如 \'strawberry\')\n' +
-              '  - `new CollectWater()` 在池塘取水 (上限 5 格)\n' +
+              '  - `new CollectWater()` 在池塘一次取满水 (上限 5 格)\n' +
               '  - `new Water()` 给当前格缺水作物浇水\n' +
               '  - `new WaterRow()` / `new WaterCol()` 给整行/列浇水 (3 能量)\n' +
               '  - `new Harvest()` 收获当前格成熟作物\n' +
