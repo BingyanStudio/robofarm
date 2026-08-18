@@ -20,13 +20,15 @@ export function isPosition(v: unknown): v is Position {
 }
 
 interface OpSchema {
-  fields: { name: string; kind: 'position' | 'string' }[];
+  fields: { name: string; kind: 'position' | 'string' | 'crops' }[];
 }
 
 // 操作类型 → 结构 schema 的注册表。新增操作类型时, 同时在此注册并在 engine.ts 注册处理器。
 const OP_SCHEMAS: Record<string, OpSchema> = {
   move: { fields: [{ name: 'to', kind: 'position' }] },
+  teleport: { fields: [{ name: 'to', kind: 'position' }] },
   plant: { fields: [{ name: 'crop', kind: 'string' }] },
+  newDrone: { fields: [{ name: 'at', kind: 'position' }] },
   collectWater: { fields: [] },
   water: { fields: [] },
   harvest: { fields: [] },
@@ -39,6 +41,8 @@ const OP_SCHEMAS: Record<string, OpSchema> = {
   waterCol: { fields: [] },
   interceptRow: { fields: [] },
   interceptCol: { fields: [] },
+  plantRow: { fields: [{ name: 'plants', kind: 'crops' }] },
+  plantCol: { fields: [{ name: 'plants', kind: 'crops' }] },
   changeTile: { fields: [{ name: 'tileType', kind: 'string' }] },
 };
 
@@ -50,7 +54,9 @@ const OP_SCHEMAS: Record<string, OpSchema> = {
 const OP_CLASS_TYPES: Record<string, string> = {
   ChangeTile: 'changeTile',
   Move: 'move',
+  Teleport: 'teleport',
   Plant: 'plant',
+  NewDrone: 'newDrone',
   CollectWater: 'collectWater',
   Water: 'water',
   Harvest: 'harvest',
@@ -63,6 +69,8 @@ const OP_CLASS_TYPES: Record<string, string> = {
   WaterCol: 'waterCol',
   InterceptRow: 'interceptRow',
   InterceptCol: 'interceptCol',
+  PlantRow: 'plantRow',
+  PlantCol: 'plantCol',
 };
 
 /** 识别操作类型: 优先纯对象形式 (raw.type), 其次玩家 class 的构造类名 */
@@ -102,6 +110,9 @@ export function normalizeOp(raw: unknown): NormalizeResult {
     }
     if (kind === 'string' && typeof v !== 'string') {
       return { ok: false, error: `操作 ${type} 的字段 ${name} 必须是字符串` };
+    }
+    if (kind === 'crops' && !(Array.isArray(v) && v.length > 0 && v.every((c) => isCropType(c)))) {
+      return { ok: false, error: `操作 ${type} 的字段 ${name} 必须是非空作物类型数组 (如 ['strawberry', 'grape'])` };
     }
   }
   if (type === 'plant' && !isCropType(op.crop)) {

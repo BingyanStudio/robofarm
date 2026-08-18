@@ -32,12 +32,12 @@ export function matchScreen(root: HTMLElement): void {
   });
 
   const stateLine = el('div', { class: 'state-line', text: '出战状态: 查询中…' });
-  left.append(
-    stateLine,
-    el('div', { class: 'row' }, [
-      button('上传出战代码', () => void upload()),
-    ])
-  );
+  // 模拟竞技入口 + 上传出战代码: 二者居中排列在左侧边栏
+  const actionsRow = el('div', { class: 'match-actions' }, [
+    button('模拟竞技', () => (location.hash = '#/simulate')),
+    button('上传出战代码', () => void upload()),
+  ]);
+  left.append(stateLine, actionsRow);
 
   right.append(el('div', { class: 'game-title', text: '选择对手' }));
   const listHost = el('div', { class: 'card-list' });

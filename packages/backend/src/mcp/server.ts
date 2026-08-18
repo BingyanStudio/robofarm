@@ -35,7 +35,7 @@ export interface McpServerOptions {
 
 export function createMcpServer(opts: McpServerOptions = {}): Server {
   const server = new Server(
-    { name: 'robofarm-docs', version: '0.1.5' },
+    { name: 'robofarm-docs', version: '1.0.0' },
     { capabilities: { resources: {}, tools: {}, prompts: {} } }
   );
   /** 该 MCP 会话的登录令牌 (经 login_start / login_finish 获得) */
@@ -138,10 +138,10 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
           required: ['path'],
         },
       },
-      // ---- 单人模式 (需登录, 除排行榜) ----
+      // ---- 单人种植 (需登录, 除排行榜) ----
       {
         name: 'single_validate',
-        description: '提交玩家代码并启动服务器端单人验证 (最多 300 回合), 同一用户同时只能运行一个。之后用 single_validate_status 查询进度与分数。',
+        description: '提交玩家代码并启动服务器端单人验证 (最多 500 回合), 同一用户同时只能运行一个。之后用 single_validate_status 查询进度与分数。',
         inputSchema: {
           type: 'object',
           properties: { code: { type: 'string', description: '玩家 TypeScript 代码 (含入口函数 run)' } },
@@ -160,7 +160,7 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
       },
       {
         name: 'single_leaderboard',
-        description: '单人模式公开排行榜 (name / score / me)。无需登录。',
+        description: '单人种植公开排行榜 (name / score / me)。无需登录。',
         inputSchema: { type: 'object', properties: {} },
       },
       {
@@ -404,7 +404,7 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
           };
         }
       }
-      // ---- 单人模式 ----
+      // ---- 单人种植 ----
       case 'single_validate': {
         const code = typeof args?.code === 'string' ? args.code : '';
         if (!code.trim()) {
@@ -490,20 +490,25 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
               '- 定义入口函数 `function run(droneId: number)`; 每回合对每架无人机调用一次, 返回一个操作类实例或 `null`。\n' +
               '- 可用操作类 (均继承 DroneOperation, 按类名识别):\n' +
               '  - `new Move([x, y])` 移动到周围 8 格之一\n' +
+              '  - `new Teleport([x, y])` 传送到任意位置 (能量 = ceil(欧氏距离), 竞技模式仅限己方半场)\n' +
               '  - `new Plant(crop)` 在当前位置种植 (crop 用字符串, 如 \'strawberry\')\n' +
               '  - `new CollectWater()` 在池塘一次取满水 (上限 5 格)\n' +
               '  - `new Water()` 给当前格缺水作物浇水\n' +
               '  - `new WaterRow()` / `new WaterCol()` 给整行/列浇水 (3 能量)\n' +
+              '  - `new PlantRow(plants)` / `new PlantCol(plants)` 按数组顺序种植整行/列 (3 能量, 跳过无法种植的格子)\n' +
+              '  - 行/列范围操作实际覆盖以无人机为中心的 3 格; InterceptRow/Col 以施法点为中心 3 格\n' +
+              '  - `new NewDrone([x, y])` 花费 4000 金钱创建新无人机 (上限: 单人 2 / 竞技 3)\n' +
               '  - `new Harvest()` 收获当前格成熟作物\n' +
               '  - `new HarvestRow()` / `new HarvestCol()` 收割整行/列 (4 能量, 竞技仅己方半场)\n' +
               '  - `new Clear()` 铲除当前格作物\n' +
               '  - `new Intercept([x, y])` 竞技模式单格拦截\n' +
               '  - `new InterceptRow()` / `new InterceptCol()` 拦截整行/列 (6 能量)\n' +
               '  - `new Charge()` 原地充能 +5 (能量上限 10)\n' +
-              '  - `new ChangeTile(tileType)` 转换脚下地块为 soil/water/sand (3 能量, 需相邻同类型地块)\n' +
+              '  - `new ChangeTile(tileType)` 转换脚下地块为 soil/water/sand (6 能量, 需相邻同类型地块)\n' +
               '- 可用 API: `getSelf()` (含 water/energy) / `getGame()` (含 money) / `getMap()` / `getTile(p)` / `getCrop(p)` / `getDrone(p)`, 坐标越界返回 null。\n' +
               '- 作物列表 (代码名, 成本/收获/成熟回合/需水/可种地块):\n' + cropSummary() + '\n' +
-              '- 竞技模式: 自己半场在左侧 (14×7), 对方半场收获进入临时资金池, 返回己方半场入账; 种植不受半场限制 (可到对方半场占位), 铲除仅限己方半场。沙地上生长周期 ×1.5 (西瓜不受影响), 草莓/葡萄/南瓜/西瓜/紫云英可种。\n' +
+              '- 机制: 沙漠化 (收获的格相邻有沙地则转化为沙地); 间作 (四方向 ≥2 个不同作物, 收获 +20%); 香菇总周期 = 20 + 2×场上香菇数\n' +
+              '- 竞技模式: 自己半场在左侧 (14×7), 对方半场收获进入临时资金池, 返回己方半场入账; 种植不受半场限制 (可到对方半场占位), 铲除仅限己方半场。沙地上生长周期 ×1.5, 草莓/葡萄/南瓜/西瓜/紫云英可种。\n' +
               '- 限制: 单次 run() 400ms 超时即判负; 禁止网络/异步 API。\n' +
               '- 完整文档可用 get_doc / robofarm://docs/* 获取。\n\n' +
               (goal ? `策略目标: ${String(goal)}\n\n` : '') +

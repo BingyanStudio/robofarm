@@ -135,6 +135,10 @@ export class GameController {
 
     events.push(...stepTurn(this.world, actions));
     this.world.turn += 1;
+    // 同步无人机列表: NewDrone 可能新增无人机, 下一回合开始执行代码
+    for (let pi = 0; pi < this.players.length; pi++) {
+      this.droneIdsByPlayer[pi] = this.world.drones.filter((d) => d.player === pi).map((d) => d.id);
+    }
     events.push({ type: 'snapshot', state: snapshotOf(this.world) });
 
     if (this.world.turn >= this.world.maxTurns) {

@@ -86,9 +86,13 @@ export function replayScreen(root: HTMLElement, params: URLSearchParams): void {
   }
 
   if (!id) {
+    // 未选择回放: "选择回放"按钮醒目居中, 右上角的"导入回放记录"保持不变
     host.replaceChildren(
-      el('p', { text: '尚未选择回放。' }),
-      el('p', { class: 'hint', text: '点击右上角"导入回放记录"载入本地回放文件 (JSON); 或从"多人竞技 → 历史记录"中点击某场对局播放。' })
+      el('div', { class: 'replay-empty' }, [
+        el('p', { text: '尚未选择回放' }),
+        el('button', { class: 'btn btn-big', text: '选择回放', onClick: () => fileInput.click() }),
+        el('p', { class: 'hint', text: '从本地导入回放文件 (JSON); 或从"多人竞技 → 历史记录"中点击某场对局播放。' }),
+      ])
     );
     return;
   }
@@ -146,7 +150,7 @@ function buildPlayer(
   let timer: ReturnType<typeof setTimeout> | null = null;
   let speed = 1;
 
-  const btnPlay = button('播放', togglePlay);
+  const btnPlay = button('播放', togglePlay, { class: 'btn btn-start' });
   const btnBack = button('⏮', () => seek(0));
   const btnStepBack = button('◀', () => seek(Math.max(0, idx - 1)));
   const btnStep = button('▶', () => seek(Math.min(groups.length, idx + 1)));
@@ -192,6 +196,9 @@ function buildPlayer(
   function togglePlay(): void {
     playing = !playing;
     btnPlay.textContent = playing ? '暂停' : '播放';
+    // 播放(绿色 accent) / 暂停(红色 accent)
+    btnPlay.classList.toggle('btn-stop', playing);
+    btnPlay.classList.toggle('btn-start', !playing);
     if (playing) schedule();
     else if (timer) clearTimeout(timer);
   }

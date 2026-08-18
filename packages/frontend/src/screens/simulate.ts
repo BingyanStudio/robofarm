@@ -61,11 +61,13 @@ export function simulateScreen(root: HTMLElement): void {
   let playing = false;
   let speedIdx = 0;
   let timer: ReturnType<typeof setTimeout> | null = null;
+  /** 首次点击开始时会远程拉取 esbuild, 编译完成前禁用开始/步进按钮 */
+  let compiling = false;
 
   // 速度档位标签, 与 TURN_INTERVALS_MS 对齐 (0 正常 / 1 两倍 / 2 四倍 / 3 八倍)
   const SPEED_LABELS = ['速度: 正常', '速度: ×2', '速度: ×4', '速度: ×8'];
 
-  const statusText = el('span', { class: 'status-text', text: '回合 0 / 300' });
+  const statusText = el('span', { class: 'status-text', text: `回合 0 / ${DEFAULT_MAX_TURNS}` });
   layout.statusHost.append(statusText);
 
   const view = new GameView({
@@ -78,7 +80,7 @@ export function simulateScreen(root: HTMLElement): void {
 
   // 未开始前也先展示地图 (竞技地图: 双方无人机在各自出生点)
   view.apply([{ type: 'snapshot', state: snapshotOf(createCombatWorld(DEFAULT_MAX_TURNS)) }]);
-  statusText.textContent = '回合 0 / 300';
+  statusText.textContent = `回合 0 / ${DEFAULT_MAX_TURNS}`;
 
   function appendLog(lines: string[]): void {
     for (const line of lines) {
@@ -99,12 +101,13 @@ export function simulateScreen(root: HTMLElement): void {
     updatePauseButton();
   }
 
-  /** 开始/停止合并按钮: 有进行中的对局显示红色"停止", 否则显示绿色"开始" */
+  /** 开始/停止合并按钮: 有进行中的对局显示红色"停止", 否则显示绿色"开始"; 编译中禁用 */
   function updateStartStop(): void {
     const running = controller !== null && !controller.over;
-    btnStartStop.textContent = running ? '停止' : '开始';
-    btnStartStop.classList.toggle('btn-stop', running);
-    btnStartStop.classList.toggle('btn-start', !running);
+    btnStartStop.disabled = compiling;
+    btnStartStop.textContent = compiling ? '编译中…' : running ? '停止' : '开始';
+    btnStartStop.classList.toggle('btn-stop', running && !compiling);
+    btnStartStop.classList.toggle('btn-start', !running && !compiling);
   }
 
   /** 暂停/继续按钮: 播放中显示"暂停", 暂停/步进模式显示"继续"; 无对局时禁用 */
@@ -129,11 +132,19 @@ export function simulateScreen(root: HTMLElement): void {
 
   /** 合并按钮: 未开始时编译并开始新对局, 进行中则停止并允许修改代码 */
   async function onStartStop(): Promise<void> {
+    if (compiling) return; // 编译中禁止再次点击
     if (controller && !controller.over) {
       stopForEdit();
       return;
     }
-    await newGame(true);
+    compiling = true;
+    updateStartStop();
+    try {
+      await newGame(true);
+    } finally {
+      compiling = false;
+      updateStartStop();
+    }
   }
 
   /** 锁定/解锁代码编辑器 (游戏进行中锁定) */
@@ -149,7 +160,7 @@ export function simulateScreen(root: HTMLElement): void {
     stopGame();
     setEditorLocked(false);
     view.apply([{ type: 'snapshot', state: snapshotOf(createCombatWorld(DEFAULT_MAX_TURNS)) }]);
-    statusText.textContent = '回合 0 / 300';
+    statusText.textContent = `回合 0 / ${DEFAULT_MAX_TURNS}`;
     appendLog(['[系统] 游戏已停止, 可以修改代码']);
   }
 
@@ -187,7 +198,7 @@ export function simulateScreen(root: HTMLElement): void {
     }
     // 立即渲染初始地图 (重启/步进未播放时也能看到场景)
     view.apply([{ type: 'snapshot', state: snapshotOf(controller.world) }]);
-    statusText.textContent = '回合 0 / 300';
+    statusText.textContent = `回合 0 / ${DEFAULT_MAX_TURNS}`;
     appendLog(['[系统] 新对局开始 (我方为左侧, 对方为镜像视角)']);
     setEditorLocked(true);
     updateStartStop();
@@ -266,6 +277,7 @@ export function simulateScreen(root: HTMLElement): void {
 
   /** 步进: 没有对局时先编译并创建, 再运行 1 回合 (创建后为暂停模式) */
   async function onStep(): Promise<void> {
+    if (compiling) return; // 编译中禁止
     playing = false;
     if (!controller) {
       await newGame(false);

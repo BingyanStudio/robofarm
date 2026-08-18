@@ -6,7 +6,7 @@
 //   3. 写入当前版本号 (供下次对比)
 import { el, button, modal } from './ui';
 
-export const VERSION = '0.1.5';
+export const VERSION = '1.0.0';
 export const VERSION_KEY = 'robofarm.version';
 
 export interface UpdateEntry {
@@ -17,6 +17,40 @@ export interface UpdateEntry {
 
 /** 更新日志 (按版本从新到旧) */
 export const UPDATE_LOG: UpdateEntry[] = [
+  {
+    version: '1.0.0',
+    title: 'v1.0.0',
+    items: [
+      '## 新操作',
+      'PlantRow / PlantCol: 消耗 3 能量按数组顺序种植整行/列, 自动跳过无法种植的格子',
+      'Teleport: 传送到任意位置, 消耗 ceil(欧氏距离) 能量; 竞技模式仅限己方半场内',
+      'NewDrone: 花费 4000 金钱在指定位置创建新无人机 (上限: 单人 2 / 竞技 3, 下一回合开始执行代码)',
+      '## 平衡性调整',
+      '回合上限: 单人/竞技模式默认回合数 300 → 500',
+      '香菇: 成熟后按上右下左顺序分 4 回合各扩散 1 株; 需浇水; 总生长周期在种植时动态计算 (20 + 2 × 场上香菇总数, 越多长得越慢)',
+      '紫云英: 成本 100 / 收获 120 / 160 周期, 生长中每回合加速周围作物',
+      '西瓜: 成本 1000 / 收获 1800 / 100 周期; 移除沙地免疫 (沙地生长同样 ×1.5)',
+      '行/列范围操作 (种植/收割/浇灌/拦截) 范围缩短为以施法点为中心的 3 格',
+      'ChangeTile 能量消耗提升至 6',
+      '新机制 沙漠化: 收获的格子相邻有沙地时转化为沙地 (仅蚕食土地)',
+      '新机制 间作: 四方向 ≥2 个不同种类作物时, 收获收益 +20%',
+      '## 大版本迁移',
+      '排行榜: 按大版本分 Tab (V0.x 时代的排行榜已冻结保留), 前三名用奖牌 Emoji 标注',
+      '多人竞技: 上传代码池已清空 (所有玩家恢复未上传状态)',
+      '## 界面改进',
+      '主菜单全新布局: logo 替换大标题, 单人/多人两个大按钮居中, 其余入口平铺下方, 返回菜单改为图标按钮',
+      '"模拟竞技"入口移入多人竞技页面 ("上传出战代码"左侧)',
+      '回放页面: 未选择回放时 "选择回放" 按钮居中醒目展示',
+      '页面整体不再滚动: 长代码不再把整个页面撑出滚动条 (各面板内部自行滚动)',
+      '"单人模式" 更名为 "单人种植" (代码与文档同步); 排行榜按钮移除 👑 王冠 Emoji',
+      '主菜单背景新增浅色动态发光',
+      '主菜单 Logo 下方显示当前版本号 (灰色小字)',
+      '修复: 返回菜单图标显示为裂图 (back.svg 此前为空文件, 已补充)',
+      '修复: 按钮文字竖直居中 (中文/Emoji 混排时的基线偏移)',
+      '修复: 首次点击"开始"编译期间 (远程拉取 esbuild) 禁用开始/步进按钮, 避免重复点击; 按钮显示"编译中…"',
+      '回放界面: "播放"按钮绿色、"暂停"按钮红色 accent',
+    ],
+  },
   {
     version: '0.1.5',
     title: 'v0.1.5',
@@ -90,7 +124,14 @@ export function showUpdateLog(): void {
   const body = el('div', { class: 'update-log' });
   for (const entry of UPDATE_LOG) {
     const list = el('ul', { class: 'doc-list' });
-    for (const item of entry.items) list.append(el('li', { text: item }));
+    for (const item of entry.items) {
+      // 以 "## " 开头的条目渲染为加粗小标题 (分组)
+      if (item.startsWith('## ')) {
+        list.append(el('li', { class: 'update-group', text: item.slice(3) }));
+      } else {
+        list.append(el('li', { text: item }));
+      }
+    }
     body.append(el('h4', { text: entry.title }), list);
   }
   const m = modal('更新日志', body);

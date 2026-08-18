@@ -1,5 +1,4 @@
 // 应用入口 + 极简 hash 路由。
-import { startScreen } from './screens/start';
 import { menuScreen } from './screens/menu';
 import { singleScreen } from './screens/single';
 import { simulateScreen } from './screens/simulate';
@@ -24,10 +23,8 @@ function route(): void {
   const [path, queryStr] = hash.split('?');
   const params = new URLSearchParams(queryStr ?? '');
   switch (path) {
+    // 根路由 (原开始界面): 直接进入主菜单
     case '':
-    case 'start':
-      startScreen(app);
-      break;
     case 'menu':
       menuScreen(app);
       break;
@@ -53,7 +50,7 @@ function route(): void {
       apiDocsScreen(app);
       break;
     default:
-      startScreen(app);
+      menuScreen(app);
   }
 }
 

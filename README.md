@@ -1,7 +1,7 @@
 # RoboFarm
 
 编程类农场游戏: 玩家编写 TypeScript 控制无人机, 在限定回合内赚取最多金钱。
-支持单人模式 (排行榜) 与多人竞技 (偷菜/拦截, 服务器推演直播)。每局初始资金 20 金钱。
+支持单人种植 (排行榜) 与多人竞技 (偷菜/拦截, 服务器推演直播)。每局初始资金 20 金钱。
 特色机制: 能量 (充能与行/列范围操作)、沙地地块 (生长周期 ×1.5)。
 
 详细设计见 [`agent/`](agent/AGENT.md) (游戏规则 `GAME.md` / 前端 `FRONTEND.md` / 后端 `BACKEND.md`)。
@@ -18,7 +18,7 @@ packages/
 ```
 
 - 玩家代码 (TS) 在前端与后端**用同一份共享代码**编译 (esbuild-wasm) 与执行, 结果一致。
-- 单人模式前端本地执行; 提交排行榜时由后端在沙箱中重新执行验证。
+- 单人种植前端本地执行; 提交排行榜时由后端在沙箱中重新执行验证。
 - 竞技模式由服务器推演 (双方各自坐标系, P2 为镜像), 每回合事件经 WS 推送。
 
 ## 环境要求
@@ -142,7 +142,7 @@ node dist/index.js        # 自动托管 packages/frontend/dist
 | --- | --- |
 | `#/` 或 `#/start` | 开始界面 (含 MCP 接入说明) |
 | `#/menu` | 主菜单 (含 API 手册弹窗) |
-| `#/single` | 单人模式 |
+| `#/single` | 单人种植 |
 | `#/simulate` | 模拟竞技 |
 | `#/match` | 多人竞技匹配 |
 | `#/battle?opponentId=:id` | 多人对战 (挑战指定玩家) |
@@ -159,7 +159,7 @@ node dist/index.js        # 自动托管 packages/frontend/dist
 | `GET /auth/github/callback` | OAuth 回调, 建立会话并跳回前端 |
 | `GET /auth/me` | 当前登录用户 `{ user: { id, name, dev } }`; 未登录 401 |
 
-**单人模式** (除 leaderboard 外均需登录):
+**单人种植** (除 leaderboard 外均需登录):
 | 方法/路径 | 说明 |
 | --- | --- |
 | `GET /single/leaderboard` | 排行榜 `{ entries: [{ name, score }] }` |

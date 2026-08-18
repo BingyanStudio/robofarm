@@ -163,7 +163,7 @@ async function runMatch(room: Room, codeA: string, codeB: string): Promise<void>
     recordCombatResult(winnerId, loserId!);
   }
 
-  // 回放文件: 回合/操作/输出 (JSON), 与单人模式同一格式
+  // 回放文件: 回合/操作/输出 (JSON), 与单人种植同一格式
   const replay = JSON.stringify(
     recorder.buildFile({
       mode: 'combat',

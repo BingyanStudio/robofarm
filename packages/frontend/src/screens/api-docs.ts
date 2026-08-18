@@ -1,6 +1,6 @@
 // API 文档网页版: 后端全部接口, 按功能分类 Tab 展示, 人类友好。
 // 数据来自 shared/src/api-docs.ts (与 /api-docs Markdown / llm.txt 同一来源)。
-import { el, button, topBar } from '../ui';
+import { el, topBar } from '../ui';
 import { API_DOC_GROUPS, API_DOC_CONVENTIONS } from '@robofarm/shared';
 
 const METHOD_COLOR: Record<string, string> = {
@@ -19,7 +19,7 @@ export function apiDocsScreen(root: HTMLElement): void {
   root.replaceChildren();
   const host = el('div', { class: 'api-docs-page' });
   root.append(
-    topBar([button('返回菜单', () => (location.hash = '#/menu'), { class: 'btn btn-small' })]),
+    topBar(),
     host
   );
 

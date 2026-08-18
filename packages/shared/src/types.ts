@@ -47,7 +47,9 @@ export type Frame = 'normal' | 'mirror';
 /** 无人机可执行的操作 (判别联合)。新增操作时需同时注册 ops.ts 的模式与 engine.ts 的处理器 */
 export type InternalOperation =
   | { type: 'move'; to: Position }
+  | { type: 'teleport'; to: Position }
   | { type: 'plant'; crop: CropType }
+  | { type: 'newDrone'; at: Position }
   | { type: 'collectWater' }
   | { type: 'water' }
   | { type: 'harvest' }
@@ -61,6 +63,8 @@ export type InternalOperation =
   | { type: 'waterCol' }
   | { type: 'interceptRow' }
   | { type: 'interceptCol' }
+  | { type: 'plantRow'; plants: CropType[] }
+  | { type: 'plantCol'; plants: CropType[] }
   // 地块转换
   | { type: 'changeTile'; tileType: TileType };
 
@@ -82,7 +86,7 @@ export interface CropInfo {
 
 /** 无人机信息 (玩家 API 视角, 坐标为玩家本地坐标系) */
 export interface DroneInfo {
-  /** 本地无人机编号: 自己的无人机为 0..N-1, 对方无人机的编号为其在对方阵营内的编号 */
+  /** 本地编号: 自己的无人机为 0..N-1; 对方的无人机为真实全局 id (如竞技模式 P2 的无人机为 2, 3) */
   id: number;
   position: Position;
   /** 当前储水量 */
@@ -101,6 +105,8 @@ export interface GameInfo {
   turn: number;
   maxTurns: number;
   money: number;
+  /** 己方无人机数量上限 (单人 2 / 竞技 3), NewDrone 创建时受此限制 */
+  droneLimit: number;
 }
 
 /** 玩家程序每回合看到的完整世界快照 (坐标为玩家本地坐标系) */
@@ -139,6 +145,8 @@ export interface CropData {
   thirstsDone?: number;
   /** 种植时的实际生长周期数 (计算缺水触发点用) */
   plantCycles?: number;
+  /** 香菇: 成熟后还需扩散的小香菇数量 (每回合 1 个, 按上右下左顺序, 到 0 停止) */
+  spreadLeft?: number;
 }
 
 export interface Tile {
@@ -159,8 +167,8 @@ export interface DroneState {
   bounty: number;
   /** 本回合的拦截目标, 回合结束时结算 */
   interceptTarget: Position | null;
-  /** 行/列范围拦截 (回合结束时对整行/整列有偷菜资金的对方无人机生效) */
-  interceptZone: 'row' | 'col' | null;
+  /** 行/列范围拦截: 以施法点 (无人机释放时的位置) 为中心的 3 格范围, 回合结束时结算 */
+  interceptZone: { axis: 'row' | 'col'; center: Position } | null;
 }
 
 export interface PlayerState {
@@ -243,6 +251,7 @@ export type GameEvent =
   | { type: 'clear'; drone: number; pos: Position }
   | { type: 'intercept'; drone: number; pos: Position; thief: number; bounty: number }
   | { type: 'stash'; drone: number; pos: Position; bounty: number }
+  | { type: 'new-drone'; drone: number; pos: Position }
   | { type: 'crop-grow'; pos: Position; state: CropState; cyclesToGrown: number }
   | { type: 'invalid-op'; drone: number; message: string }
   | { type: 'log'; player: number; lines: string[] }

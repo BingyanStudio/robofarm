@@ -3,7 +3,7 @@
 // API 函数只读取"每回合由宿主传入的视图快照", 因此天然无状态。
 import { CropInfo, CropType, DroneInfo, GameInfo, PlayerView, Position, TileInfo, TileType } from './types';
 import { TILES } from './registry';
-import { MAX_LOGS_PER_TURN, MAX_LOG_LINES } from './config';
+import { MAX_LOGS_PER_TURN, MAX_LOG_LINES, DRONE_LIMIT } from './config';
 import { isPosition } from './ops';
 import { isCropType } from './registry';
 
@@ -26,6 +26,24 @@ export class Move extends DroneOperation {
   constructor(public to: Position) {
     super();
     if (!isPosition(to)) throw new Error('Move 的参数 to 必须是 [x, y] 坐标');
+  }
+}
+
+/** 传送到指定位置 (任意距离), 消耗 ceil(欧氏距离) 能量; 竞技模式只能在我方半场内传送 */
+export class Teleport extends DroneOperation {
+  readonly type = 'teleport';
+  constructor(public to: Position) {
+    super();
+    if (!isPosition(to)) throw new Error('Teleport 的参数 to 必须是 [x, y] 坐标');
+  }
+}
+
+/** 花费 4000 金钱在指定位置创建一架新的无人机 (上限: 单人 2 / 竞技 3, 见 getGame().droneLimit) */
+export class NewDrone extends DroneOperation {
+  readonly type = 'newDrone';
+  constructor(public at: Position) {
+    super();
+    if (!isPosition(at)) throw new Error('NewDrone 的参数 at 必须是 [x, y] 坐标');
   }
 }
 
@@ -135,6 +153,28 @@ export class InterceptCol extends DroneOperation {
   }
 }
 
+/** 种植整行: 从左到右按 plants 顺序在所在行种植, 跳过无法种植的格子, 直到行末或数组耗尽, 消耗 3 能量 */
+export class PlantRow extends DroneOperation {
+  readonly type = 'plantRow';
+  constructor(public plants: CropType[]) {
+    super();
+    if (!Array.isArray(plants) || plants.length === 0 || !plants.every((c) => isCropType(c))) {
+      throw new Error('PlantRow 的参数 plants 必须是非空作物类型数组 (如 [\'strawberry\', \'grape\'])');
+    }
+  }
+}
+
+/** 种植整列: 从上到下按 plants 顺序在所在列种植, 跳过无法种植的格子, 直到列末或数组耗尽, 消耗 3 能量 */
+export class PlantCol extends DroneOperation {
+  readonly type = 'plantCol';
+  constructor(public plants: CropType[]) {
+    super();
+    if (!Array.isArray(plants) || plants.length === 0 || !plants.every((c) => isCropType(c))) {
+      throw new Error('PlantCol 的参数 plants 必须是非空作物类型数组 (如 [\'strawberry\', \'grape\'])');
+    }
+  }
+}
+
 /** 转换脚下地块: 消耗 3 能量, 上下左右必须有至少一个与目标类型相同的地块 */
 export class ChangeTile extends DroneOperation {
   readonly type = 'changeTile';
@@ -150,6 +190,7 @@ export class ChangeTile extends DroneOperation {
 export const OPS = {
   DroneOperation,
   Move,
+  Teleport,
   Plant,
   CollectWater,
   Water,
@@ -163,6 +204,9 @@ export const OPS = {
   WaterCol,
   InterceptRow,
   InterceptCol,
+  PlantRow,
+  PlantCol,
+  NewDrone,
   ChangeTile,
 };
 
@@ -247,7 +291,7 @@ export function playerApiFactory(getView: () => PlayerView | null): {
     getGame(): GameInfo {
       const view = getView();
       if (!view) throw new Error('API 调用时机错误: 当前回合视图未就绪');
-      return { mode: view.mode, turn: view.turn, maxTurns: view.maxTurns, money: view.money };
+      return { mode: view.mode, turn: view.turn, maxTurns: view.maxTurns, money: view.money, droneLimit: DRONE_LIMIT[view.mode] };
     },
     getMap() {
       const view = getView();

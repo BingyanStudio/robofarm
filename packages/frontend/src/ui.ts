@@ -53,10 +53,17 @@ export function page(children: (Node | string)[]): HTMLElement {
 export function topBar(right: Node[] = []): HTMLElement {
   return el('div', { class: 'topbar' }, [
     el('div', { class: 'topbar-left' }, [
-      el('span', { class: 'logo', text: '🤖 RoboFarm' }),
+      // 返回菜单: Icon 按钮 (放在 logo 左侧)
+      el('button', {
+        class: 'btn btn-small btn-icon',
+        title: '返回菜单',
+        onClick: () => (location.hash = '#/menu'),
+      }, [
+        el('img', { class: 'icon-img', src: '/sprites/back.svg', alt: '返回菜单' }),
+      ]),
+      el('img', { class: 'logo-img', src: '/sprites/logo.svg', alt: 'RoboFarm' }),
       // 版本号显示在标题旁边 (灰色小字)
       el('span', { class: 'version-badge', text: `v${VERSION}` }),
-      button('返回菜单', () => (location.hash = '#/menu'), { class: 'btn btn-small' }),
     ]),
     // 登录状态 / 排行榜 / 我的成绩等始终位于右侧
     el('div', { class: 'topbar-right' }, right),

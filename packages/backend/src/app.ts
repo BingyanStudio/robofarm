@@ -84,7 +84,7 @@ export function createApp(): express.Express {
 
   app.use('/auth', createAuthRouter());
 
-  // ---- 单人模式 ----
+  // ---- 单人种植 ----
   app.get('/single/replay/:id', requireUser, (req: Request, res: Response) => {
     const result = single.singleReplay(Number(req.params.id), userOf(req).id);
     if ('error' in result) {
@@ -119,7 +119,7 @@ export function createApp(): express.Express {
   app.get('/single/leaderboard', (req: Request, res: Response) => {
     // 排行榜公开可读; 登录用户的成绩标记 me: true, 供前端高亮显示
     const user = currentUser(req);
-    res.json({ entries: single.singleLeaderboard(user?.id ?? null) });
+    res.json(single.singleLeaderboard(user?.id ?? null));
   });
 
   // ---- 竞技模式 ----

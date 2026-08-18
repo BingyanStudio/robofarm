@@ -42,7 +42,7 @@ async function runToEnd(controller: GameController): Promise<{ events: any[]; ov
   return { events: all, over };
 }
 
-describe('GameController: 单人模式', () => {
+describe('GameController: 单人种植', () => {
   it('运行完整一局并正常结束, 视图回合数与金钱正确', async () => {
     let seenTurn: number[] = [];
     const controller = new GameController({
@@ -195,5 +195,34 @@ describe('GameController: 竞技模式视图坐标系', () => {
     });
     await runToEnd(controller);
     expect(controller.world.drones[0].position).toEqual([3, 3]);
+  });
+});
+
+describe('GameController: NewDrone', () => {
+  it('创建的新无人机在下一回合开始执行代码 (droneId 顺延为 1)', async () => {
+    const called: number[][] = []; // 每回合被调用的 droneId 列表
+    const controller = new GameController({
+      mode: 'single',
+      maxTurns: 8,
+      players: [
+        me((droneId, view) => {
+          if (!called[view.turn]) called[view.turn] = [];
+          called[view.turn].push(droneId);
+          if (view.turn === 1) return { type: 'newDrone', at: [6, 6] };
+          if (droneId === 1 && view.turn >= 2) return { type: 'move', to: [5, 6] };
+          return null;
+        }),
+      ],
+    });
+    controller.world.players[0].money = 5000; // 支付 NewDrone 费用
+    const { events } = await runToEnd(controller);
+    expect(events.some((e) => e.type === 'new-drone')).toBe(true);
+    // 第 1 回合只有 droneId 0; 第 2 回合起 droneId 0 和 1 都被调用
+    expect(called[1]).toEqual([0]);
+    expect(called[2]).toEqual([0, 1]);
+    expect(called[3]).toEqual([0, 1]);
+    // 新无人机执行了移动
+    const moves = events.filter((e) => e.type === 'move' && e.drone !== undefined);
+    expect(moves.some((e) => JSON.stringify(e.from) === '[6,6]' && JSON.stringify(e.to) === '[5,6]')).toBe(true);
   });
 });

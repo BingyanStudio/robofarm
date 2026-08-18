@@ -45,6 +45,17 @@ export interface MatchRow {
   created_at: number;
 }
 
+export interface LeaderboardSnapshotRow {
+  version: string;
+  payload: string;
+  created_at: number;
+}
+
+/** 当前大版本的排行榜版本号 (每版冻结一次旧排行榜) */
+export const LEADERBOARD_VERSION = 'v1.0.0';
+/** 上一个大版本的排行榜标签 (V1.0.0 发布时冻结整个 V0.x 时代) */
+export const PREV_LEADERBOARD_VERSION = 'v0.x';
+
 let db: DatabaseSync | null = null;
 
 /** 进程启动时的工作目录: start.sh 不再 cd 到脚本目录, .env 与相对路径都基于它 */
@@ -123,6 +134,15 @@ function migrate(d: DatabaseSync): void {
       replay TEXT NOT NULL,
       created_at INTEGER NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS meta (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS leaderboard_snapshots (
+      version TEXT PRIMARY KEY,
+      payload TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
   `);
   // 老库迁移: single_submissions 增加回放列 (已存在则忽略)
   try {
@@ -130,6 +150,50 @@ function migrate(d: DatabaseSync): void {
   } catch {
     // 列已存在
   }
+  applyV100Migrations(d);
+}
+
+/**
+ * V1.0.0 一次性数据迁移 (用 meta 表记录, 幂等):
+ * 1. 清空多人代码匹配池 (所有玩家恢复"未上传代码"状态)
+ * 2. 冻结旧版本排行榜 (V0.x 时代的最后一版排行榜成为快照 Tab)
+ */
+function applyV100Migrations(d: DatabaseSync): void {
+  const applied = (key: string): boolean =>
+    d.prepare('SELECT 1 FROM meta WHERE key = ?').get(key) !== undefined;
+  const mark = (key: string): void => {
+    d.prepare('INSERT OR IGNORE INTO meta (key, value) VALUES (?, ?)').run(key, String(Date.now()));
+  };
+
+  if (!applied('v1.0.0.clear-combat-codes')) {
+    d.exec('DELETE FROM combat_codes');
+    mark('v1.0.0.clear-combat-codes');
+  }
+  if (!applied('v1.0.0.leaderboard-snapshot')) {
+    takeLeaderboardSnapshot(d, PREV_LEADERBOARD_VERSION);
+    mark('v1.0.0.leaderboard-snapshot');
+  }
+}
+
+/** 冻结当前排行榜为指定版本快照 (V0.x → 固定 Tab) */
+export function takeLeaderboardSnapshot(d: DatabaseSync, version: string): void {
+  const rows = d
+    .prepare(
+      `SELECT u.github_login AS name, MAX(s.score) AS score
+       FROM single_submissions s JOIN users u ON u.id = s.user_id
+       WHERE s.score IS NOT NULL
+       GROUP BY s.user_id
+       ORDER BY score DESC LIMIT 50`
+    )
+    .all() as unknown as { name: string; score: number }[];
+  d.prepare('INSERT OR REPLACE INTO leaderboard_snapshots (version, payload, created_at) VALUES (?, ?, ?)')
+    .run(version, JSON.stringify(rows), Date.now());
+}
+
+export function listLeaderboardSnapshots(): LeaderboardSnapshotRow[] {
+  return getDb()
+    .prepare('SELECT * FROM leaderboard_snapshots ORDER BY version')
+    .all() as unknown as LeaderboardSnapshotRow[];
 }
 
 export function upsertUserByLogin(login: string): UserRow {

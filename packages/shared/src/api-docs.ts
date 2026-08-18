@@ -83,7 +83,7 @@ export const API_DOC_GROUPS: ApiDocGroup[] = [
   },
   {
     id: 'single',
-    title: '单人模式 Single',
+    title: '单人种植 Single',
     description: '代码提交、验证状态、历史、排行榜与回放下载。',
     endpoints: [
       {
@@ -122,8 +122,11 @@ export const API_DOC_GROUPS: ApiDocGroup[] = [
         method: 'GET',
         path: '/single/leaderboard',
         title: '排行榜',
-        description: '公开排行榜 (登录用户的成绩带 me 标记)。',
-        responses: [{ code: '200', body: '{ "entries": [ { "name": "alice", "score": 1200, "me": false } ] }' }],
+        description: '公开排行榜, 按大版本分 Tab (tabs): 每个历史大版本的冻结快照 + 当前版本的实时榜 (登录用户的成绩带 me 标记)。',
+        responses: [{
+          code: '200',
+          body: '{ "tabs": [ { "version": "v0.x", "entries": [ { "name": "alice", "score": 1200, "me": false } ] }, { "version": "v1.0.0", "entries": [ { "name": "bob", "score": 1500, "me": true } ] } ] }',
+        }],
       },
       {
         method: 'GET',
@@ -334,7 +337,7 @@ export function apiDocsMarkdown(baseUrl?: string): string {
     }
     out.push('---', '');
   }
-  out.push('## 补充: 回放文件格式 (ReplayFile)', '', '```json', '{ "mode": "single | combat", "maxTurns": 300, "players": ["玩家"], "result": { "type": "finished", "money": [25] }, "rounds": [ { "round": 1, "drones": [{ "id": 0, "op": { "type": "plant", "crop": "strawberry" } }], "output": ["[log] ..."] } ] }', '```', '');
+  out.push('## 补充: 回放文件格式 (ReplayFile)', '', '```json', '{ "mode": "single | combat", "maxTurns": 500, "players": ["玩家"], "result": { "type": "finished", "money": [25] }, "rounds": [ { "round": 1, "drones": [{ "id": 0, "op": { "type": "plant", "crop": "strawberry" } }], "output": ["[log] ..."] } ] }', '```', '');
   return out.join('\n');
 }
 

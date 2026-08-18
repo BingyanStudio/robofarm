@@ -34,6 +34,8 @@ body {
   height: 100vh;
   display: flex;
   flex-direction: column;
+  /* 页面整体不滚动: 各面板内部自行滚动 (防止长代码把整个页面顶出滚动条) */
+  overflow: hidden;
 }
 
 /* ---------- 通用 ---------- */
@@ -46,6 +48,11 @@ body {
   cursor: pointer;
   font-size: 14px;
   transition: background 0.15s;
+  /* 文字竖直居中 (修复中文/Emoji 混排时的基线偏移) */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
 }
 
 .btn:hover {
@@ -159,6 +166,27 @@ body {
   gap: 8px;
 }
 
+/* 顶栏 logo (logo.svg) */
+.logo-img {
+  height: 30px;
+  width: auto;
+  display: block;
+}
+
+/* Icon 按钮 (返回菜单等): 只显示图标 */
+.btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+}
+
+.icon-img {
+  height: 20px;
+  width: 20px;
+  display: block;
+}
+
 .logo {
   font-weight: bold;
   margin-right: 6px;
@@ -185,6 +213,14 @@ body {
   margin: 0 0 8px;
 }
 
+/* 更新日志内的加粗小标题 (分组) */
+.update-log .update-group {
+  list-style: none;
+  font-weight: 700;
+  color: #e8c04a;
+  margin: 10px 0 2px;
+}
+
 .user-chip {
   padding: 4px 12px;
   border-radius: 20px;
@@ -200,7 +236,6 @@ body {
 }
 
 /* ---------- 开始 / 菜单 ---------- */
-.start-box,
 .menu-box {
   margin: auto;
   text-align: center;
@@ -209,20 +244,116 @@ body {
   align-items: center;
   gap: 18px;
   padding: 40px;
+  overflow-y: auto;
+  min-height: 0;
+  /* 背景浅色动态发光 (径向渐变 + 呼吸动画) */
+  position: relative;
 }
 
-.start-title {
-  font-size: 48px;
-  margin: 0;
+.menu-box::before {
+  content: '';
+  /* fixed 相对视口定位: 不参与盒子滚动溢出, 不会产生滚动条 */
+  position: fixed;
+  top: 3%;
+  left: 50%;
+  width: 560px;
+  height: 560px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(122, 162, 247, 0.18), rgba(122, 162, 247, 0.06) 45%, transparent 70%);
+  filter: blur(36px);
+  transform: translateX(-50%);
+  animation: menu-glow 6s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
 }
 
-.start-desc {
-  max-width: 520px;
-  font-size: 16px;
-  color: #b9ccc3;
+/* 浅色呼吸: 发光范围缓慢缩放, 让菜单背景有"动态"感 */
+@keyframes menu-glow {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.12);
+  }
 }
 
-/* MCP 接入说明卡片 (开始界面) */
+.menu-box > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* 菜单 logo (logo.svg 替换原大标题) */
+.menu-logo {
+  height: 90px;
+  width: auto;
+  display: block;
+}
+
+/* Logo 下方的版本号 (灰色小字) */
+.menu-version {
+  color: #6b7f76;
+  font-size: 14px;
+  margin-top: -10px;
+}
+
+/* 两个大按钮: 屏幕中央左右两侧 */
+.menu-hero {
+  display: flex;
+  gap: 40px;
+  justify-content: center;
+  align-items: stretch;
+}
+
+.btn-hero {
+  width: 220px;
+  height: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: linear-gradient(180deg, #24362e, #1a2821);
+  border: 2px solid #3d5348;
+  border-radius: 14px;
+  color: #e7ece9;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 700;
+  transition: transform 0.12s, border-color 0.15s, background 0.15s;
+}
+
+.btn-hero:hover {
+  transform: translateY(-2px);
+  border-color: #7aa2f7;
+  background: linear-gradient(180deg, #2c4138, #1f2e26);
+}
+
+.hero-emoji {
+  font-size: 52px;
+  line-height: 1;
+}
+
+.hero-label {
+  font-size: 20px;
+}
+
+/* 其余入口: 两个大按钮下方平铺, 左右分别与大按钮对齐, 中间均匀分布 */
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  width: min(660px, 90vw);
+}
+
+.menu-grid .btn {
+  padding: 12px 8px;
+  font-size: 15px;
+}
+
+/* MCP 接入说明卡片 (菜单界面) */
 .mcp-card {
   margin-top: 10px;
   max-width: 520px;
@@ -260,11 +391,12 @@ body {
   line-height: 1.5;
 }
 
-.menu-buttons {
+/* 多人竞技左侧边栏: 模拟竞技 + 上传出战代码 居中排列 */
+.match-actions {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 260px;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 /* ---------- 游戏布局 ---------- */
@@ -527,6 +659,38 @@ body {
   overflow-y: auto;
 }
 
+/* 排行榜: 大版本 Tab + 榜单列表 */
+.leaderboard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 320px;
+}
+
+.lb-tabs {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid #2a3a33;
+  padding-bottom: 8px;
+}
+
+.lb-tab {
+  background: transparent;
+  color: #8aa39a;
+  border: 1px solid #2a3a33;
+  border-radius: 6px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.lb-tab.active {
+  background: #24362e;
+  border-color: #7aa2f7;
+  color: #e7ece9;
+  font-weight: 600;
+}
+
 /* 提交验证: 圆圈加载条 + 提示 + 隐藏按钮 */
 .submit-progress {
   display: flex;
@@ -737,6 +901,17 @@ body {
   border-radius: 8px;
   cursor: grab;
   min-height: 0;
+}
+
+/* 未选择回放: "选择回放"按钮居中醒目 */
+.replay-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
 }
 
 .replay-controls {

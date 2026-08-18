@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { normalizeOp } from './ops';
-import { CollectWater, Clear, Harvest, Intercept, Move, Plant, Water } from './player-api';
+import { CollectWater, Clear, Harvest, Intercept, Move, NewDrone, Plant, PlantCol, PlantRow, Teleport, Water } from './player-api';
 import { CropType } from './types';
 
 describe('normalizeOp: 玩家操作类 (class API)', () => {
@@ -9,9 +9,32 @@ describe('normalizeOp: 玩家操作类 (class API)', () => {
     expect(r).toEqual({ ok: true, op: { type: 'move', to: [1, 2] } });
   });
 
+  it('Teleport 实例 → 纯对象 { type: "teleport", to }', () => {
+    expect(normalizeOp(new Teleport([6, 3]))).toEqual({ ok: true, op: { type: 'teleport', to: [6, 3] } });
+    expect(() => new Teleport('x' as never)).toThrow(/坐标/);
+  });
+
+  it('NewDrone 实例 → 纯对象 { type: "newDrone", at }', () => {
+    expect(normalizeOp(new NewDrone([6, 6]))).toEqual({ ok: true, op: { type: 'newDrone', at: [6, 6] } });
+    expect(() => new NewDrone([1] as never)).toThrow(/坐标/);
+  });
+
   it('Plant 实例 → 纯对象 { type: "plant", crop }', () => {
     const r = normalizeOp(new Plant(CropType.Strawberry));
     expect(r).toEqual({ ok: true, op: { type: 'plant', crop: 'strawberry' } });
+  });
+
+  it('PlantRow / PlantCol 实例 → 纯对象 { type, plants }', () => {
+    expect(normalizeOp(new PlantRow([CropType.Strawberry, CropType.Grape])))
+      .toEqual({ ok: true, op: { type: 'plantRow', plants: ['strawberry', 'grape'] } });
+    expect(normalizeOp(new PlantCol([CropType.Melon])))
+      .toEqual({ ok: true, op: { type: 'plantCol', plants: ['melon'] } });
+    // 空数组 / 非法作物抛错
+    expect(() => new PlantRow([])).toThrow(/非空作物类型数组/);
+    expect(() => new PlantCol(['cucumber' as never])).toThrow(/非空作物类型数组/);
+    // 纯对象形式校验
+    expect(normalizeOp({ type: 'plantRow', plants: [] }).ok).toBe(false);
+    expect(normalizeOp({ type: 'plantCol', plants: ['cucumber'] }).ok).toBe(false);
   });
 
   it('CollectWater / Water / Harvest / Clear → 无参操作', () => {

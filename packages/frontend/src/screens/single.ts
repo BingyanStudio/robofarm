@@ -1,4 +1,4 @@
-// 单人模式: 本地执行玩家代码, 支持开始/步进/重启/调速, 可提交到服务器验证。
+// 单人种植: 本地执行玩家代码, 支持开始/步进/重启/调速, 可提交到服务器验证。
 import { BrowserProgram } from '../browser-program';
 import {
   GameController,
@@ -21,7 +21,7 @@ const CODE_KEY = 'robofarm.single';
 
 export function singleScreen(root: HTMLElement): void {
   root.replaceChildren();
-  const layout = createGameLayout('单人模式 · 在限定回合内赚取最多金钱');
+  const layout = createGameLayout('单人种植 · 在限定回合内赚取最多金钱');
   const renderer = new Renderer(layout.canvas);
   const logBox = el('div', { class: 'log-box' });
   layout.logHost.append(logBox);
@@ -30,7 +30,7 @@ export function singleScreen(root: HTMLElement): void {
   root.append(
     topBar([
       userBox,
-      button('👑 排行榜', () => showLeaderboard(), { class: 'btn btn-gold' }),
+      button('排行榜', () => showLeaderboard(), { class: 'btn btn-gold' }),
       button('我的成绩', () => showHistory()),
     ]),
     layout.root
@@ -53,6 +53,8 @@ export function singleScreen(root: HTMLElement): void {
   let playing = false;
   let speedIdx = 0;
   let timer: ReturnType<typeof setTimeout> | null = null;
+  /** 首次点击开始时会远程拉取 esbuild, 编译完成前禁用开始/步进按钮 */
+  let compiling = false;
   /** 回放录制器: 记录每回合操作与输出 (每次新对局重建) */
   let recorder: ReplayRecorder | null = null;
   let replayFile: ReplayFile | null = null;
@@ -67,12 +69,12 @@ export function singleScreen(root: HTMLElement): void {
     onEnd: (result) => handleEnd(result),
     moneyEl: layout.moneyHost,
   });
-  const statusText = el('span', { class: 'status-text', text: '回合 0 / 300' });
+  const statusText = el('span', { class: 'status-text', text: `回合 0 / ${DEFAULT_MAX_TURNS}` });
   layout.statusHost.append(statusText);
 
   // 未开始前也先展示地图 (初始状态: 无人机在出生点)
   view.apply([{ type: 'snapshot', state: snapshotOf(createSingleWorld(DEFAULT_MAX_TURNS)) }]);
-  statusText.textContent = '回合 0 / 300';
+  statusText.textContent = `回合 0 / ${DEFAULT_MAX_TURNS}`;
 
   function appendLog(lines: string[]): void {
     for (const line of lines) {
@@ -97,12 +99,13 @@ export function singleScreen(root: HTMLElement): void {
     updatePauseButton();
   }
 
-  /** 开始/停止合并按钮: 有进行中的对局显示红色"停止", 否则显示绿色"开始" */
+  /** 开始/停止合并按钮: 有进行中的对局显示红色"停止", 否则显示绿色"开始"; 编译中禁用 */
   function updateStartStop(): void {
     const running = controller !== null && !controller.over;
-    btnStartStop.textContent = running ? '停止' : '开始';
-    btnStartStop.classList.toggle('btn-stop', running);
-    btnStartStop.classList.toggle('btn-start', !running);
+    btnStartStop.disabled = compiling;
+    btnStartStop.textContent = compiling ? '编译中…' : running ? '停止' : '开始';
+    btnStartStop.classList.toggle('btn-stop', running && !compiling);
+    btnStartStop.classList.toggle('btn-start', !running && !compiling);
   }
 
   /** 暂停/继续按钮: 播放中显示"暂停", 暂停/步进模式显示"继续"; 无对局时禁用 */
@@ -127,11 +130,19 @@ export function singleScreen(root: HTMLElement): void {
 
   /** 合并按钮: 未开始时编译并开始新对局, 进行中则停止并允许修改代码 */
   async function onStartStop(): Promise<void> {
+    if (compiling) return; // 编译中禁止再次点击
     if (controller && !controller.over) {
       stopForEdit();
       return;
     }
-    await newGame(true);
+    compiling = true;
+    updateStartStop();
+    try {
+      await newGame(true);
+    } finally {
+      compiling = false;
+      updateStartStop();
+    }
   }
 
   /** 锁定/解锁代码编辑器 (游戏进行中锁定) */
@@ -145,7 +156,7 @@ export function singleScreen(root: HTMLElement): void {
     stopGame();
     setEditorLocked(false);
     view.apply([{ type: 'snapshot', state: snapshotOf(createSingleWorld(DEFAULT_MAX_TURNS)) }]);
-    statusText.textContent = '回合 0 / 300';
+    statusText.textContent = `回合 0 / ${DEFAULT_MAX_TURNS}`;
     log('[系统] 游戏已停止, 可以修改代码');
   }
 
@@ -180,7 +191,7 @@ export function singleScreen(root: HTMLElement): void {
     });
     // 立即渲染初始地图 (重启/步进未播放时也能看到场景)
     view.apply([{ type: 'snapshot', state: snapshotOf(controller.world) }]);
-    statusText.textContent = '回合 0 / 300';
+    statusText.textContent = `回合 0 / ${DEFAULT_MAX_TURNS}`;
     log('[系统] 新对局开始');
     setEditorLocked(true);
     updateStartStop();
@@ -298,18 +309,61 @@ export function singleScreen(root: HTMLElement): void {
   function showLeaderboard(): void {
     void (async () => {
       const { data } = await api.get('/single/leaderboard');
-      const rows = (data?.entries ?? []) as { name: string; score: number; me?: boolean }[];
-      const list = el('div', { class: 'list' });
-      if (rows.length === 0) list.append(el('p', { class: 'hint', text: '暂无排行数据' }));
-      rows.forEach((r, i) => {
-        list.append(
-          el('div', { class: 'list-row' + (r.me ? ' mine' : '') }, [
-            el('span', { text: `${i + 1}. ${r.name}${r.me ? ' (我)' : ''}` }),
-            el('span', { class: 'muted', text: `${r.score}` }),
-          ])
-        );
-      });
-      modal('排行榜', list);
+      const tabs = (data?.tabs ?? []) as {
+        version: string;
+        entries: { name: string; score: number; me?: boolean }[];
+      }[];
+      const body = el('div', { class: 'leaderboard' });
+      if (tabs.length === 0) {
+        body.append(el('p', { class: 'hint', text: '暂无排行数据' }));
+        modal('排行榜', body);
+        return;
+      }
+      let active = tabs.length - 1; // 默认展示当前版本的实时排行榜 (最后一个 Tab)
+      const tabBar = el('div', { class: 'lb-tabs' });
+      const listHost = el('div', { class: 'list' });
+      const MEDALS = ['🥇', '🥈', '🥉'];
+
+      function renderTabs(): void {
+        tabBar.replaceChildren();
+        tabs.forEach((t, i) => {
+          tabBar.append(
+            el('button', {
+              class: 'lb-tab' + (i === active ? ' active' : ''),
+              text: t.version,
+              onClick: () => {
+                active = i;
+                renderTabs();
+                renderList();
+              },
+            })
+          );
+        });
+      }
+
+      function renderList(): void {
+        listHost.replaceChildren();
+        const rows = tabs[active]?.entries ?? [];
+        if (rows.length === 0) {
+          listHost.append(el('p', { class: 'hint', text: '暂无排行数据' }));
+          return;
+        }
+        rows.forEach((r, i) => {
+          // 前三名使用奖牌 Emoji 标注
+          const rank = MEDALS[i] ?? `${i + 1}.`;
+          listHost.append(
+            el('div', { class: 'list-row' + (r.me ? ' mine' : '') }, [
+              el('span', { text: `${rank} ${r.name}${r.me ? ' (我)' : ''}` }),
+              el('span', { class: 'muted', text: `${r.score}` }),
+            ])
+          );
+        });
+      }
+
+      body.append(tabBar, listHost);
+      renderTabs();
+      renderList();
+      modal('排行榜', body);
     })();
   }
 
@@ -374,6 +428,7 @@ export function singleScreen(root: HTMLElement): void {
 
   /** 步进: 没有对局时先编译并创建, 再运行 1 回合 (创建后为暂停模式) */
   async function onStep(): Promise<void> {
+    if (compiling) return; // 编译中禁止
     playing = false;
     if (!controller) {
       await newGame(false);

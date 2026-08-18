@@ -89,27 +89,42 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
   **不依赖固定的剩余取模**, 因此沙地 (周期 ×1.5) 等调整过周期的作物缺水次数同步增加。
   当前地块: 土地 / 水池 / 沙地 (可种草莓/葡萄/南瓜)。
 - 无人机操作: 玩家侧为**操作类** API (`shared/src/player-api.ts` 的 `Move` /
-  `Plant` / `CollectWater` / `Water` / `Harvest` / `Clear` / `Intercept` /
+  `Teleport` / `Plant` / `CollectWater` / `Water` / `Harvest` / `Clear` / `Intercept` /
   `Charge` / `HarvestRow` / `HarvestCol` / `WaterRow` / `WaterCol` /
-  `InterceptRow` / `InterceptCol`, 均继承 `DroneOperation`, 参数经构造函数传入),
+  `InterceptRow` / `InterceptCol` / `PlantRow` / `PlantCol`, 均继承 `DroneOperation`,
+  参数经构造函数传入),
   引擎按**构造类名**识别操作; 内部传输/引擎仍用判别联合 `DroneOperation`
   (`types.ts`), 由 `ops.ts` 的 `normalizeOp` 把类实例统一转换为纯对象
   (同时兼容 `{ type: ... }` 旧写法)。新增操作 = 添加操作类 + OP_SCHEMAS +
   OP_HANDLERS 三处。
 - **能量机制**: DroneState.energy (上限 MAX_ENERGY=10, 初始 0), Charge 原地 +5;
-  行/列范围操作消耗能量 (收割 4 / 浇灌 3 / 拦截 6, 常量在 config.ts)。
-  行/列收割仅限己方半场; 行/列拦截在回合结束结算 (interceptZone 字段)。
+  行/列范围操作消耗能量 (收割 4 / 浇灌 3 / 种植 3 / 拦截 6, 常量在 config.ts);
+  Teleport 消耗 ceil(欧氏距离) 能量 (尝试时即扣除, 仲裁失败不退还; 竞技模式只能
+  在我方半场内传送, 与移动同走仲裁); ChangeTile 消耗 CHANGE_TILE_COST=6;
+  NewDrone 消耗 NEW_DRONE_COST=4000 金钱 (上限 DRONE_LIMIT: 单人 2 / 竞技 3,
+  GameInfo.droneLimit 可查)。
+  行/列范围操作覆盖以无人机为中心的 3 格 (interceptZone 记录施法点 center);
+  行/列收割仅限己方半场; 行/列拦截在回合结束结算。
+  行/列种植 (PlantRow/PlantCol) 按 plants 数组顺序在 3 格内种植,
+  跳过无法种植的格子 (地块不适配/已有作物/金钱不足) (ops.ts 的 `crops` 字段 kind 校验)。
 - 当前作物: 草莓 / 葡萄 / 小麦 (需水) / 荷花 (水生) / 南瓜 (需水) /
-  西瓜 (需水, 沙地免疫 growthOverride) / 紫云英 (成熟加速邻格 onMature) / 香菇 (成熟自动扩散 onMature) /
+  西瓜 (成本 1000/收获 1800/100 周期) /
+  紫云英 (成本 100/收获 120/160 周期, 生长加速邻格 onGrow) /
+  香菇 (基础 20 周期, 实际周期 = 20 + 2×场上香菇数, 需水, 成熟后分 4 回合按上右下左扩散 onMature) /
   水仙 (生长自动浇水 onGrow),
   完整属性见 agent/CROP.md, 数据在 `CROPS` 注册表 (改文档或加作物只改这一处)。
+- **沙漠化 / 间作**: 收获作物时, 若其周围存在沙地则该格转化为沙地 (仅蚕食土地,
+  不影响水池, engine.ts `maybeDesertify`); 若作物的四方向邻格有 ≥2 个不同种类作物,
+  收获收益 +20% (向下取整, engine.ts `intercroppingValue`)。
 - **成熟特效 (onMature)**: 每种作物成熟时都会执行其挂接的特效 (多数作物不声明)。
-  效果按 id 在 engine.ts 的 `MATURITY_EFFECTS` 表注册 (如 accelerateNeighbors / selfSpread),
+  效果按 id 在 engine.ts 的 `MATURITY_EFFECTS` 表注册 (如 selfSpread),
   新增特效 = 加一个处理器 + 在注册表声明, 无需 if 硬编码。
+  香菇: 成熟时设置 `spreadLeft=4`, 之后每回合在 Grown 分支按上右下左扩散 1 株
+  (CropData.spreadLeft 字段, 到 0 停止)。
 - **生长特效 (onGrow)**: 与 onMature 同构, 每个生长回合执行 (如 Daffodil 的 autoWater,
   每 3 周期按 上→右→下→左 给邻格缺水作物浇水, 一次/回合, 成熟失效), 处理器在
   engine.ts 的 `GROWTH_EFFECTS` 表注册。
-- **ChangeTile**: 消耗 CHANGE_TILE_COST (config.ts), 需上下左右有同类型地块 (orthNeighbors 检查),
+- **ChangeTile**: 消耗 CHANGE_TILE_COST=6, 需上下左右有同类型地块 (orthNeighbors 检查),
   有作物的地块不可转换; 按操作三处注册 (player-api + OP_SCHEMAS + OP_HANDLERS)。
 
 ## 引擎语义 (shared/src/engine.ts, 改前必读)
@@ -198,11 +213,19 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
 
 - `GET /auth/me`, `GET /auth/github[/callback]` (OAuth, 未配置时 dev 模式)
 - 单人: `GET/POST /single/validate` (busy/progress/score/error), `GET /single/history`,
-  `GET /single/leaderboard`
+  `GET /single/leaderboard` (按大版本分 Tab: 历史冻结快照 + 当前版本实时榜, 见下方"版本迁移")
 - 竞技: `GET /combat/state`, `POST /combat/upload` (清空胜败),
   `GET /combat/list`, `POST /combat/start {id}` → roomId,
   `GET /combat/room` (观战列表), `GET /combat/history`,
   `GET /combat/replay/:id` (仅对局双方), `WS /ws/combat/room/:roomId`
+
+## 大版本迁移 (db.ts 的 applyV100Migrations)
+
+- 每次大版本更新在 `getDb()` 首次初始化时执行一次 (meta 表记录, 幂等):
+  1. 清空 `combat_codes` (所有人恢复"未上传代码"状态)
+  2. 冻结当前排行榜为上一大版本快照 (`leaderboard_snapshots` 表,
+     标签见 `PREV_LEADERBOARD_VERSION`), 之后以 Tab 展示
+- 当前大版本标签: `LEADERBOARD_VERSION` (db.ts), 改版本号时同步改这两个常量。
 - WS 协议: `match-start` / `replay-buffer` (迟到观众回放) / `turn {turn, events}` /
   `match-end {matchId, result}` / `error`。对局在服务器按 `TURN_INTERVAL_MS` 节奏推演。
 - 对战推演用 `services/combat.ts` 的 runMatch: 编译双方代码 → 两个 NodeProgram →

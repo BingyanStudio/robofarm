@@ -1,8 +1,8 @@
-// 单人模式验证服务: 接收玩家代码, 在服务端连续执行完整对局,
+// 单人种植验证服务: 接收玩家代码, 在服务端连续执行完整对局,
 // 正常结束记录分数进排行榜, 否则记录报错信息。
 import { GameController, compilePlayerCode, DEFAULT_MAX_TURNS, ReplayRecorder } from '@robofarm/shared';
 import { NodeProgram } from '../runner/node-program';
-import { listSingleHistory, leaderboard, recordSingleSubmission, getSingleSubmission, ensureCwd } from '../db';
+import { listSingleHistory, leaderboard, recordSingleSubmission, getSingleSubmission, ensureCwd, listLeaderboardSnapshots, LEADERBOARD_VERSION } from '../db';
 
 const stamp = () => new Date().toISOString();
 
@@ -58,7 +58,7 @@ async function runValidation(userId: number, code: string): Promise<void> {
       players: [{ name: '玩家', frame: 'normal', program: recorder.wrap(program) }],
       maxTurns: DEFAULT_MAX_TURNS,
     });
-    console.log(`[${stamp()}] [single] user=${userId} 开始验证 (300 回合)`);
+    console.log(`[${stamp()}] [single] user=${userId} 开始验证 (${DEFAULT_MAX_TURNS} 回合)`);
     let endResult: { type: string; message?: string; money?: number[] } | null = null;
     while (!controller.over) {
       const events = await controller.step();
@@ -124,9 +124,16 @@ export function singleHistory(userId: number) {
 }
 
 export function singleLeaderboard(userId: number | null) {
-  return leaderboard(50).map((e) => ({
+  const live = leaderboard(50).map((e) => ({
     name: e.name,
     score: e.score,
     me: e.user_id === userId,
   }));
+  // 历次大版本的冻结排行榜 + 当前版本的实时排行榜 (前端以 Tab 展示)
+  const tabs = listLeaderboardSnapshots().map((s) => ({
+    version: s.version,
+    entries: (JSON.parse(s.payload) as { name: string; score: number }[]).map((e) => ({ ...e, me: false })),
+  }));
+  tabs.push({ version: LEADERBOARD_VERSION, entries: live });
+  return { tabs };
 }

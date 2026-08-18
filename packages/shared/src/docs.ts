@@ -33,6 +33,14 @@ export const DOC_OPERATIONS: DocEntry[] = [
     example: 'return new Move([2, 3]);',
   },
   {
+    id: 'doc-Teleport',
+    name: 'Teleport',
+    def: 'class Teleport extends DroneOperation',
+    desc: '传送到指定位置 (任意距离), 消耗 ceil(欧氏距离) 点能量; 传送失败 (目标越界 / 被占据) 时能量不退还。竞技模式只能从我方半场传送到我方半场。',
+    params: ['`to`: `[number, number]` — 目标坐标 (x, y)'],
+    example: 'return new Teleport([6, 3]);',
+  },
+  {
     id: 'doc-Plant',
     name: 'Plant',
     def: 'class Plant extends DroneOperation',
@@ -58,8 +66,24 @@ export const DOC_OPERATIONS: DocEntry[] = [
     id: 'doc-WaterRow',
     name: 'WaterRow',
     def: 'class WaterRow extends DroneOperation',
-    desc: '给所在行作物从左到右浇水, 直到储水耗尽为止, 跳过不需要浇水的作物, 消耗 3 能量。',
+    desc: '给以无人机为中心的行内 3 格作物从左到右浇水, 直到储水耗尽为止, 跳过不需要浇水的作物, 消耗 3 能量。',
     example: 'return new WaterRow();',
+  },
+  {
+    id: 'doc-PlantRow',
+    name: 'PlantRow',
+    def: 'class PlantRow extends DroneOperation',
+    desc: '在以无人机为中心的行内 3 格从左到右按 plants 数组顺序种植, 跳过无法种植的格子 (地块不适配 / 已有作物 / 金钱不足), 消耗 3 能量。',
+    params: ['`plants`: `CropType[]` — 作物类型数组 (非空), 按顺序逐个种植'],
+    example: "return new PlantRow(['strawberry', 'grape', 'pumpkin']);",
+  },
+  {
+    id: 'doc-PlantCol',
+    name: 'PlantCol',
+    def: 'class PlantCol extends DroneOperation',
+    desc: '在以无人机为中心的列内 3 格从上到下按 plants 数组顺序种植, 跳过无法种植的格子 (地块不适配 / 已有作物 / 金钱不足), 消耗 3 能量。',
+    params: ['`plants`: `CropType[]` — 作物类型数组 (非空), 按顺序逐个种植'],
+    example: "return new PlantCol(['strawberry', 'strawberry']);",
   },
   {
     id: 'doc-WaterCol',
@@ -79,14 +103,14 @@ export const DOC_OPERATIONS: DocEntry[] = [
     id: 'doc-HarvestRow',
     name: 'HarvestRow',
     def: 'class HarvestRow extends DroneOperation',
-    desc: '一次性收获自身所在行的全部成熟作物, 消耗 4 能量。竞技模式仅收割自己半场的作物 (不产生偷菜)。',
+    desc: '一次性收获以无人机为中心的行内 3 格全部成熟作物, 消耗 4 能量。竞技模式仅收割自己半场的作物 (不产生偷菜)。',
     example: 'return new HarvestRow();',
   },
   {
     id: 'doc-HarvestCol',
     name: 'HarvestCol',
     def: 'class HarvestCol extends DroneOperation',
-    desc: '一次性收获自身所在列的全部成熟作物, 消耗 4 能量。竞技模式仅收割自己半场的作物 (不产生偷菜)。',
+    desc: '一次性收获以无人机为中心的列内 3 格全部成熟作物, 消耗 4 能量。竞技模式仅收割自己半场的作物 (不产生偷菜)。',
     example: 'return new HarvestCol();',
   },
   {
@@ -108,15 +132,23 @@ export const DOC_OPERATIONS: DocEntry[] = [
     id: 'doc-InterceptRow',
     name: 'InterceptRow',
     def: 'class InterceptRow extends DroneOperation',
-    desc: '竞技模式专用: 回合结束时拦截所在行全部携带偷菜资金的对方无人机, 消耗 6 能量。',
+    desc: '竞技模式专用: 回合结束时拦截以施法点为中心的行内 3 格中全部携带偷菜资金的对方无人机, 消耗 6 能量。',
     example: 'return new InterceptRow();',
   },
   {
     id: 'doc-InterceptCol',
     name: 'InterceptCol',
     def: 'class InterceptCol extends DroneOperation',
-    desc: '竞技模式专用: 回合结束时拦截所在列全部携带偷菜资金的对方无人机, 消耗 6 能量。',
+    desc: '竞技模式专用: 回合结束时拦截以施法点为中心的列内 3 格中全部携带偷菜资金的对方无人机, 消耗 6 能量。',
     example: 'return new InterceptCol();',
+  },
+  {
+    id: 'doc-NewDrone',
+    name: 'NewDrone',
+    def: 'class NewDrone extends DroneOperation',
+    desc: '花费 4000 金钱在指定位置创建一架新的无人机 (该无人机下一回合开始执行代码)。前提: 金钱足够 / 无人机数量未达上限 (单人 2 / 竞技 3, 见 getGame().droneLimit) / 指定位置没有无人机。',
+    params: ['`at`: `[number, number]` — 创建位置坐标 (x, y)'],
+    example: 'return new NewDrone([6, 3]);',
   },
   {
     id: 'doc-Charge',
@@ -129,7 +161,7 @@ export const DOC_OPERATIONS: DocEntry[] = [
     id: 'doc-ChangeTile',
     name: 'ChangeTile',
     def: 'class ChangeTile extends DroneOperation',
-    desc: '将脚下地块转换为指定类型 (soil / water / sand), 消耗 3 能量。前提: 上下左右必须有至少一个与目标类型相同的地块, 不允许凭空创造; 有作物的地块不能转换。',
+    desc: '将脚下地块转换为指定类型 (soil / water / sand), 消耗 6 能量。前提: 上下左右必须有至少一个与目标类型相同的地块, 不允许凭空创造; 有作物的地块不能转换。',
     params: ['`tileType`: `\'soil\' | \'water\' | \'sand\'` — 目标地块类型'],
     example: 'return new ChangeTile(\'water\');',
   },
@@ -302,7 +334,9 @@ export const DOC_RULES: DocParagraphSection[] = [
     title: '回合制',
     paragraphs: [
       '每回合 `run()` 调用一次; 所有玩家的操作同时结算, 冲突时执行耗时短者优先。',
-      '只允许移动到周围 8 格 (相邻格, 含斜向), 超出范围操作无效并报错。',
+      '普通移动只允许到周围 8 格 (相邻格, 含斜向), 超出范围操作无效并报错; `Teleport` 可传送到任意位置 (能量 = ceil(欧氏距离), 竞技模式仅限己方半场内)。',
+      '行/列范围操作 (Plant/Harvest/Water/Intercept 的 Row/Col 版) 范围为以施法点为中心的 3 格。',
+      '`NewDrone` 花费 4000 金钱创建新无人机 (下一回合开始执行代码), 上限: 单人 2 / 竞技 3 (见 `getGame().droneLimit`)。',
     ],
   },
   {
@@ -311,18 +345,22 @@ export const DOC_RULES: DocParagraphSection[] = [
       '作物有 生长中 / 缺水 / 成熟 三种状态; 进入缺水后长期保持, 生长不推进, 浇水后继续。',
       '缺水次数按种植时的实际生长周期动态计算 (每约 `thirstInterval` 回合一次, 总次数 = 实际周期 ÷ 间隔), 沙地等生长周期被调整的地块缺水次数相应增加。',
       '水仙 (种在水池): 生长中每回合按 上→右→下→左 顺序自动给邻格缺水作物浇水 (每次仅一株), 成熟后失效。',
+      '紫云英: 生长中每回合按 上→右→下→左 顺序检查邻格作物, 不缺水且距成熟 ≥2 周期的作物生长时间 -1。',
+      '香菇: 总生长周期在种植/扩散时动态计算 (20 + 2 × 场上香菇总数, 越多长得越慢); 成熟后按 上→右→下→左 顺序每回合扩散 1 株新香菇 (共 4 回合)。',
+      '沙漠化: 收获作物时, 若该作物周围存在沙地, 则该格也转化为沙地 (仅蚕食土地, 不影响水池)。',
+      '间作: 若作物的四方向邻格至少有 2 个不同于自己种类的作物, 收获收益 +20%。',
     ],
   },
   {
     title: '地块与沙地',
     paragraphs: [
-      '地块类型: 土地 (soil) / 水池 (water) / 沙地 (sand)。沙地上可种植草莓/葡萄/南瓜/西瓜/紫云英, 生长所需周期 ×1.5 (向下取整); 西瓜在沙地生长不受减速影响。',
+      '地块类型: 土地 (soil) / 水池 (water) / 沙地 (sand)。沙地上可种植草莓/葡萄/南瓜/西瓜/紫云英, 生长所需周期 ×1.5 (向下取整)。',
     ],
   },
   {
     title: '能量机制',
     paragraphs: [
-      '无人机拥有能量 (上限 10, 初始 0)。`Charge` 原地充能 +5; 行/列范围操作消耗能量: 收割整行/列 4, 浇灌整行/列 3, 拦截整行/列 6; `ChangeTile` 转换脚下地块 3 能量 (需相邻同类型地块)。',
+      '无人机拥有能量 (上限 10, 初始 0)。`Charge` 原地充能 +5; 行/列范围操作消耗能量: 收割整行/列 4, 浇灌整行/列 3, 种植整行/列 3, 拦截整行/列 6; `Teleport` 消耗 ceil(欧氏距离) 能量; `ChangeTile` 转换脚下地块 6 能量 (需相邻同类型地块); `NewDrone` 消耗 4000 金钱。',
     ],
   },
   {
@@ -344,7 +382,7 @@ export const DOC_RULES: DocParagraphSection[] = [
 export const DOC_OVERVIEW: DocParagraphSection = {
   title: '游戏概览',
   paragraphs: [
-    'RoboFarm 是一个编程农场游戏: 玩家编写 TypeScript 控制无人机, 在限定回合 (300) 内赚取最多金钱。每局初始资金 20 金钱, 用于种植等开销。',
+    'RoboFarm 是一个编程农场游戏: 玩家编写 TypeScript 控制无人机, 在限定回合 (500) 内赚取最多金钱。每局初始资金 20 金钱, 用于种植等开销。',
     '每回合, 游戏对每架无人机调用一次 `function run(droneId: number)`, 玩家返回一个操作类实例 (或 `null` 表示不动)。',
     '操作类继承自 `DroneOperation`, 引擎按类名识别; 参数在构造函数中传入。',
     '坐标均为 `[x, y]` 元组, x 向右, y 向下; 越界访问 API 返回 `null`。',

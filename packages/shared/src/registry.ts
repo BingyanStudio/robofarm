@@ -76,12 +76,12 @@ export interface CropTypeConfig {
    * 成熟时的特效 (效果 id): 引擎按 id 在 MATURITY_EFFECTS 表注册处理器,
    * 每种作物成熟时都会执行其挂接的特效; 多数作物不声明 (无特效)。
    */
-  onMature?: 'accelerateNeighbors' | 'selfSpread';
+  onMature?: 'selfSpread';
   /**
    * 生长中的特效 (效果 id): 引擎按 id 在 GROWTH_EFFECTS 表注册处理器,
    * 每种作物在生长中的每个回合都会执行其挂接的特效; 多数作物不声明 (无特效)。
    */
-  onGrow?: 'autoWater';
+  onGrow?: 'autoWater' | 'accelerateNeighbors';
 }
 
 /**
@@ -142,34 +142,33 @@ export const CROPS: Record<CropType, CropTypeConfig> = {
   [CropType.Melon]: {
     type: CropType.Melon,
     name: '西瓜',
-    description: '一种沙地友好的高价值作物, 需要合理规划浇水。',
+    description: '一种高价值作物, 需要合理规划浇水。',
     habitats: [TileType.Soil, TileType.Sand],
-    plantCost: 120,
-    value: 840,
-    growCycles: 120,
-    thirstInterval: 15, // 生长中缺水 8 次
-    growthOverride: 1, // 沙地生长不受 1.5 倍减速影响
+    plantCost: 1000,
+    value: 1800,
+    growCycles: 100,
+    thirstInterval: 15, // 生长中缺水 6 次 (沙地 ×1.5 时 10 次)
   },
   [CropType.MilkVetch]: {
     type: CropType.MilkVetch,
     name: '紫云英',
-    description: '绿肥植物，成熟时会加快周围作物的生长。',
+    description: '绿肥植物，生长时会加速周围作物的生长。',
     habitats: [TileType.Soil, TileType.Sand],
-    plantCost: 180,
-    value: 200,
-    growCycles: 60,
-    thirstInterval: 40, // 生长中缺水 1 次
-    onMature: 'accelerateNeighbors',
+    plantCost: 100,
+    value: 120,
+    growCycles: 160,
+    thirstInterval: 40, // 生长中缺水 4 次
+    onGrow: 'accelerateNeighbors',
   },
   [CropType.Shiitake]: {
     type: CropType.Shiitake,
     name: '香菇',
-    description: '成熟时，向上下左右四格种下新的香菇, 可多轮收取以获得最大收益。',
+    description: '总生长周期在种植时动态计算: 20 + 2 × 场上香菇总数 (越多长得越慢); 成熟后每回合向一个方向 (上右下左) 种下新的香菇。',
     habitats: [TileType.Soil],
     plantCost: 80,
     value: 40,
     growCycles: 20,
-    thirstInterval: null, // 无需浇水
+    thirstInterval: 20, // 实际周期按场上香菇数动态计算, 缺水次数随之增减
     onMature: 'selfSpread',
   },
   [CropType.Daffodil]: {

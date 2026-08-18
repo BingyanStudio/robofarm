@@ -8,7 +8,7 @@ export { TILES, CROPS, isCropType, cropConfig, cropInfo } from './registry';
 export type { TileTypeConfig, CropTypeConfig } from './registry';
 export { SINGLE_WIDTH, SINGLE_HEIGHT, COMBAT_WIDTH, COMBAT_HEIGHT, mirrorPosition, createSingleWorld, createCombatWorld, isOwnHalf, isOwnHalfAt, inBounds, tileAt, samePos, placeCrop, isWater } from './maps';
 export { toLocal, fromLocal, buildPlayerView, snapshotOf, findDroneAt } from './view';
-export { playerApiFactory, DroneOperation, Move, Plant, CollectWater, Water, Harvest, Clear, Intercept, Charge, HarvestRow, HarvestCol, WaterRow, WaterCol, InterceptRow, InterceptCol, ChangeTile, OPS } from './player-api';
+export { playerApiFactory, DroneOperation, Move, Teleport, NewDrone, Plant, CollectWater, Water, Harvest, Clear, Intercept, Charge, HarvestRow, HarvestCol, WaterRow, WaterCol, InterceptRow, InterceptCol, PlantRow, PlantCol, ChangeTile, OPS } from './player-api';
 export type { PlayerApi, PlayerConsole } from './player-api';
 export { stepTurn } from './engine';
 export type { DroneAction } from './engine';

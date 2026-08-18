@@ -11,7 +11,7 @@ export const LOAD_TIMEOUT_MS = 2000;
 export const MAX_WATER = 5;
 
 /** 单人/竞技模式的默认回合数 */
-export const DEFAULT_MAX_TURNS = 300;
+export const DEFAULT_MAX_TURNS = 500;
 
 /** 正常播放速度下每回合间隔 (毫秒) */
 export const TURN_INTERVAL_MS = 800;
@@ -34,11 +34,20 @@ export const HARVEST_ROW_COL_COST = 4;
 /** WaterRow / WaterCol 的能量消耗 */
 export const WATER_ROW_COL_COST = 3;
 
+/** PlantRow / PlantCol 的能量消耗 */
+export const PLANT_ROW_COL_COST = 3;
+
 /** InterceptRow / InterceptCol 的能量消耗 */
 export const INTERCEPT_ROW_COL_COST = 6;
 
 /** ChangeTile (地块转换) 的能量消耗 */
-export const CHANGE_TILE_COST = 3;
+export const CHANGE_TILE_COST = 6;
+
+/** NewDrone 的金钱消耗 */
+export const NEW_DRONE_COST = 4000;
+
+/** 每名玩家的无人机数量上限 (按游戏模式) */
+export const DRONE_LIMIT: Record<'single' | 'combat', number> = { single: 2, combat: 3 };
 
 /** 每个玩家程序最多保留的日志行数 */
 export const MAX_LOG_LINES = 200;

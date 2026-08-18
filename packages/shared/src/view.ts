@@ -55,7 +55,8 @@ export function buildPlayerView(
     tiles.push(row);
   }
 
-  // 本地无人机编号: 自己的无人机按 0..N-1 编号, 对方的无人机也按其在对方阵营内的编号
+  // 本地无人机编号: 自己的无人机为 0..N-1 (即 run(droneId) 的 droneId);
+  // 对方的无人机显示其真实全局 id (如竞技模式 P2 的无人机为 2, 3)
   const ownDrones = world.drones.filter((d) => d.player === playerIndex);
   const enemyDrones = world.drones.filter((d) => d.player !== playerIndex);
   const drones: DroneInfo[] = [];
@@ -71,9 +72,8 @@ export function buildPlayerView(
     });
   }
   for (const d of enemyDrones) {
-    const idx = enemyDrones.indexOf(d);
     drones.push({
-      id: idx,
+      id: d.id,
       position: toLocal(d.position, width, frame),
       water: d.water,
       energy: d.energy,
