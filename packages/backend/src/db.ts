@@ -22,6 +22,7 @@ export interface SingleSubmissionRow {
   code: string;
   score: number | null;
   error: string | null;
+  replay: string | null;
   created_at: number;
 }
 
@@ -102,6 +103,7 @@ function migrate(d: DatabaseSync): void {
       code TEXT NOT NULL,
       score INTEGER,
       error TEXT,
+      replay TEXT,
       created_at INTEGER NOT NULL
     );
     CREATE TABLE IF NOT EXISTS combat_codes (
@@ -122,6 +124,12 @@ function migrate(d: DatabaseSync): void {
       created_at INTEGER NOT NULL
     );
   `);
+  // 老库迁移: single_submissions 增加回放列 (已存在则忽略)
+  try {
+    d.exec('ALTER TABLE single_submissions ADD COLUMN replay TEXT');
+  } catch {
+    // 列已存在
+  }
 }
 
 export function upsertUserByLogin(login: string): UserRow {
@@ -154,10 +162,18 @@ export function deleteSession(token: string): void {
   getDb().prepare('DELETE FROM sessions WHERE token = ?').run(token);
 }
 
-export function recordSingleSubmission(userId: number, code: string, score: number | null, error: string | null): void {
+export function recordSingleSubmission(userId: number, code: string, score: number | null, error: string | null, replay: string | null = null): void {
   getDb()
-    .prepare('INSERT INTO single_submissions (user_id, code, score, error, created_at) VALUES (?, ?, ?, ?, ?)')
-    .run(userId, code, score, error, Date.now());
+    .prepare('INSERT INTO single_submissions (user_id, code, score, error, replay, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(userId, code, score, error, replay, Date.now());
+}
+
+/** 取某条单人提交记录 (仅本人可见) */
+export function getSingleSubmission(id: number, userId: number): SingleSubmissionRow | null {
+  const row = getDb()
+    .prepare('SELECT * FROM single_submissions WHERE id = ? AND user_id = ?')
+    .get(id, userId) as unknown as SingleSubmissionRow | undefined;
+  return row ?? null;
 }
 
 export function listSingleHistory(userId: number, limit = 50): SingleSubmissionRow[] {

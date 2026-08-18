@@ -6,7 +6,7 @@
 //   3. 写入当前版本号 (供下次对比)
 import { el, button, modal } from './ui';
 
-export const VERSION = '0.1.2';
+export const VERSION = '0.1.3';
 export const VERSION_KEY = 'robofarm.version';
 
 export interface UpdateEntry {
@@ -17,6 +17,16 @@ export interface UpdateEntry {
 
 /** 更新日志 (按版本从新到旧) */
 export const UPDATE_LOG: UpdateEntry[] = [
+  {
+    version: '0.1.3',
+    title: 'v0.1.3',
+    items: [
+      '回放导出: 单人本地 (结束弹窗"保存回放") / 服务器验证 ("我的成绩"下载) / 竞技历史 (下载) 均可导出 JSON 回放文件',
+      '回放导入: 回放界面新增"导入回放记录", 可载入本地回放文件播放; 主菜单新增"回放"入口',
+      '回放播放增强: 复用游戏内事件管线, 支持移动动画 / 浇水收获拦截特效; 回合 0 显示初始状态',
+      '模拟竞技: 支持 ×2 / ×4 加速',
+    ],
+  },
   {
     version: '0.1.2',
     title: 'v0.1.2',

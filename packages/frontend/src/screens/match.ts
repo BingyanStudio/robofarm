@@ -1,6 +1,6 @@
 // 多人竞技匹配: 上传出战代码, 查看其他玩家, 发起挑战, 查看历史对局。
 import { createEditor } from '../editor';
-import { el, button, modal, toast, topBar, fmtTime } from '../ui';
+import { el, button, modal, toast, topBar, fmtTime, downloadJson } from '../ui';
 import { api, fetchUser } from '../net';
 import { DEFAULT_CODE } from '../game-layout';
 
@@ -115,6 +115,16 @@ export function matchScreen(root: HTMLElement): void {
           el('span', { text: `vs ${r.opponent} · ${label[r.result]}` }),
           el('span', { class: 'muted', text: fmtTime(r.created_at) }),
         ]);
+        const dlBtn = button('下载回放', () => {
+          void (async () => {
+            const res = await api.get(`/combat/replay/${r.id}`);
+            if (res.status === 200) downloadJson(res.data, `robofarm-replay-combat-${r.id}.json`);
+            else toast(res.data?.error ?? '回放下载失败');
+          })();
+        }, { class: 'btn btn-small btn-gold' });
+        // 阻止冒泡到行点击 (跳转回放页)
+        dlBtn.addEventListener('click', (e) => e.stopPropagation());
+        row.append(dlBtn);
         row.addEventListener('click', () => (location.hash = `#/replay?id=${r.id}`));
         list.append(row);
       });

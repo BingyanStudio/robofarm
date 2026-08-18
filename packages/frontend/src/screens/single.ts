@@ -8,11 +8,13 @@ import {
   DEFAULT_MAX_TURNS,
   TURN_INTERVALS_MS,
   GameResult,
+  ReplayRecorder,
+  ReplayFile,
 } from '@robofarm/shared';
 import { createGameLayout, DEFAULT_CODE, GameView } from '../game-layout';
 import { createEditor } from '../editor';
 import { Renderer } from '../renderer';
-import { el, button, modal, toast, topBar, sleep } from '../ui';
+import { el, button, modal, toast, topBar, sleep, downloadJson } from '../ui';
 import { api, fetchUser } from '../net';
 
 const CODE_KEY = 'robofarm.single';
@@ -51,6 +53,9 @@ export function singleScreen(root: HTMLElement): void {
   let playing = false;
   let speedIdx = 0;
   let timer: ReturnType<typeof setTimeout> | null = null;
+  /** 回放录制器: 记录每回合操作与输出 (每次新对局重建) */
+  let recorder: ReplayRecorder | null = null;
+  let replayFile: ReplayFile | null = null;
 
   // 速度档位标签, 与 TURN_INTERVALS_MS 对齐 (0 正常 / 1 两倍 / 2 四倍)
   const SPEED_LABELS = ['速度: 正常', '速度: ×2', '速度: ×4'];
@@ -165,9 +170,12 @@ export function singleScreen(root: HTMLElement): void {
       return;
     }
     programs = [program];
+    // 录制回放: 包装程序捕获每回合操作
+    recorder = new ReplayRecorder();
+    replayFile = null;
     controller = new GameController({
       mode: 'single',
-      players: [{ name: '玩家', frame: 'normal', program }],
+      players: [{ name: '玩家', frame: 'normal', program: recorder.wrap(program) }],
       maxTurns: DEFAULT_MAX_TURNS,
     });
     // 立即渲染初始地图 (重启/步进未播放时也能看到场景)
@@ -189,6 +197,7 @@ export function singleScreen(root: HTMLElement): void {
       return;
     }
     const events = await controller.step();
+    recorder?.afterStep(events, controller.world.turn);
     view.apply(events);
   }
 
@@ -212,13 +221,25 @@ export function singleScreen(root: HTMLElement): void {
       const money = result.scores[0]?.money ?? 0;
       statusText.textContent = `对局结束 · 金钱 ${money}`;
       log(`[系统] 对局结束, 最终金钱: ${money}`);
+      // 生成回放文件
+      if (recorder) {
+        replayFile = recorder.buildFile({
+          mode: 'single',
+          maxTurns: DEFAULT_MAX_TURNS,
+          players: ['玩家'],
+          result: { type: 'finished', money: [money] },
+        });
+      }
       const body = el('div', {}, [
         el('p', { text: `最终金钱: ${money}` }),
         el('p', { class: 'hint', text: '本地得分仅供参考, 提交后由服务器验证计分' }),
       ]);
       const m = modal('对局结束', body);
-      const submitBtn = button('提交成绩', () => submitScore(m));
-      body.append(el('div', { class: 'row' }, [submitBtn]));
+      const actions = [button('提交成绩', () => submitScore(m))];
+      if (replayFile) {
+        actions.push(button('保存回放', () => downloadJson(replayFile, `robofarm-replay-single.json`), { class: 'btn btn-gold' }));
+      }
+      body.append(el('div', { class: 'row' }, actions));
     } else {
       statusText.textContent = '对局中止';
       log(`[错误] ${result.message}`);
@@ -292,16 +313,26 @@ export function singleScreen(root: HTMLElement): void {
         toast('请先登录');
         return;
       }
-      const rows = (data?.entries ?? []) as { id: number; score: number | null; error: string | null; created_at: number }[];
+      const rows = (data?.entries ?? []) as { id: number; score: number | null; error: string | null; replay: string | null; created_at: number }[];
       const list = el('div', { class: 'list' });
       if (rows.length === 0) list.append(el('p', { class: 'hint', text: '暂无成绩记录' }));
       rows.forEach((r) => {
-        list.append(
-          el('div', { class: 'list-row' }, [
-            el('span', { text: r.error ? `✗ ${r.error}` : `得分 ${r.score}` }),
-            el('span', { class: 'muted', text: new Date(r.created_at).toLocaleString() }),
-          ])
-        );
+        const row = el('div', { class: 'list-row' }, [
+          el('span', { text: r.error ? `✗ ${r.error}` : `得分 ${r.score}` }),
+          el('span', { class: 'muted', text: new Date(r.created_at).toLocaleString() }),
+        ]);
+        if (r.replay) {
+          row.append(
+            button('下载回放', () => {
+              void (async () => {
+                const res = await api.get(`/single/replay/${r.id}`);
+                if (res.status === 200) downloadJson(res.data, `robofarm-replay-single-${r.id}.json`);
+                else toast(res.data?.error ?? '回放下载失败');
+              })();
+            }, { class: 'btn btn-small btn-gold' })
+          );
+        }
+        list.append(row);
       });
       modal('我的成绩', list);
     })();

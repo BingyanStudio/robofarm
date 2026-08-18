@@ -13,6 +13,8 @@ export type { PlayerApi, PlayerConsole } from './player-api';
 export { stepTurn } from './engine';
 export type { DroneAction } from './engine';
 export { GameController } from './game-controller';
+export { ReplayRecorder, wrapProgramForReplay, replayEvents, makeScriptedPlayer } from './replay';
+export type { ReplayFile, ReplayRound, ReplayDroneOp, ReplayPlayerConfig } from './replay';
 export type { PlayerProgram, PlayerTurnResult, GamePlayer, GameControllerOptions } from './game-controller';
 export { compilePlayerCode, setWasmUrl, setWasmModule } from './compile';
 export type { CompileResult, CompileError } from './compile';

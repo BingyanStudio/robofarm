@@ -1,8 +1,8 @@
 // 单人模式验证服务: 接收玩家代码, 在服务端连续执行完整对局,
 // 正常结束记录分数进排行榜, 否则记录报错信息。
-import { GameController, compilePlayerCode, DEFAULT_MAX_TURNS } from '@robofarm/shared';
+import { GameController, compilePlayerCode, DEFAULT_MAX_TURNS, ReplayRecorder } from '@robofarm/shared';
 import { NodeProgram } from '../runner/node-program';
-import { listSingleHistory, leaderboard, recordSingleSubmission, ensureCwd } from '../db';
+import { listSingleHistory, leaderboard, recordSingleSubmission, getSingleSubmission, ensureCwd } from '../db';
 
 const stamp = () => new Date().toISOString();
 
@@ -41,6 +41,7 @@ async function runValidation(userId: number, code: string): Promise<void> {
   let score: number | null = null;
   let error: string | null = null;
   let program: NodeProgram | null = null;
+  const recorder = new ReplayRecorder();
   try {
     ensureCwd(); // cwd 可能被外部删除, 运行前自愈
     const compiled = await compilePlayerCode(code);
@@ -54,15 +55,16 @@ async function runValidation(userId: number, code: string): Promise<void> {
     await program.load();
     const controller = new GameController({
       mode: 'single',
-      players: [{ name: '玩家', frame: 'normal', program }],
+      players: [{ name: '玩家', frame: 'normal', program: recorder.wrap(program) }],
       maxTurns: DEFAULT_MAX_TURNS,
     });
     console.log(`[${stamp()}] [single] user=${userId} 开始验证 (300 回合)`);
-    let endResult: { type: string; message?: string } | null = null;
+    let endResult: { type: string; message?: string; money?: number[] } | null = null;
     while (!controller.over) {
       const events = await controller.step();
+      recorder.afterStep(events, controller.world.turn);
       for (const e of events) {
-        if (e.type === 'end') endResult = e.result as { type: string; message?: string };
+        if (e.type === 'end') endResult = e.result as { type: string; message?: string; money?: number[] };
       }
       const st = states.get(userId);
       if (st) st.progress = Math.min(1, controller.world.turn / controller.world.maxTurns);
@@ -83,8 +85,33 @@ async function runValidation(userId: number, code: string): Promise<void> {
       st.score = score;
       st.error = error;
     }
-    recordSingleSubmission(userId, code, score, error);
+    // 生成回放文件 (JSON) 并入库
+    let replayJson: string | null = null;
+    try {
+      const file = recorder.buildFile({
+        mode: 'single',
+        maxTurns: DEFAULT_MAX_TURNS,
+        players: ['玩家'],
+        result: error ? { type: 'error', message: error } : { type: 'finished', money: score != null ? [score] : undefined },
+      });
+      replayJson = JSON.stringify(file);
+    } catch {
+      replayJson = null; // 录制失败不阻塞入库
+    }
+    recordSingleSubmission(userId, code, score, error, replayJson);
     console.log(`[${stamp()}] [single] user=${userId} 验证完成 score=${score ?? '-'}${error ? ` error=${error}` : ''}`);
+  }
+}
+
+/** 下载某条单人提交的回放文件 */
+export function singleReplay(submissionId: number, userId: number): { file: unknown } | { error: string } {
+  const row = getSingleSubmission(submissionId, userId);
+  if (!row) return { error: '记录不存在' };
+  if (!row.replay) return { error: '该记录没有回放' };
+  try {
+    return { file: JSON.parse(row.replay) };
+  } catch {
+    return { error: '回放数据损坏' };
   }
 }
 

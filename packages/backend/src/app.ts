@@ -84,6 +84,15 @@ export function createApp(): express.Express {
   app.use('/auth', createAuthRouter());
 
   // ---- 单人模式 ----
+  app.get('/single/replay/:id', requireUser, (req: Request, res: Response) => {
+    const result = single.singleReplay(Number(req.params.id), userOf(req).id);
+    if ('error' in result) {
+      res.status(404).json({ error: result.error });
+      return;
+    }
+    res.json(result.file);
+  });
+
   app.get('/single/history', requireUser, (req: Request, res: Response) => {
     res.json({ entries: single.singleHistory(userOf(req).id) });
   });

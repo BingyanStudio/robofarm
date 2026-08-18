@@ -1,6 +1,6 @@
 // 竞技模式服务: 对战房间管理、比赛推演、WebSocket 直播、回放存储。
 import { WebSocket } from 'ws';
-import { GameController, compilePlayerCode, DEFAULT_MAX_TURNS, GameEvent } from '@robofarm/shared';
+import { GameController, compilePlayerCode, DEFAULT_MAX_TURNS, GameEvent, ReplayRecorder } from '@robofarm/shared';
 import { NodeProgram } from '../runner/node-program';
 import { getCombatCode, insertMatch, getMatch, listMatchesForUser, recordCombatResult, getUserById, listCombatCodesExcluding, ensureCwd } from '../db';
 import { randomBytes } from 'node:crypto';
@@ -92,11 +92,12 @@ async function runMatch(room: Room, codeA: string, codeB: string): Promise<void>
     return failMatch(room, err instanceof Error ? err.message : String(err));
   }
 
+  const recorder = new ReplayRecorder();
   const controller = new GameController({
     mode: 'combat',
     players: [
-      { name: room.players[0].name, frame: room.players[0].frame, program: programA },
-      { name: room.players[1].name, frame: room.players[1].frame, program: programB },
+      { name: room.players[0].name, frame: room.players[0].frame, program: recorder.wrap(programA) },
+      { name: room.players[1].name, frame: room.players[1].frame, program: recorder.wrap(programB) },
     ],
     maxTurns: DEFAULT_MAX_TURNS,
   });
@@ -116,6 +117,7 @@ async function runMatch(room: Room, codeA: string, codeB: string): Promise<void>
   try {
     while (!controller.over) {
       const events = await controller.step();
+      recorder.afterStep(events, controller.world.turn);
       room.events.push(...events);
       for (const e of events) if (e.type === 'end') endResult = e;
       broadcast(room, { type: 'turn', turn: controller.world.turn, events });
@@ -161,14 +163,18 @@ async function runMatch(room: Room, codeA: string, codeB: string): Promise<void>
     recordCombatResult(winnerId, loserId!);
   }
 
-  const replay = JSON.stringify({
-    config: {
+  // 回放文件: 回合/操作/输出 (JSON), 与单人模式同一格式
+  const replay = JSON.stringify(
+    recorder.buildFile({
       mode: 'combat',
-      players: room.players.map((p) => ({ name: p.name })),
       maxTurns: DEFAULT_MAX_TURNS,
-    },
-    events: room.events,
-  });
+      players: room.players.map((p) => p.name),
+      result:
+        end.result.type === 'error'
+          ? { type: 'error', message: end.result.message }
+          : { type: 'finished', money: end.result.scores.map((s) => s.money) },
+    })
+  );
   const matchId = insertMatch(room.id, room.players[0].userId, room.players[1].userId, winnerId, outcome, replay);
 
   room.status = 'finished';
