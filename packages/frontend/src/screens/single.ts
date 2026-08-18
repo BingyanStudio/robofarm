@@ -26,7 +26,11 @@ export function singleScreen(root: HTMLElement): void {
 
   let userBox = el('span', { class: 'user-chip', text: '…' });
   root.append(
-    topBar([userBox, button('排行榜', () => showLeaderboard()), button('我的成绩', () => showHistory())]),
+    topBar([
+      userBox,
+      button('👑 排行榜', () => showLeaderboard(), { class: 'btn btn-small btn-gold' }),
+      button('我的成绩', () => showHistory()),
+    ]),
     layout.root
   );
 
@@ -241,33 +245,38 @@ export function singleScreen(root: HTMLElement): void {
     }
     m.close();
     toast('已提交, 服务器验证中…');
-    pollValidation();
+    void pollThenToast();
   }
 
-  async function pollValidation(): Promise<void> {
+  /** 轮询 /single/validate 直到 busy=false, 返回验证结果 (最多 120 秒) */
+  async function pollValidationOnce(): Promise<{ score: number | null; error: string | null; timeout: boolean }> {
     for (let i = 0; i < 120; i++) {
       await sleep(1000);
       const { data } = await api.get('/single/validate');
       if (!data) continue;
-      if (!data.busy) {
-        if (data.error) toast(`验证失败: ${data.error}`);
-        else toast(`验证完成, 得分: ${data.score}`);
-        return;
-      }
+      if (!data.busy) return { score: data.score ?? null, error: data.error ?? null, timeout: false };
     }
-    toast('验证超时, 请稍后查询');
+    return { score: null, error: null, timeout: true };
+  }
+
+  /** 轮询并把结果以 toast 展示 (无弹窗上下文时用) */
+  async function pollThenToast(): Promise<void> {
+    const r = await pollValidationOnce();
+    if (r.timeout) toast('验证超时, 请稍后查询');
+    else if (r.error) toast(`验证失败: ${r.error}`);
+    else toast(`验证完成, 得分: ${r.score}`);
   }
 
   function showLeaderboard(): void {
     void (async () => {
       const { data } = await api.get('/single/leaderboard');
-      const rows = (data?.entries ?? []) as { name: string; score: number }[];
+      const rows = (data?.entries ?? []) as { name: string; score: number; me?: boolean }[];
       const list = el('div', { class: 'list' });
       if (rows.length === 0) list.append(el('p', { class: 'hint', text: '暂无排行数据' }));
       rows.forEach((r, i) => {
         list.append(
-          el('div', { class: 'list-row' }, [
-            el('span', { text: `${i + 1}. ${r.name}` }),
+          el('div', { class: 'list-row' + (r.me ? ' mine' : '') }, [
+            el('span', { text: `${i + 1}. ${r.name}${r.me ? ' (我)' : ''}` }),
             el('span', { class: 'muted', text: `${r.score}` }),
           ])
         );
@@ -341,7 +350,7 @@ export function singleScreen(root: HTMLElement): void {
       toast('请先登录 (右上角)');
       return;
     }
-    // 提交前先确认, 玩家确认后才真正提交到服务器
+    // 提交前先确认 (弹窗无右上角关闭按钮, 只能确认/取消)
     const confirmed = await new Promise<boolean>((resolve) => {
       const body = el('div', {}, [
         el('p', { text: '确认将代码提交到服务器验证?' }),
@@ -357,7 +366,7 @@ export function singleScreen(root: HTMLElement): void {
           }),
         ]),
       ]);
-      const m = modal('提交确认', body);
+      const m = modal('提交确认', body, { noClose: true });
     });
     if (!confirmed) return;
     const check = await api.get('/single/validate');
@@ -366,12 +375,41 @@ export function singleScreen(root: HTMLElement): void {
       return;
     }
     const code = editor.getValue();
+
+    // 提交后: 弹窗变为圆圈加载条 + "隐藏"按钮
+    let hidden = false;
+    let progressModal: { close: () => void } | null = null;
+    const progressBody = el('div', { class: 'submit-progress' }, [
+      el('div', { class: 'spinner' }),
+      el('p', { class: 'hint', text: '服务器验证中…' }),
+      el('div', { class: 'row' }, [
+        button('隐藏', () => {
+          hidden = true;
+          progressModal?.close();
+        }),
+      ]),
+    ]);
+    progressModal = modal('提交验证', progressBody, { noClose: true });
+
     const res = await api.post('/single/validate', { code });
-    if (res.status === 200) {
-      toast('已提交, 服务器验证中…');
-      pollValidation();
-    } else {
+    if (res.status !== 200) {
+      progressModal.close();
       toast(res.data?.error ?? '提交失败');
+      return;
+    }
+    // 轮询直到服务器执行完毕
+    const r = await pollValidationOnce();
+    if (!hidden) {
+      progressModal.close();
+      if (r.error) modal('验证失败', el('p', { text: r.error }));
+      else if (r.timeout) toast('验证超时, 请稍后查询');
+      else showLeaderboard(); // 弹窗未被隐藏: 立即弹出排行榜
+    } else if (r.error) {
+      toast(`验证失败: ${r.error}`);
+    } else if (r.timeout) {
+      toast('验证超时, 请稍后查询');
+    } else {
+      toast(`验证完成, 得分: ${r.score}`);
     }
   }
 

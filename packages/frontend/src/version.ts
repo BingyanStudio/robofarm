@@ -64,8 +64,9 @@ export function checkVersionOnLoad(autoExpandManual: () => void): void {
     // localStorage 不可用 (隐私模式等) 时静默跳过
   }
   if (stored === null) {
-    // 首次进入: 自动展开右侧 API 手册
+    // 首次进入: 自动展开右侧 API 手册, 同时弹出更新日志
     autoExpandManual();
+    showUpdateLog();
   } else if (!isKnownVersion(stored)) {
     // 版本更老或无法识别: 展示更新日志
     showUpdateLog();

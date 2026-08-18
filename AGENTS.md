@@ -99,8 +99,12 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
 - **能量机制**: DroneState.energy (上限 MAX_ENERGY=10, 初始 0), Charge 原地 +5;
   行/列范围操作消耗能量 (收割 4 / 浇灌 3 / 拦截 6, 常量在 config.ts)。
   行/列收割仅限己方半场; 行/列拦截在回合结束结算 (interceptZone 字段)。
-- 当前作物: 草莓 / 葡萄 / 小麦 (需水) / 荷花 (水生) / 南瓜 (需水),
+- 当前作物: 草莓 / 葡萄 / 小麦 (需水) / 荷花 (水生) / 南瓜 (需水) /
+  西瓜 (需水, 沙地免疫 growthOverride) / 紫云英 (成熟加速邻格 onMature) / 香菇 (成熟自动扩散 onMature),
   完整属性见 agent/CROP.md, 数据在 `CROPS` 注册表 (改文档或加作物只改这一处)。
+- **成熟特效 (onMature)**: 每种作物成熟时都会执行其挂接的特效 (多数作物不声明)。
+  效果按 id 在 engine.ts 的 `MATURITY_EFFECTS` 表注册 (如 accelerateNeighbors / selfSpread),
+  新增特效 = 加一个处理器 + 在注册表声明, 无需 if 硬编码。
 
 ## 引擎语义 (shared/src/engine.ts, 改前必读)
 

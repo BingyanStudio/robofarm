@@ -231,7 +231,7 @@ export function createMcpServer(): Server {
               '  - `new InterceptRow()` / `new InterceptCol()` 拦截整行/列 (6 能量)\n' +
               '- 可用 API: `getSelf()` (含 water/energy) / `getGame()` (含 money) / `getMap()` / `getTile(p)` / `getCrop(p)` / `getDrone(p)`, 坐标越界返回 null。\n' +
               '- 作物列表 (代码名, 成本/收获/成熟回合/需水/可种地块):\n' + cropSummary() + '\n' +
-              '- 竞技模式: 自己半场在左侧 (14×7), 对方半场收获进入临时资金池, 返回己方半场入账; 种植不受半场限制 (可到对方半场占位), 铲除仅限己方半场。沙地上生长周期 ×1.5, 只有草莓/葡萄/南瓜可种。\n' +
+              '- 竞技模式: 自己半场在左侧 (14×7), 对方半场收获进入临时资金池, 返回己方半场入账; 种植不受半场限制 (可到对方半场占位), 铲除仅限己方半场。沙地上生长周期 ×1.5 (西瓜不受影响), 草莓/葡萄/南瓜/西瓜/紫云英可种。\n' +
               '- 限制: 单次 run() 400ms 超时即判负; 禁止网络/异步 API。\n' +
               '- 完整文档可用 get_doc / robofarm://docs/* 获取。\n\n' +
               (goal ? `策略目标: ${String(goal)}\n\n` : '') +

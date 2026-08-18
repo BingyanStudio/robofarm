@@ -166,16 +166,16 @@ export function listSingleHistory(userId: number, limit = 50): SingleSubmissionR
     .all(userId, limit) as unknown as SingleSubmissionRow[];
 }
 
-export function leaderboard(limit = 50): { name: string; score: number }[] {
+export function leaderboard(limit = 50): { user_id: number; name: string; score: number }[] {
   return getDb()
     .prepare(
-      `SELECT u.github_login AS name, MAX(s.score) AS score
+      `SELECT u.id AS user_id, u.github_login AS name, MAX(s.score) AS score
        FROM single_submissions s JOIN users u ON u.id = s.user_id
        WHERE s.score IS NOT NULL
        GROUP BY s.user_id
        ORDER BY score DESC LIMIT ?`
     )
-    .all(limit) as unknown as { name: string; score: number }[];
+    .all(limit) as unknown as { user_id: number; name: string; score: number }[];
 }
 
 export function getCombatCode(userId: number): CombatCodeRow | null {

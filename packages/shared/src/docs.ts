@@ -307,7 +307,7 @@ export const DOC_RULES: DocParagraphSection[] = [
   {
     title: '地块与沙地',
     paragraphs: [
-      '地块类型: 土地 (soil) / 水池 (water) / 沙地 (sand)。沙地上可种植草莓、葡萄、南瓜, 生长所需周期 ×1.5 (向下取整)。',
+      '地块类型: 土地 (soil) / 水池 (water) / 沙地 (sand)。沙地上可种植草莓/葡萄/南瓜/西瓜/紫云英, 生长所需周期 ×1.5 (向下取整); 西瓜在沙地生长不受减速影响。',
     ],
   },
   {

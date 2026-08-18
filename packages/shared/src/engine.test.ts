@@ -91,7 +91,7 @@ describe('engine: 各类作物 (注册表驱动)', () => {
     expect(world.players[0].money).toBe(40); // 0 + 40
   });
 
-  it('小麦: 30 成本, 25 回合生长, 缺水 2 次 (剩余 20、10 回合时)', () => {
+  it('小麦: 30 成本, 30 回合生长, 缺水 2 次 (剩余 20、10 回合时), 收获 +120', () => {
     const world = single();
     world.players[0].money = 100; // 初始资金不够, 直接补给
     stepTurn(world, actions([0, { type: 'plant', crop: CropType.Wheat }]));
@@ -110,7 +110,7 @@ describe('engine: 各类作物 (注册表驱动)', () => {
     expect(thirstyCount).toBe(2);
     expect(world.map[3][3].crop?.state).toBe(CropState.Grown);
     stepTurn(world, actions([0, { type: 'harvest' }]));
-    expect(world.players[0].money).toBe(150); // 70 + 80
+    expect(world.players[0].money).toBe(190); // 70 + 120
   });
 
   it('荷花: 水生, 只能种在水池, 40 回合成熟, 收获 +90', () => {
@@ -131,7 +131,7 @@ describe('engine: 各类作物 (注册表驱动)', () => {
     expect(world.players[0].money).toBe(160); // 70 + 90
   });
 
-  it('南瓜: 100 成本, 100 回合生长, 缺水 5 次, 收获 +300', () => {
+  it('南瓜: 100 成本, 100 回合生长, 缺水 5 次, 收获 +500', () => {
     const world = single();
     world.players[0].money = 100; // 初始资金不够, 直接补给
     stepTurn(world, actions([0, { type: 'plant', crop: CropType.Pumpkin }]));
@@ -150,7 +150,7 @@ describe('engine: 各类作物 (注册表驱动)', () => {
     expect(thirstyCount).toBe(5);
     expect(world.map[3][3].crop?.state).toBe(CropState.Grown);
     stepTurn(world, actions([0, { type: 'harvest' }]));
-    expect(world.players[0].money).toBe(300);
+    expect(world.players[0].money).toBe(500);
   });
 });
 
@@ -563,5 +563,70 @@ describe('engine: 缺水次数动态计算', () => {
       if (w.map[3][3].crop!.state === CropState.Grown) break;
     }
     expect(thirstyAt).toEqual([20, 10]);
+  });
+});
+
+describe('engine: 新作物 (西瓜/紫云英/香菇)', () => {
+  it('西瓜: 沙地生长不受 1.5 倍减速, 缺水 8 次', () => {
+    const w = single();
+    w.players[0].money = 200;
+    w.drones[0].position = [0, 0]; // 沙地
+    stepTurn(w, actions([0, { type: 'plant', crop: CropType.Melon }]));
+    const crop = w.map[0][0].crop!;
+    expect(crop.growthRemaining).toBe(119); // 120 - 1, 沙地免疫 (非 floor(120*1.5)=179)
+    expect(crop.thirstTotal).toBe(8);
+    let thirstyCount = 0;
+    let guard = 0;
+    while (crop.state !== CropState.Grown && guard++ < 200) {
+      if (crop.state === CropState.Thirsty) {
+        thirstyCount++;
+        w.drones[0].water = 1;
+        stepTurn(w, actions([0, { type: 'water' }]));
+      } else {
+        stepTurn(w, actions([0, null]));
+      }
+    }
+    expect(thirstyCount).toBe(8);
+    expect(crop.state).toBe(CropState.Grown);
+  });
+
+  it('紫云英成熟: 上下左右正在生长的作物剩余周期减少 25% (向下取整, 至少 1)', () => {
+    const w = single();
+    placeCrop(w, [3, 3], { type: CropType.MilkVetch, state: CropState.Growing, growthRemaining: 1 });
+    placeCrop(w, [2, 3], { type: CropType.Pumpkin, state: CropState.Growing, growthRemaining: 95 });
+    placeCrop(w, [4, 3], { type: CropType.Pumpkin, state: CropState.Growing, growthRemaining: 95 });
+    placeCrop(w, [6, 6], { type: CropType.Pumpkin, state: CropState.Growing, growthRemaining: 95 });
+    stepTurn(w, actions([0, null])); // 紫云英成熟, 触发特效
+    expect(w.map[3][3].crop!.state).toBe(CropState.Grown);
+    // (2,3) 先于 (3,3) 结算: 95→94 后再被加速 → floor(94*0.75)=70
+    expect(w.map[3][2].crop!.growthRemaining).toBe(70);
+    // (4,3) 后于 (3,3) 结算: 95 直接被加速 → floor(95*0.75)=71, 再扣 1 → 70
+    expect(w.map[3][4].crop!.growthRemaining).toBe(70);
+    // 远处对照不受影响
+    expect(w.map[6][6].crop!.growthRemaining).toBe(94);
+  });
+
+  it('香菇成熟: 上下左右无作物且为陆地的格子自动种上新香菇', () => {
+    const w = single();
+    placeCrop(w, [3, 3], { type: CropType.Shiitake, state: CropState.Growing, growthRemaining: 1 });
+    placeCrop(w, [2, 3], { type: CropType.Strawberry, state: CropState.Growing, growthRemaining: 3 }); // 已有作物
+    w.map[4][3] = { type: TileType.Water, crop: null }; // (3,4) 水池
+    stepTurn(w, actions([0, null]));
+    expect(w.map[3][3].crop!.state).toBe(CropState.Grown);
+    expect(w.map[3][4].crop?.type).toBe(CropType.Shiitake); // (4,3) 空地 → 新种
+    expect(w.map[2][3].crop?.type).toBe(CropType.Shiitake); // (3,2) 空地 → 新种
+    expect(w.map[3][2].crop?.type).toBe(CropType.Strawberry); // (2,3) 已有作物不变
+    expect(w.map[4][3].crop).toBeNull(); // (3,4) 水池不种
+    // 新香菇也在生长 (剩余 20, 种植回合扣 1)
+    expect(w.map[3][4].crop!.growthRemaining).toBe(19);
+  });
+
+  it('香菇可多轮繁殖并收获 (自行生长 20 回合成熟)', () => {
+    const w = single();
+    placeCrop(w, [3, 3], { type: CropType.Shiitake, state: CropState.Growing, growthRemaining: 1 });
+    for (let i = 0; i < 25; i++) stepTurn(w, actions([0, null]));
+    // 第 1 轮: (3,3) 成熟 → 种 (4,3),(3,2),(3,4); 20 回合后它们成熟 → 再扩散
+    const shiitakeCount = w.map.flat().filter((t) => t.crop?.type === CropType.Shiitake).length;
+    expect(shiitakeCount).toBeGreaterThanOrEqual(4);
   });
 });

@@ -67,6 +67,16 @@ export interface CropTypeConfig {
    * null 表示无需浇水。
    */
   thirstInterval: number | null;
+  /**
+   * 覆盖地块的生长倍率: 设置后忽略地块 growthFactor (如西瓜在沙地不受 1.5 减速)。
+   * 未设置时使用地块的 growthFactor。
+   */
+  growthOverride?: number;
+  /**
+   * 成熟时的特效 (效果 id): 引擎按 id 在 MATURITY_EFFECTS 表注册处理器,
+   * 每种作物成熟时都会执行其挂接的特效; 多数作物不声明 (无特效)。
+   */
+  onMature?: 'accelerateNeighbors' | 'selfSpread';
 }
 
 /**
@@ -77,7 +87,7 @@ export const CROPS: Record<CropType, CropTypeConfig> = {
   [CropType.Strawberry]: {
     type: CropType.Strawberry,
     name: '草莓',
-    description: '零成本的基础作物, 适合快速启动与边角料时间。',
+    description: '零成本的基础作物, 味道很不错。',
     habitats: [TileType.Soil, TileType.Sand],
     plantCost: 0,
     value: 5,
@@ -87,7 +97,7 @@ export const CROPS: Record<CropType, CropTypeConfig> = {
   [CropType.Grape]: {
     type: CropType.Grape,
     name: '葡萄',
-    description: '生长周期稍长, 但利率更高。',
+    description: '生长周期稍长，利率更高，味道也很不错。',
     habitats: [TileType.Soil, TileType.Sand],
     plantCost: 20,
     value: 40,
@@ -97,17 +107,17 @@ export const CROPS: Record<CropType, CropTypeConfig> = {
   [CropType.Wheat]: {
     type: CropType.Wheat,
     name: '小麦',
-    description: '需要浇水的作物, 但收益较高。',
+    description: '需要浇水的作物，但收益较高。',
     habitats: [TileType.Soil],
     plantCost: 30,
-    value: 80,
-    growCycles: 25,
-    thirstInterval: 10, // 生长中缺水 2 次 (剩余 20、10 回合时)
+    value: 120,
+    growCycles: 30,
+    thirstInterval: 15, // 生长中缺水 2 次 (剩余 20、10 回合时)
   },
   [CropType.Lotus]: {
     type: CropType.Lotus,
     name: '荷花',
-    description: '水生植物, 让水池也成为盈利点。',
+    description: '水生植物，让水池也成为盈利点。',
     habitats: [TileType.Water],
     plantCost: 30,
     value: 90,
@@ -117,12 +127,45 @@ export const CROPS: Record<CropType, CropTypeConfig> = {
   [CropType.Pumpkin]: {
     type: CropType.Pumpkin,
     name: '南瓜',
-    description: '生长周期和浇水条件都苛刻的植物, 但收益率高。',
+    description: '生长周期和浇水条件都苛刻的植物，但收益率高。',
     habitats: [TileType.Soil, TileType.Sand],
     plantCost: 100,
-    value: 300,
+    value: 500,
     growCycles: 100,
-    thirstInterval: 18, // 生长中缺水 5 次 (剩余 90、72、54、36、18 回合时)
+    thirstInterval: 18, // 生长中缺水 5 次 (每 18 回合一次)
+  },
+  [CropType.Melon]: {
+    type: CropType.Melon,
+    name: '西瓜',
+    description: '一种沙地友好的高价值作物, 需要合理规划浇水。',
+    habitats: [TileType.Soil, TileType.Sand],
+    plantCost: 120,
+    value: 840,
+    growCycles: 120,
+    thirstInterval: 15, // 生长中缺水 8 次
+    growthOverride: 1, // 沙地生长不受 1.5 倍减速影响
+  },
+  [CropType.MilkVetch]: {
+    type: CropType.MilkVetch,
+    name: '紫云英',
+    description: '绿肥植物，成熟时会加快周围作物的生长。',
+    habitats: [TileType.Soil, TileType.Sand],
+    plantCost: 180,
+    value: 200,
+    growCycles: 60,
+    thirstInterval: 40, // 生长中缺水 1 次
+    onMature: 'accelerateNeighbors',
+  },
+  [CropType.Shiitake]: {
+    type: CropType.Shiitake,
+    name: '香菇',
+    description: '一种会自我繁殖的作物, 需要控制其繁殖范围并多轮收取以获得最大收益。',
+    habitats: [TileType.Soil],
+    plantCost: 80,
+    value: 40,
+    growCycles: 20,
+    thirstInterval: null, // 无需浇水
+    onMature: 'selfSpread',
   },
 };
 

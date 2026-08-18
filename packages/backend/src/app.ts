@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
 import { WebSocketServer, WebSocket } from 'ws';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { createAuthRouter, requireUser, AuthUser } from './auth';
+import { createAuthRouter, requireUser, currentUser, AuthUser } from './auth';
 import * as single from './services/single';
 import * as combat from './services/combat';
 import { getCombatCode, upsertCombatCode } from './db';
@@ -106,9 +106,10 @@ export function createApp(): express.Express {
     res.json(single.validationStatus(userOf(req).id));
   });
 
-  app.get('/single/leaderboard', (_req: Request, res: Response) => {
-    // 排行榜公开可读
-    res.json({ entries: single.singleLeaderboard() });
+  app.get('/single/leaderboard', (req: Request, res: Response) => {
+    // 排行榜公开可读; 登录用户的成绩标记 me: true, 供前端高亮显示
+    const user = currentUser(req);
+    res.json({ entries: single.singleLeaderboard(user?.id ?? null) });
   });
 
   // ---- 竞技模式 ----

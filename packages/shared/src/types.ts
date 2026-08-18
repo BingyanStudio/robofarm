@@ -18,6 +18,9 @@ export enum CropType {
   Wheat = 'wheat',
   Lotus = 'lotus',
   Pumpkin = 'pumpkin',
+  Melon = 'melon',
+  MilkVetch = 'milk_vetch',
+  Shiitake = 'shiitake',
 }
 
 /** 作物状态 */
@@ -131,6 +134,8 @@ export interface CropData {
   thirstTotal?: number;
   /** 已发生的缺水次数 */
   thirstsDone?: number;
+  /** 种植时的实际生长周期数 (计算缺水触发点用) */
+  plantCycles?: number;
 }
 
 export interface Tile {

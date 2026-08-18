@@ -96,6 +96,10 @@ export function singleHistory(userId: number) {
   return listSingleHistory(userId);
 }
 
-export function singleLeaderboard() {
-  return leaderboard(50);
+export function singleLeaderboard(userId: number | null) {
+  return leaderboard(50).map((e) => ({
+    name: e.name,
+    score: e.score,
+    me: e.user_id === userId,
+  }));
 }

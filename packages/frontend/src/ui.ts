@@ -31,11 +31,11 @@ export function toast(message: string): void {
   setTimeout(() => box.remove(), 2600);
 }
 
-export function modal(title: string, body: HTMLElement): { close: () => void } {
+export function modal(title: string, body: HTMLElement, opts: { noClose?: boolean } = {}): { close: () => void } {
   const overlay = el('div', { class: 'modal-overlay' });
   const head = el('div', { class: 'modal-head' }, [
     el('h3', { text: title }),
-    button('关闭', () => overlay.remove(), { class: 'btn btn-small' }),
+    ...(opts.noClose ? [] : [button('关闭', () => overlay.remove(), { class: 'btn btn-small' })]),
   ]);
   const content = el('div', { class: 'modal-body' }, [body]);
   overlay.append(el('div', { class: 'modal' }, [head, content]));

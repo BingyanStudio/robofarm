@@ -9,10 +9,12 @@
 import {
   CropData,
   CropState,
+  CropType,
   InternalOperation,
   DroneState,
   GameEvent,
   Position,
+  TileType,
   WorldState,
 } from './types';
 import { TILES, cropConfig } from './registry';
@@ -54,15 +56,17 @@ const OP_HANDLERS: Record<string, OpHandler> = {
     const player = world.players[drone.player];
     if (player.money < cfg.plantCost) return { ok: false, message: '金钱不足' };
     player.money -= cfg.plantCost;
-    // 生长周期受地块类型影响 (如沙地 ×1.5), 数据在 TILES 注册表;
+    // 生长周期受地块类型影响 (如沙地 ×1.5, 数据在 TILES 注册表);
+    // 作物可用 growthOverride 覆盖地块倍率 (如西瓜沙地免疫);
     // 总缺水次数按该次种植的实际周期动态计算 (不依赖固定的剩余取模)
-    const adjusted = Math.floor(cfg.growCycles * TILES[tile.type].growthFactor);
+    const adjusted = Math.floor(cfg.growCycles * (cfg.growthOverride ?? TILES[tile.type].growthFactor));
     tile.crop = {
       type: op.crop,
       state: CropState.Growing,
       growthRemaining: adjusted,
       thirstTotal: cfg.thirstInterval === null ? 0 : Math.floor(adjusted / cfg.thirstInterval),
       thirstsDone: 0,
+      plantCycles: adjusted,
     };
     events.push({ type: 'plant', drone: drone.id, pos: [drone.position[0], drone.position[1]], crop: op.crop });
     return { ok: true };
@@ -403,12 +407,12 @@ function tickCrops(world: WorldState, events: GameEvent[]): void {
     for (let x = 0; x < world.map[y].length; x++) {
       const crop = world.map[y][x].crop;
       if (!crop) continue;
-      tickCrop(crop, [x, y], events);
+      tickCrop(world, crop, [x, y], events);
     }
   }
 }
 
-function tickCrop(crop: CropData, pos: Position, events: GameEvent[]): void {
+function tickCrop(world: WorldState, crop: CropData, pos: Position, events: GameEvent[]): void {
   const cfg = cropConfig(crop.type);
   if (crop.state === CropState.Growing) {
     crop.growthRemaining -= 1;
@@ -416,12 +420,20 @@ function tickCrop(crop: CropData, pos: Position, events: GameEvent[]): void {
       crop.state = CropState.Grown;
       crop.growthRemaining = 0;
       events.push({ type: 'crop-grow', pos, state: CropState.Grown, cyclesToGrown: 0 });
+      // 成熟特效: 每种作物成熟时都会执行其挂接的特效 (多数作物未声明, 无操作)
+      const effect = cfg.onMature;
+      if (effect) MATURITY_EFFECTS[effect]?.({ world, pos, events });
     } else if (cfg.thirstInterval !== null) {
-      // 缺水触发按种植时记录的"总缺水次数"动态计算:
-      // 第 (thirstsDone+1) 次缺水发生在剩余回合数降到 ceil((剩余次数)·thirstInterval) 时。
+      // 缺水触发按种植时记录的"总缺水次数"动态计算, 缺水点在实际生长周期内均匀分布:
+      // 第 (thirstsDone+1) 次缺水发生在剩余回合数降到 ceil((剩余次数)·实际周期/(总次数+1)) 时。
       const total = crop.thirstTotal ?? 0;
       const done = crop.thirstsDone ?? 0;
-      if (total > 0 && done < total && crop.growthRemaining === Math.ceil((total - done) * cfg.thirstInterval)) {
+      const cycles = crop.plantCycles ?? cfg.growCycles;
+      if (
+        total > 0 &&
+        done < total &&
+        crop.growthRemaining === Math.ceil(((total - done) * cycles) / (total + 1))
+      ) {
         crop.state = CropState.Thirsty;
         crop.thirstsDone = done + 1;
         events.push({ type: 'crop-grow', pos, state: CropState.Thirsty, cyclesToGrown: 0 });
@@ -446,3 +458,47 @@ function tickCrop(crop: CropData, pos: Position, events: GameEvent[]): void {
     events.push({ type: 'crop-grow', pos, state: CropState.Thirsty, cyclesToGrown: 0 });
   }
 }
+
+/** 上下左右四个正交邻格 (越界跳过) */
+function orthNeighbors(pos: Position, world: WorldState): Position[] {
+  const out: Position[] = [];
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+    const nx = pos[0] + dx;
+    const ny = pos[1] + dy;
+    if (nx >= 0 && nx < world.map[0].length && ny >= 0 && ny < world.map.length) {
+      out.push([nx, ny]);
+    }
+  }
+  return out;
+}
+
+/**
+ * 成熟特效处理器 (按作物注册表声明的效果 id 注册, 可扩展)。
+ * 新增效果 = 在这里加一个处理器 + 在 CROPS 注册表中声明。
+ */
+const MATURITY_EFFECTS: Record<string, (ctx: { world: WorldState; pos: Position; events: GameEvent[] }) => void> = {
+  /** 紫云英: 上下左右四格内正在生长 (且不缺水的) 作物, 剩余生长周期减少 25% (向下取整, 至少 1) */
+  accelerateNeighbors({ world, pos }) {
+    for (const [nx, ny] of orthNeighbors(pos, world)) {
+      const crop = world.map[ny][nx].crop;
+      if (!crop || crop.state !== CropState.Growing) continue;
+      crop.growthRemaining = Math.max(1, Math.floor(crop.growthRemaining * 0.75));
+    }
+  },
+  /** 香菇: 上下左右四格若无作物且为陆地, 则自动种植上新的香菇 */
+  selfSpread({ world, pos }) {
+    const cfg = cropConfig(CropType.Shiitake);
+    for (const [nx, ny] of orthNeighbors(pos, world)) {
+      const tile = world.map[ny][nx];
+      if (tile.crop || tile.type !== TileType.Soil) continue;
+      tile.crop = {
+        type: CropType.Shiitake,
+        state: CropState.Growing,
+        growthRemaining: cfg.growCycles,
+        thirstTotal: 0,
+        thirstsDone: 0,
+        plantCycles: cfg.growCycles,
+      };
+    }
+  },
+};
