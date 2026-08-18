@@ -22,7 +22,7 @@ export function simulateScreen(root: HTMLElement): void {
   // 双 Tab 编辑器
   const tabs = el('div', { class: 'tabs' });
   const tabMe = el('button', { class: 'tab active', text: '我方无人机' });
-  const tabEnemy = el('button', { class: 'tab', text: '敌方无人机' });
+  const tabEnemy = el('button', { class: 'tab', text: '对方无人机' });
   tabs.append(tabMe, tabEnemy);
   layout.editorHost.append(tabs);
 
@@ -162,7 +162,7 @@ export function simulateScreen(root: HTMLElement): void {
     }
     if (!b.ok) {
       setEditorLocked(false);
-      return reportCompileError('敌方', b.errors);
+      return reportCompileError('对方', b.errors);
     }
     try {
       const programA = await BrowserProgram.create(a.js);
@@ -172,7 +172,7 @@ export function simulateScreen(root: HTMLElement): void {
         mode: 'combat',
         players: [
           { name: '我方', frame: 'normal', program: programA },
-          { name: '敌方', frame: 'mirror', program: programB },
+          { name: '对方', frame: 'mirror', program: programB },
         ],
         maxTurns: DEFAULT_MAX_TURNS,
       });
@@ -184,7 +184,7 @@ export function simulateScreen(root: HTMLElement): void {
     // 立即渲染初始地图 (重启/步进未播放时也能看到场景)
     view.apply([{ type: 'snapshot', state: snapshotOf(controller.world) }]);
     statusText.textContent = '回合 0 / 300';
-    appendLog(['[系统] 新对局开始 (我方为左侧, 敌方为镜像视角)']);
+    appendLog(['[系统] 新对局开始 (我方为左侧, 对方为镜像视角)']);
     setEditorLocked(true);
     updateStartStop();
     if (autoPlay) {
@@ -225,13 +225,13 @@ export function simulateScreen(root: HTMLElement): void {
     updatePauseButton();
     if (result.type === 'finished') {
       const [s0, s1] = result.scores;
-      const winner = s0.money > s1.money ? '我方' : s1.money > s0.money ? '敌方' : '平局';
+      const winner = s0.money > s1.money ? '我方' : s1.money > s0.money ? '对方' : '平局';
       statusText.textContent = `对局结束 · 胜者: ${winner}`;
-      appendLog([`[系统] 对局结束: 我方 ${s0.money} vs 敌方 ${s1.money}, 胜者: ${winner}`]);
+      appendLog([`[系统] 对局结束: 我方 ${s0.money} vs 对方 ${s1.money}, 胜者: ${winner}`]);
       modal(
         '对局结束',
         el('div', {}, [
-          el('p', { text: `我方 ${s0.money} vs 敌方 ${s1.money}` }),
+          el('p', { text: `我方 ${s0.money} vs 对方 ${s1.money}` }),
           el('p', { class: 'hint', text: `胜者: ${winner}` }),
         ])
       );

@@ -155,7 +155,7 @@ export class GameView {
             const ps = e.state.players;
             this.cb.moneyEl.textContent =
               e.state.mode === 'combat' && ps.length >= 2
-                ? `💰 我方 ${ps[0].money} · 敌方 ${ps[1].money}`
+                ? `💰 我方 ${ps[0].money} · 对方 ${ps[1].money}`
                 : `💰 ${ps[0]?.money ?? 0}`;
           }
           break;
