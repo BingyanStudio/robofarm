@@ -6,7 +6,7 @@
 //   3. 写入当前版本号 (供下次对比)
 import { el, button, modal } from './ui';
 
-export const VERSION = '0.2.0';
+export const VERSION = '0.1.5';
 export const VERSION_KEY = 'robofarm.version';
 
 export interface UpdateEntry {
@@ -18,8 +18,8 @@ export interface UpdateEntry {
 /** 更新日志 (按版本从新到旧) */
 export const UPDATE_LOG: UpdateEntry[] = [
   {
-    version: '0.2.0',
-    title: 'v0.2.0',
+    version: '0.1.5',
+    title: 'v0.1.5',
     items: [
       'MCP 新增 12 个后端 API 工具: 单人 (提交验证 / 验证状态 / 提交历史 / 排行榜 / 回放下载) 与竞技 (出战状态 / 上传代码 / 玩家列表 / 发起对战 / 观战房间 / 历史对局 / 回放下载)',
       'MCP 调用改进: 请求失败返回明确错误, 未登录时提示先完成 GitHub 登录流程',
