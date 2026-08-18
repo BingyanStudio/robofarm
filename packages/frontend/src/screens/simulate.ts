@@ -1,6 +1,6 @@
 // 模拟竞技: 本机同时运行敌我双方代码 (双方各自坐标系), 模拟对战。
 import { BrowserProgram } from '../browser-program';
-import { GameController, compilePlayerCode, createCombatWorld, snapshotOf, DEFAULT_MAX_TURNS, TURN_INTERVAL_MS, GameResult } from '@robofarm/shared';
+import { GameController, compilePlayerCode, createCombatWorld, snapshotOf, DEFAULT_MAX_TURNS, TURN_INTERVALS_MS, GameResult } from '@robofarm/shared';
 import { createGameLayout, DEFAULT_CODE, GameView } from '../game-layout';
 import { createEditor } from '../editor';
 import { Renderer } from '../renderer';
@@ -59,7 +59,11 @@ export function simulateScreen(root: HTMLElement): void {
   let controller: GameController | null = null;
   let programs: BrowserProgram[] = [];
   let playing = false;
+  let speedIdx = 0;
   let timer: ReturnType<typeof setTimeout> | null = null;
+
+  // 速度档位标签, 与 TURN_INTERVALS_MS 对齐 (0 正常 / 1 两倍 / 2 四倍)
+  const SPEED_LABELS = ['速度: 正常', '速度: ×2', '速度: ×4'];
 
   const statusText = el('span', { class: 'status-text', text: '回合 0 / 300' });
   layout.statusHost.append(statusText);
@@ -211,10 +215,11 @@ export function simulateScreen(root: HTMLElement): void {
   function scheduleNext(): void {
     if (!playing) return;
     if (timer) clearTimeout(timer);
+    // 先等当前回合 (含双方代码执行) 彻底结束后再进入下一回合, 防止回合重叠
     timer = setTimeout(async () => {
       await stepOnce();
       if (playing && controller && !controller.over) scheduleNext();
-    }, TURN_INTERVAL_MS);
+    }, TURN_INTERVALS_MS[speedIdx]);
   }
 
   function handleEnd(result: GameResult): void {
@@ -245,7 +250,11 @@ export function simulateScreen(root: HTMLElement): void {
   const btnStartStop = button('开始', () => void onStartStop());
   const btnPause = button('暂停', () => togglePause());
   const btnStep = button('步进', () => void onStep());
-  layout.controlsHost.append(btnStartStop, btnPause, btnStep);
+  const btnSpeed = button('速度: 正常', () => {
+    speedIdx = (speedIdx + 1) % SPEED_LABELS.length;
+    btnSpeed.textContent = SPEED_LABELS[speedIdx];
+  });
+  layout.controlsHost.append(btnStartStop, btnPause, btnStep, btnSpeed);
   updatePauseButton();
 
   /** 步进: 没有对局时先编译并创建, 再运行 1 回合 (创建后为暂停模式) */
