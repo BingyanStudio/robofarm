@@ -14,6 +14,7 @@ import {
   ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { CROPS, DOC_SECTIONS, isCropType, sectionMarkdown, cropDocEntries, createSingleWorld, createCombatWorld } from '@robofarm/shared';
+import { mcpLoginStart, mcpLoginFinish } from '../auth';
 
 const DOC_TITLES: Record<string, string> = {
   overview: '游戏概览',
@@ -27,11 +28,18 @@ const DOC_TITLES: Record<string, string> = {
 
 const ALL_SECTIONS = [...DOC_SECTIONS] as string[];
 
-export function createMcpServer(): Server {
+export interface McpServerOptions {
+  /** 后端自身地址 (api_call 代理目标 / 登录授权回调), 由会话创建时的请求推导 */
+  baseUrl?: string;
+}
+
+export function createMcpServer(opts: McpServerOptions = {}): Server {
   const server = new Server(
-    { name: 'robofarm-docs', version: '0.1.0' },
+    { name: 'robofarm-docs', version: '0.2.0' },
     { capabilities: { resources: {}, tools: {}, prompts: {} } }
   );
+  /** 该 MCP 会话的登录令牌 (经 login_start / login_finish 获得) */
+  let sessionToken: string | null = null;
 
   // ---- 资源列表 / 读取 ----
   server.setRequestHandler(ListResourcesRequestSchema, async () => ({
@@ -103,8 +111,171 @@ export function createMcpServer(): Server {
           required: ['mode'],
         },
       },
+      {
+        name: 'login_start',
+        description: 'GitHub 登录第一步: 返回授权地址与 state。开发模式下无需登录 (dev: true)。浏览器完成授权后, 用返回的 state 调用 login_finish 领取会话令牌。',
+        inputSchema: { type: 'object', properties: {} },
+      },
+      {
+        name: 'login_finish',
+        description: 'GitHub 登录第二步: 用 login_start 返回的 state 领取会话令牌 (浏览器授权完成后)。之后 api_call 自动携带该令牌。',
+        inputSchema: {
+          type: 'object',
+          properties: { state: { type: 'string', description: 'login_start 返回的 state' } },
+          required: ['state'],
+        },
+      },
+      {
+        name: 'api_call',
+        description: '调用后端 HTTP API (代理): 任意 method + 相对路径 + JSON body, 返回 { status, data }。已登录会话自动携带 Cookie。',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            method: { type: 'string', enum: ['GET', 'POST', 'PUT', 'DELETE'], description: 'HTTP 方法 (默认 GET)' },
+            path: { type: 'string', description: '相对路径, 如 /single/validate 或 /single/replay/1' },
+            body: { type: 'object', description: 'JSON 请求体 (POST/PUT 时)' },
+          },
+          required: ['path'],
+        },
+      },
+      // ---- 单人模式 (需登录, 除排行榜) ----
+      {
+        name: 'single_validate',
+        description: '提交玩家代码并启动服务器端单人验证 (最多 300 回合), 同一用户同时只能运行一个。之后用 single_validate_status 查询进度与分数。',
+        inputSchema: {
+          type: 'object',
+          properties: { code: { type: 'string', description: '玩家 TypeScript 代码 (含入口函数 run)' } },
+          required: ['code'],
+        },
+      },
+      {
+        name: 'single_validate_status',
+        description: '查询当前用户的单人验证状态: busy / progress (0-1) / score / error。',
+        inputSchema: { type: 'object', properties: {} },
+      },
+      {
+        name: 'single_history',
+        description: '当前用户的单人提交历史 (id / score / error / replay / created_at)。',
+        inputSchema: { type: 'object', properties: {} },
+      },
+      {
+        name: 'single_leaderboard',
+        description: '单人模式公开排行榜 (name / score / me)。无需登录。',
+        inputSchema: { type: 'object', properties: {} },
+      },
+      {
+        name: 'single_replay',
+        description: '下载某条单人提交的完整回放文件 (ReplayFile JSON, 仅本人可见)。',
+        inputSchema: {
+          type: 'object',
+          properties: { id: { type: 'number', description: '提交记录 id (见 single_history)' } },
+          required: ['id'],
+        },
+      },
+      // ---- 竞技模式 (需登录, 除观战房间) ----
+      {
+        name: 'combat_state',
+        description: '当前用户的出战代码与战绩 (code / wins / losses), 未上传过返回 null。',
+        inputSchema: { type: 'object', properties: {} },
+      },
+      {
+        name: 'combat_upload',
+        description: '上传竞技出战代码 (上传后胜败清零)。',
+        inputSchema: {
+          type: 'object',
+          properties: { code: { type: 'string', description: '出战 TypeScript 代码' } },
+          required: ['code'],
+        },
+      },
+      {
+        name: 'combat_list',
+        description: '可挑战的玩家列表 (id / name / wins / losses, 排除自己)。',
+        inputSchema: { type: 'object', properties: {} },
+      },
+      {
+        name: 'combat_start',
+        description: '向指定玩家发起竞技对战, 返回 roomId。每个玩家同时最多主动发起 1 场。',
+        inputSchema: {
+          type: 'object',
+          properties: { opponentId: { type: 'number', description: '对手用户 id (见 combat_list)' } },
+          required: ['opponentId'],
+        },
+      },
+      {
+        name: 'combat_room',
+        description: '进行中的对战房间列表 (观战用, 无需登录): id / players / status。',
+        inputSchema: { type: 'object', properties: {} },
+      },
+      {
+        name: 'combat_history',
+        description: '当前用户的历史对局列表 (id / opponent / opponentId / result / created_at)。',
+        inputSchema: { type: 'object', properties: {} },
+      },
+      {
+        name: 'combat_replay',
+        description: '下载某场对战回放 ({ config, events }, 仅对局双方可见)。',
+        inputSchema: {
+          type: 'object',
+          properties: { id: { type: 'number', description: '对局 id (见 combat_history)' } },
+          required: ['id'],
+        },
+      },
     ],
   }));
+
+  /** 携带会话令牌调用后端 HTTP API */
+  const apiRequest = async (
+    method: string,
+    path: string,
+    body?: unknown
+  ): Promise<{ status: number; data: unknown }> => {
+    const base = opts.baseUrl ?? 'http://127.0.0.1';
+    const res = await fetch(new URL(path, base), {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(sessionToken ? { Cookie: `robofarm_session=${sessionToken}` } : {}),
+      },
+      body: method === 'GET' || method === 'DELETE' || body === undefined ? undefined : JSON.stringify(body),
+    });
+    const text = await res.text();
+    let data: unknown = text;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      // 非 JSON 响应原样返回
+    }
+    return { status: res.status, data };
+  };
+
+  /** 封装 apiRequest 结果: 非 2xx 标记错误, 401 提示登录流程 */
+  const apiToolResult = async (
+    method: string,
+    path: string,
+    body?: unknown
+  ): Promise<{ content: { type: 'text'; text: string }[]; isError?: boolean }> => {
+    try {
+      const r = await apiRequest(method, path, body);
+      if (r.status === 401) {
+        return {
+          content: [{
+            type: 'text',
+            text: 'HTTP 401: 未登录。先调用 login_start + login_finish 获取会话令牌 (开发模式下后端自动登录, 无需此步骤)。',
+          }],
+          isError: true,
+        };
+      }
+      if (r.status >= 400) {
+        return { content: [{ type: 'text', text: `HTTP ${r.status}: ${JSON.stringify(r.data)}` }], isError: true };
+      }
+      return { content: [{ type: 'text', text: JSON.stringify(r.data, null, 2) }] };
+    } catch (err) {
+      return {
+        content: [{ type: 'text', text: `请求失败: ${err instanceof Error ? err.message : String(err)}` }],
+        isError: true,
+      };
+    }
+  };
 
   server.setRequestHandler(CallToolRequestSchema, async (req) => {
     const { name, arguments: args } = req.params;
@@ -187,6 +358,102 @@ export function createMcpServer(): Server {
             }, null, 2),
           }],
         };
+      }
+      case 'login_start': {
+        const base = opts.baseUrl ?? '';
+        const r = mcpLoginStart(base);
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify(r, null, 2),
+          }],
+        };
+      }
+      case 'login_finish': {
+        const state = typeof args?.state === 'string' ? args.state : '';
+        const r = mcpLoginFinish(state);
+        if ('error' in r) {
+          return { content: [{ type: 'text', text: r.error }], isError: true };
+        }
+        sessionToken = r.token;
+        return {
+          content: [{
+            type: 'text',
+            text: '登录成功, 会话令牌已绑定, 后续 api_call 将自动携带认证。',
+          }],
+        };
+      }
+      case 'api_call': {
+        const method = typeof args?.method === 'string' ? args.method.toUpperCase() : 'GET';
+        const path = typeof args?.path === 'string' ? args.path : '';
+        if (!path.startsWith('/')) {
+          return { content: [{ type: 'text', text: 'path 必须是相对路径 (以 / 开头)' }], isError: true };
+        }
+        try {
+          const res = await apiRequest(method, path, args?.body);
+          return {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({ status: res.status, data: res.data }, null, 2),
+            }],
+          };
+        } catch (err) {
+          return {
+            content: [{ type: 'text', text: `请求失败: ${err instanceof Error ? err.message : String(err)}` }],
+            isError: true,
+          };
+        }
+      }
+      // ---- 单人模式 ----
+      case 'single_validate': {
+        const code = typeof args?.code === 'string' ? args.code : '';
+        if (!code.trim()) {
+          return { content: [{ type: 'text', text: '缺少 code 参数 (玩家 TypeScript 代码)' }], isError: true };
+        }
+        return await apiToolResult('POST', '/single/validate', { code });
+      }
+      case 'single_validate_status':
+        return await apiToolResult('GET', '/single/validate');
+      case 'single_history':
+        return await apiToolResult('GET', '/single/history');
+      case 'single_leaderboard':
+        return await apiToolResult('GET', '/single/leaderboard');
+      case 'single_replay': {
+        const id = Number(args?.id);
+        if (!Number.isInteger(id)) {
+          return { content: [{ type: 'text', text: '缺少 id 参数 (提交记录 id)' }], isError: true };
+        }
+        return await apiToolResult('GET', `/single/replay/${id}`);
+      }
+      // ---- 竞技模式 ----
+      case 'combat_state':
+        return await apiToolResult('GET', '/combat/state');
+      case 'combat_upload': {
+        const code = typeof args?.code === 'string' ? args.code : '';
+        if (!code.trim()) {
+          return { content: [{ type: 'text', text: '缺少 code 参数 (出战 TypeScript 代码)' }], isError: true };
+        }
+        return await apiToolResult('POST', '/combat/upload', { code });
+      }
+      case 'combat_list':
+        return await apiToolResult('GET', '/combat/list');
+      case 'combat_start': {
+        const opponentId = Number(args?.opponentId);
+        if (!Number.isInteger(opponentId)) {
+          return { content: [{ type: 'text', text: '缺少 opponentId 参数 (对手用户 id)' }], isError: true };
+        }
+        return await apiToolResult('POST', '/combat/start', { id: opponentId });
+      }
+      case 'combat_room':
+        return await apiToolResult('GET', '/combat/room');
+      case 'combat_history':
+        return await apiToolResult('GET', '/combat/history');
+      case 'combat_replay': {
+        const id = Number(args?.id);
+        if (!Number.isInteger(id)) {
+          return { content: [{ type: 'text', text: '缺少 id 参数 (对局 id)' }], isError: true };
+        }
+        return await apiToolResult('GET', `/combat/replay/${id}`);
       }
       default:
         throw new Error(`未知工具: ${name}`);

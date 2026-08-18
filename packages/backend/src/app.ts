@@ -44,7 +44,7 @@ export function mountMcp(app: express.Express): void {
       }
     }
     const id = randomUUID();
-    const server = createMcpServer();
+    const server = createMcpServer({ baseUrl: requestBaseUrl(req) });
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => id,
       // initialize 完成 (会话确立) 后注册, 此时 transport.sessionId 已可用

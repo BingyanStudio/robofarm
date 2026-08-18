@@ -14,6 +14,9 @@ interface OAuthState {
 
 const pendingStates = new Map<string, OAuthState>();
 
+/** OAuth 回调成功后暂存的会话令牌 (按 state), 供 MCP 等无 Cookie 客户端领取 */
+const pendingLoginTokens = new Map<string, { token: string; createdAt: number }>();
+
 export interface AuthUser {
   id: number;
   name: string;
@@ -45,6 +48,29 @@ function frontendOrigin(req: Request): string {
 function redirectUri(req: Request): string {
   const explicit = process.env.GITHUB_REDIRECT_URI?.trim();
   return explicit ? explicit : `${backendOrigin(req)}/auth/github/callback`;
+}
+
+/** MCP 登录第一步: 返回 GitHub 授权地址 (含 state); 开发模式直接返回 dev 标记 */
+export function mcpLoginStart(baseUrl: string): { authorizeUrl?: string; state?: string; dev: boolean } {
+  if (devMode()) return { dev: true };
+  const state = randomBytes(16).toString('hex');
+  pendingStates.set(state, { state, createdAt: Date.now() });
+  const callback = `${baseUrl}/auth/github/callback`;
+  const url =
+    `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(clientId())}` +
+    `&redirect_uri=${encodeURIComponent(callback)}` +
+    `&scope=read:user&state=${state}`;
+  return { authorizeUrl: url, state, dev: false };
+}
+
+/** MCP 登录第二步: 用 OAuth state 换取会话令牌 (一次性, 10 分钟内有效) */
+export function mcpLoginFinish(state: string): { token: string } | { error: string } {
+  const entry = pendingLoginTokens.get(state);
+  if (!entry || Date.now() - entry.createdAt > STATE_TTL_MS) {
+    return { error: 'state 无效或已过期 (请先完成浏览器登录)' };
+  }
+  pendingLoginTokens.delete(state);
+  return { token: entry.token };
 }
 
 export function devMode(): boolean {
@@ -118,6 +144,8 @@ export function createAuthRouter(): Router {
       const user = upsertUserByLogin(login);
       const token = createSession(user.id);
       res.setHeader('Set-Cookie', cookie(SESSION_COOKIE, token));
+      // 供 MCP 客户端领取 (浏览器登录后, MCP 用 state 换取令牌)
+      pendingLoginTokens.set(state as string, { token, createdAt: Date.now() });
       res.redirect(`${frontendOrigin(req)}/#/menu`);
     } catch (err) {
       res.status(500).send(`GitHub 登录失败: ${err instanceof Error ? err.message : String(err)}`);
