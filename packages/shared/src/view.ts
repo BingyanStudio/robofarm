@@ -65,6 +65,7 @@ export function buildPlayerView(
       id: idx,
       position: toLocal(d.position, width, frame),
       water: d.water,
+      energy: d.energy,
       isOpponent: false,
       bounty: d.bounty,
     });
@@ -75,6 +76,7 @@ export function buildPlayerView(
       id: idx,
       position: toLocal(d.position, width, frame),
       water: d.water,
+      energy: d.energy,
       isOpponent: true,
       bounty: d.bounty,
     });
@@ -85,6 +87,7 @@ export function buildPlayerView(
     id: droneIndex,
     position: toLocal(selfDrone.position, width, frame),
     water: selfDrone.water,
+    energy: selfDrone.energy,
     isOpponent: false,
     bounty: selfDrone.bounty,
   };
@@ -119,6 +122,7 @@ export function snapshotOf(world: WorldState) {
       player: d.player,
       position: [d.position[0], d.position[1]] as Position,
       water: d.water,
+      energy: d.energy,
       bounty: d.bounty,
       interceptTarget: d.interceptTarget ? ([d.interceptTarget[0], d.interceptTarget[1]] as Position) : null,
     })),

@@ -1,4 +1,6 @@
 // 通用 UI 辅助。
+import { VERSION } from './version';
+
 export function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
   attrs: Record<string, unknown> = {},
@@ -50,11 +52,15 @@ export function page(children: (Node | string)[]): HTMLElement {
 
 export function topBar(right: Node[] = []): HTMLElement {
   return el('div', { class: 'topbar' }, [
-    el('div', { class: 'topbar-left' }, [el('span', { class: 'logo', text: '🤖 RoboFarm' }), button('返回菜单', () => (location.hash = '#/menu'), { class: 'btn btn-small' })]),
+    el('div', { class: 'topbar-left' }, [
+      el('span', { class: 'logo', text: '🤖 RoboFarm' }),
+      button('返回菜单', () => (location.hash = '#/menu'), { class: 'btn btn-small' }),
+    ]),
     el('div', { class: 'topbar-right' }, right),
+    // 标题栏右上角常驻版本号 (灰色小字)
+    el('span', { class: 'version-badge', text: `v${VERSION}` }),
   ]);
 }
-
 export const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 export function fmtTime(ts: number): string {

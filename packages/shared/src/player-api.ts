@@ -78,6 +78,62 @@ export class Intercept extends DroneOperation {
   }
 }
 
+/** 充能: 原地不动, 能量 +5 (上限 10) */
+export class Charge extends DroneOperation {
+  readonly type = 'charge';
+  constructor() {
+    super();
+  }
+}
+
+/** 收割整行: 一次性收获所在行全部成熟作物 (竞技模式仅自己半场), 消耗 4 能量 */
+export class HarvestRow extends DroneOperation {
+  readonly type = 'harvestRow';
+  constructor() {
+    super();
+  }
+}
+
+/** 收割整列: 一次性收获所在列全部成熟作物 (竞技模式仅自己半场), 消耗 4 能量 */
+export class HarvestCol extends DroneOperation {
+  readonly type = 'harvestCol';
+  constructor() {
+    super();
+  }
+}
+
+/** 浇灌整行: 从左到右给所在行缺水作物浇水直到水耗尽, 消耗 3 能量 */
+export class WaterRow extends DroneOperation {
+  readonly type = 'waterRow';
+  constructor() {
+    super();
+  }
+}
+
+/** 浇灌整列: 从上到下给所在列缺水作物浇水直到水耗尽, 消耗 3 能量 */
+export class WaterCol extends DroneOperation {
+  readonly type = 'waterCol';
+  constructor() {
+    super();
+  }
+}
+
+/** 拦截整行: 回合结束时拦截所在行全部携带偷菜资金的对方无人机, 消耗 6 能量 */
+export class InterceptRow extends DroneOperation {
+  readonly type = 'interceptRow';
+  constructor() {
+    super();
+  }
+}
+
+/** 拦截整列: 回合结束时拦截所在列全部携带偷菜资金的对方无人机, 消耗 6 能量 */
+export class InterceptCol extends DroneOperation {
+  readonly type = 'interceptCol';
+  constructor() {
+    super();
+  }
+}
+
 /** 注入沙箱的全部操作类 (按类名供玩家代码直接引用) */
 export const OPS = {
   DroneOperation,
@@ -88,6 +144,13 @@ export const OPS = {
   Harvest,
   Clear,
   Intercept,
+  Charge,
+  HarvestRow,
+  HarvestCol,
+  WaterRow,
+  WaterCol,
+  InterceptRow,
+  InterceptCol,
 };
 
 export interface PlayerApi {

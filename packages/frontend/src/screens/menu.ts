@@ -2,6 +2,7 @@
 import { el, button } from '../ui';
 import { fetchUser } from '../net';
 import { mcpGuide } from '../api-manual';
+import { showUpdateLog } from '../version';
 
 export function menuScreen(root: HTMLElement): void {
   root.replaceChildren();
@@ -12,6 +13,7 @@ export function menuScreen(root: HTMLElement): void {
     button('模拟竞技', () => (location.hash = '#/simulate'), { class: 'btn btn-big' }),
     button('多人竞技', () => (location.hash = '#/match'), { class: 'btn btn-big' }),
     button('观战', () => (location.hash = '#/spectate'), { class: 'btn btn-big' }),
+    button('更新日志', () => showUpdateLog(), { class: 'btn btn-big' }),
   ]);
 
   const box = el('div', { class: 'menu-box' }, [

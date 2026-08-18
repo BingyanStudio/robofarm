@@ -383,3 +383,185 @@ describe('engine: 健壮性', () => {
     expect(world.map[3][3].type).toBe(TileType.Soil);
   });
 });
+
+describe('engine: 能量机制', () => {
+  it('Charge: 原地不动, 能量 +5, 上限 10', () => {
+    const w = single();
+    let events = stepTurn(w, actions([0, { type: 'charge' }]));
+    expect(eventsOfType(events, 'charge')).toHaveLength(1);
+    expect(w.drones[0].energy).toBe(5);
+    expect(w.drones[0].position).toEqual([3, 3]); // 原地不动
+    stepTurn(w, actions([0, { type: 'charge' }]));
+    expect(w.drones[0].energy).toBe(10); // 封顶
+    stepTurn(w, actions([0, { type: 'charge' }]));
+    expect(w.drones[0].energy).toBe(10); // 不再增加
+  });
+
+  it('HarvestRow: 收获整行成熟作物, 消耗 4 能量', () => {
+    const w = single();
+    w.drones[0].energy = 5;
+    w.drones[0].position = [3, 2];
+    placeCrop(w, [2, 2], { type: CropType.Strawberry, state: CropState.Grown, growthRemaining: 0 });
+    placeCrop(w, [4, 2], { type: CropType.Strawberry, state: CropState.Grown, growthRemaining: 0 });
+    placeCrop(w, [3, 2], { type: CropType.Strawberry, state: CropState.Growing, growthRemaining: 1 });
+    const events = stepTurn(w, actions([0, { type: 'harvestRow' }]));
+    expect(eventsOfType(events, 'harvest')).toHaveLength(2);
+    expect(w.map[2][2].crop).toBeNull();
+    expect(w.map[2][4].crop).toBeNull();
+    expect(w.map[2][3].crop).not.toBeNull();
+    expect(w.drones[0].energy).toBe(1); // 5 - 4
+    expect(w.players[0].money).toBe(30); // 20 + 5 + 5
+  });
+
+  it('HarvestRow: 能量不足时无效, 不扣能量', () => {
+    const w = single();
+    w.drones[0].energy = 3;
+    const events = stepTurn(w, actions([0, { type: 'harvestRow' }]));
+    expect(eventsOfType(events, 'invalid-op')).toHaveLength(1);
+    expect(w.drones[0].energy).toBe(3);
+  });
+
+  it('HarvestRow 竞技模式: 仅收割自己半场作物', () => {
+    const w = combat();
+    w.drones[0].energy = 5;
+    w.drones[0].position = [3, 2];
+    placeCrop(w, [2, 2], { type: CropType.Strawberry, state: CropState.Grown, growthRemaining: 0 });
+    placeCrop(w, [9, 2], { type: CropType.Strawberry, state: CropState.Grown, growthRemaining: 0 }); // 对方半场
+    const events = stepTurn(w, actions([0, { type: 'harvestRow' }]));
+    expect(eventsOfType(events, 'harvest')).toHaveLength(1);
+    expect(w.map[2][9].crop).not.toBeNull(); // 对方半场未动
+    expect(w.players[0].money).toBe(25); // 20 + 5, 无偷菜
+  });
+
+  it('WaterRow: 从左到右给缺水作物浇水直到水耗尽, 跳过不需浇水的', () => {
+    const w = single();
+    w.drones[0].energy = 3;
+    w.drones[0].water = 2;
+    w.drones[0].position = [3, 2];
+    placeCrop(w, [2, 2], { type: CropType.Strawberry, state: CropState.Thirsty, growthRemaining: 2 });
+    placeCrop(w, [3, 2], { type: CropType.Strawberry, state: CropState.Growing, growthRemaining: 2 });
+    placeCrop(w, [4, 2], { type: CropType.Strawberry, state: CropState.Thirsty, growthRemaining: 2 });
+    const events = stepTurn(w, actions([0, { type: 'waterRow' }]));
+    expect(eventsOfType(events, 'water')).toHaveLength(2);
+    expect(w.map[2][2].crop!.state).toBe(CropState.Growing);
+    expect(w.map[2][4].crop!.state).toBe(CropState.Growing);
+    expect(w.drones[0].water).toBe(0);
+    expect(w.drones[0].energy).toBe(0); // 3 - 3
+  });
+
+  it('WaterCol: 从上到下浇水, 水耗尽即停', () => {
+    const w = single();
+    w.drones[0].energy = 3;
+    w.drones[0].water = 1;
+    w.drones[0].position = [3, 2];
+    placeCrop(w, [3, 0], { type: CropType.Strawberry, state: CropState.Thirsty, growthRemaining: 2 });
+    placeCrop(w, [3, 3], { type: CropType.Strawberry, state: CropState.Thirsty, growthRemaining: 2 });
+    const events = stepTurn(w, actions([0, { type: 'waterCol' }]));
+    expect(eventsOfType(events, 'water')).toHaveLength(1); // 1 格水
+    expect(w.map[0][3].crop!.state).toBe(CropState.Growing);
+    expect(w.map[3][3].crop!.state).toBe(CropState.Thirsty);
+  });
+
+  it('InterceptRow: 拦截整行对方偷菜无人机, 消耗 6 能量', () => {
+    const w = combat();
+    w.drones[0].energy = 6;
+    w.drones[0].position = [4, 3];
+    w.drones[2].position = [9, 3];
+    w.drones[2].bounty = 7;
+    w.drones[3].position = [6, 4]; // 不同行, 且在 P1 半场 (避免自动 stash)
+    w.drones[3].bounty = 8;
+    const events = stepTurn(w, actions([0, { type: 'interceptRow' }]));
+    const intercepts = eventsOfType(events, 'intercept');
+    expect(intercepts).toHaveLength(1); // 只拦到同行的 drone2
+    expect(w.drones[2].bounty).toBe(0);
+    expect(w.drones[3].bounty).toBe(8);
+    expect(w.players[0].money).toBe(27); // 20 + 7
+    expect(w.drones[0].energy).toBe(0); // 6 - 6
+  });
+
+  it('InterceptCol: 拦截整列对方偷菜无人机', () => {
+    const w = combat();
+    w.drones[0].energy = 6;
+    w.drones[0].position = [4, 2];
+    w.drones[2].position = [4, 5];
+    w.drones[2].bounty = 7;
+    w.drones[3].position = [10, 3];
+    w.drones[3].bounty = 8;
+    const events = stepTurn(w, actions([0, { type: 'interceptCol' }]));
+    expect(eventsOfType(events, 'intercept')).toHaveLength(1);
+    expect(w.drones[2].bounty).toBe(0);
+    expect(w.players[0].money).toBe(27);
+  });
+});
+
+describe('engine: 沙地', () => {
+  it('草莓可种在沙地, 生长周期 ×1.5 向下取整 (5 → 7)', () => {
+    const w = single();
+    w.drones[0].position = [0, 0]; // 沙地
+    const events = stepTurn(w, actions([0, { type: 'plant', crop: CropType.Strawberry }]));
+    expect(eventsOfType(events, 'plant')).toHaveLength(1);
+    expect(w.map[0][0].crop!.growthRemaining).toBe(6); // 种植回合即算第 1 个生长周期: floor(5*1.5)=7, 已扣 1
+    for (let i = 0; i < 5; i++) stepTurn(w, actions([0, null]));
+    expect(w.map[0][0].crop!.state).toBe(CropState.Growing);
+    stepTurn(w, actions([0, null]));
+    expect(w.map[0][0].crop!.state).toBe(CropState.Grown);
+  });
+
+  it('小麦不能种在沙地 (habitats 不含沙地)', () => {
+    const w = single();
+    w.drones[0].position = [0, 0];
+    const events = stepTurn(w, actions([0, { type: 'plant', crop: CropType.Wheat }]));
+    expect(eventsOfType(events, 'invalid-op')).toHaveLength(1);
+  });
+
+  it('沙地不覆盖水池', () => {
+    const w = single();
+    expect(w.map[1][1].type).toBe(TileType.Water); // 原水池位置仍是水
+  });
+});
+
+describe('engine: 缺水次数动态计算', () => {
+  it('沙地南瓜: 按种植时实际周期动态计算缺水次数 (150 周期 → 8 次)', () => {
+    const w = single();
+    w.players[0].money = 100;
+    w.drones[0].position = [0, 0]; // 沙地
+    stepTurn(w, actions([0, { type: 'plant', crop: CropType.Pumpkin }]));
+    const crop = w.map[0][0].crop!;
+    expect(crop.growthRemaining).toBe(149); // floor(100*1.5)=150, 种植回合已扣 1
+    expect(crop.thirstTotal).toBe(8); // floor(150 / 18)
+    let thirstyCount = 0;
+    let guard = 0;
+    while (crop.state !== CropState.Grown && guard++ < 300) {
+      if (crop.state === CropState.Thirsty) {
+        thirstyCount++;
+        w.drones[0].water = 1;
+        stepTurn(w, actions([0, { type: 'water' }]));
+      } else {
+        stepTurn(w, actions([0, null]));
+      }
+    }
+    expect(thirstyCount).toBe(8);
+    expect(crop.state).toBe(CropState.Grown);
+  });
+
+  it('土地作物缺水位置与原来一致: 小麦在剩余 20、10 回合时缺水', () => {
+    const w = single();
+    w.players[0].money = 100;
+    stepTurn(w, actions([0, { type: 'plant', crop: CropType.Wheat }]));
+    // 记录每次缺水时的剩余回合数
+    const thirstyAt: number[] = [];
+    let guard = 0;
+    while (guard++ < 100) {
+      const c = w.map[3][3].crop!;
+      if (c.state === CropState.Thirsty) {
+        thirstyAt.push(c.growthRemaining);
+        w.drones[0].water = 1;
+        stepTurn(w, actions([0, { type: 'water' }]));
+      } else {
+        stepTurn(w, actions([0, null]));
+      }
+      if (w.map[3][3].crop!.state === CropState.Grown) break;
+    }
+    expect(thirstyAt).toEqual([20, 10]);
+  });
+});

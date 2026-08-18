@@ -31,6 +31,12 @@ const SINGLE_WATER_TILES: Position[] = [
   [5, 5],
 ];
 
+/** 单人地图上的沙地区域: [左上 x, 左上 y, 右下 x, 右下 y], 水池优先于沙地 */
+const SINGLE_SAND_REGIONS: [number, number, number, number][] = [
+  [0, 0, 6, 1],
+  [0, 2, 2, 3],
+];
+
 /** 单人地图出生点 */
 const SINGLE_SPAWNS: Position[] = [[3, 3]];
 
@@ -66,17 +72,31 @@ function isWaterAt(map: Tile[][], pos: Position): boolean {
   return map[pos[1]][pos[0]].type === TileType.Water;
 }
 
+/** 铺设单人地图左半的地形: 水池优先, 其次是沙地区域 (只覆盖土地) */
+function applyLandscape(map: Tile[][]): void {
+  for (const [x, y] of SINGLE_WATER_TILES) map[y][x] = emptyTile(TileType.Water);
+  for (const [x1, y1, x2, y2] of SINGLE_SAND_REGIONS) {
+    for (let y = y1; y <= y2; y++) {
+      for (let x = x1; x <= x2; x++) {
+        if (map[y][x].type === TileType.Soil) map[y][x] = emptyTile(TileType.Sand);
+      }
+    }
+  }
+}
+
 export function createSingleWorld(maxTurns: number): WorldState {
   const map = buildMap(SINGLE_WIDTH, SINGLE_HEIGHT);
-  for (const [x, y] of SINGLE_WATER_TILES) map[y][x] = emptyTile(TileType.Water);
+  applyLandscape(map);
   const spawn = SINGLE_SPAWNS[0];
   const drone: DroneState = {
     id: 0,
     player: 0,
     position: [spawn[0], spawn[1]],
     water: 0,
+    energy: 0,
     bounty: 0,
     interceptTarget: null,
+    interceptZone: null,
   };
   const players: PlayerState[] = [{ id: 0, money: START_MONEY, alive: true }];
   return { mode: 'single', map, drones: [drone], players, turn: 0, maxTurns };
@@ -84,8 +104,8 @@ export function createSingleWorld(maxTurns: number): WorldState {
 
 export function createCombatWorld(maxTurns: number): WorldState {
   const map = buildMap(COMBAT_WIDTH, COMBAT_HEIGHT);
-  // 左半与单人地图相同
-  for (const [x, y] of SINGLE_WATER_TILES) map[y][x] = emptyTile(TileType.Water);
+  // 左半与单人地图相同 (含沙地)
+  applyLandscape(map);
   // 右半为左半的镜像
   for (let y = 0; y < SINGLE_HEIGHT; y++) {
     for (let x = 0; x < SINGLE_WIDTH; x++) {
@@ -102,8 +122,10 @@ export function createCombatWorld(maxTurns: number): WorldState {
       player: i < 2 ? 0 : 1,
       position: [pos[0], pos[1]],
       water: 0,
+      energy: 0,
       bounty: 0,
       interceptTarget: null,
+      interceptZone: null,
     });
   });
   const players: PlayerState[] = [
@@ -114,15 +136,20 @@ export function createCombatWorld(maxTurns: number): WorldState {
 }
 
 /**
- * 判断无人机当前是否位于自己的半场。
+ * 判断某坐标是否属于某玩家的半场。
  * 单人模式: 处处都是自己的半场。
  * 竞技模式: P1 半场为绝对坐标 x < width/2, P2 半场为 x >= width/2
  * (P2 本地坐标中的"左半"对应绝对坐标的右半)。
  */
-export function isOwnHalf(world: WorldState, drone: DroneState): boolean {
+export function isOwnHalfAt(world: WorldState, player: number, pos: Position): boolean {
   if (world.mode !== 'combat') return true;
   const half = world.map[0].length / 2;
-  return drone.player === 0 ? drone.position[0] < half : drone.position[0] >= half;
+  return player === 0 ? pos[0] < half : pos[0] >= half;
+}
+
+/** 判断无人机当前是否位于自己的半场 */
+export function isOwnHalf(world: WorldState, drone: DroneState): boolean {
+  return isOwnHalfAt(world, drone.player, drone.position);
 }
 
 export function inBounds(world: WorldState, pos: Position): boolean {

@@ -32,6 +32,13 @@ const OP_SCHEMAS: Record<string, OpSchema> = {
   harvest: { fields: [] },
   clear: { fields: [] },
   intercept: { fields: [{ name: 'at', kind: 'position' }] },
+  charge: { fields: [] },
+  harvestRow: { fields: [] },
+  harvestCol: { fields: [] },
+  waterRow: { fields: [] },
+  waterCol: { fields: [] },
+  interceptRow: { fields: [] },
+  interceptCol: { fields: [] },
 };
 
 /**
@@ -47,6 +54,13 @@ const OP_CLASS_TYPES: Record<string, string> = {
   Harvest: 'harvest',
   Clear: 'clear',
   Intercept: 'intercept',
+  Charge: 'charge',
+  HarvestRow: 'harvestRow',
+  HarvestCol: 'harvestCol',
+  WaterRow: 'waterRow',
+  WaterCol: 'waterCol',
+  InterceptRow: 'interceptRow',
+  InterceptCol: 'interceptCol',
 };
 
 /** 识别操作类型: 优先纯对象形式 (raw.type), 其次玩家 class 的构造类名 */

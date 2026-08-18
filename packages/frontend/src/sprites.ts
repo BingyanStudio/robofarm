@@ -1,16 +1,15 @@
 // 贴图加载与渲染辅助。贴图位于 public/sprites/ (见 agent/SPRITE.md):
 // - 无人机: drone.svg / drone_enemy.svg (机身+螺旋桨) + drone_eyes.svg (眼睛)
-// - 地块: grass.svg (无作物土地) / field.svg (有作物土地) / water.svg (水池)
+// - 地块: 按 TILES 注册表的 sprite/spriteWithCrop 名加载 (grass/field/water/sand/sand_field)
 // - 作物: crop/<type>_<n>.avif, 正方形, 铺满一格, 下标从小到大为生长阶段
-import { CropState, CropType, cropConfig } from '@robofarm/shared';
+import { CropState, CropType, cropConfig, TILES } from '@robofarm/shared';
 
 export interface Sprites {
   drone: HTMLImageElement | null;
   droneEnemy: HTMLImageElement | null;
   droneEyes: HTMLImageElement | null;
-  grass: HTMLImageElement | null;
-  field: HTMLImageElement | null;
-  water: HTMLImageElement | null;
+  /** 地块贴图: 键为 TILES 注册表中的 sprite / spriteWithCrop 名 */
+  tiles: Record<string, HTMLImageElement | null>;
   /** 各作物的生长阶段贴图 (下标 0 基, 对应 <type>_1.._n) */
   crops: Partial<Record<CropType, HTMLImageElement[]>>;
 }
@@ -40,14 +39,22 @@ let cache: Promise<Sprites> | null = null;
 export function loadSprites(): Promise<Sprites> {
   if (!cache) {
     cache = (async () => {
-      const [drone, droneEnemy, droneEyes, grass, field, water] = await Promise.all([
+      const [drone, droneEnemy, droneEyes] = await Promise.all([
         loadImage('/sprites/drone.svg'),
         loadImage('/sprites/drone_enemy.svg'),
         loadImage('/sprites/drone_eyes.svg'),
-        loadImage('/sprites/grass.svg'),
-        loadImage('/sprites/field.svg'),
-        loadImage('/sprites/water.svg'),
       ]);
+      // 从注册表驱动地块贴图: 新增地块类型后自动加载其贴图 (缺图自动回退程序化绘制)
+      const names = new Set<string>();
+      for (const cfg of Object.values(TILES)) {
+        names.add(cfg.sprite);
+        names.add(cfg.spriteWithCrop);
+      }
+      const entries = await Promise.all(
+        [...names].map(async (name) => [name, await loadImage(`/sprites/${name}.svg`)] as const)
+      );
+      const tiles: Sprites['tiles'] = {};
+      for (const [name, img] of entries) tiles[name] = img;
       // 从注册表驱动: 新增作物 (CropType) 后自动加载其贴图 (缺图自动回退程序化绘制)
       const crops: Sprites['crops'] = {};
       await Promise.all(
@@ -55,7 +62,7 @@ export function loadSprites(): Promise<Sprites> {
           crops[type] = await loadCropStages(type);
         })
       );
-      return { drone, droneEnemy, droneEyes, grass, field, water, crops };
+      return { drone, droneEnemy, droneEyes, tiles, crops };
     })();
   }
   return cache;

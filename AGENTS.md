@@ -77,16 +77,28 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
 ## 核心设计: 扩展机制 (禁止 if 硬编码特例)
 
 - 地块/作物: `shared/src/registry.ts` 数据注册表 (`TILES` / `CROPS`)。
+  地块配置: name、canCollectWater、**growthFactor** (沙地 1.5, 种植时生长周期
+  ×growthFactor 向下取整)、sprite/spriteWithCrop (前端贴图名, 有作物时用 _field 变体)、
+  color (程序化绘制兜底)。
   作物配置: habitats(可种地块)、plantCost、value、growCycles、
   `thirstInterval` (**null = 无需浇水**, 如草莓)。
   **缺水机制**: 作物进入 Thirsty 后长期保持该状态、生长不推进,
   **不枯萎** (GAME.md 已取消枯萎设定), 浇水后从剩余进度继续生长。
+  缺水次数在种植时按实际生长周期动态计算 (CropData.thirstTotal =
+  floor(实际周期 / thirstInterval)), 触发点 = ceil((剩余次数)·thirstInterval),
+  **不依赖固定的剩余取模**, 因此沙地 (周期 ×1.5) 等调整过周期的作物缺水次数同步增加。
+  当前地块: 土地 / 水池 / 沙地 (可种草莓/葡萄/南瓜)。
 - 无人机操作: 玩家侧为**操作类** API (`shared/src/player-api.ts` 的 `Move` /
-  `Plant` / `CollectWater` / `Water` / `Harvest` / `Clear` / `Intercept`,
-  均继承 `DroneOperation`, 参数经构造函数传入), 引擎按**构造类名**识别操作;
-  内部传输/引擎仍用判别联合 `DroneOperation` (`types.ts`), 由
-  `ops.ts` 的 `normalizeOp` 把类实例统一转换为纯对象 (同时兼容 `{ type: ... }`
-  旧写法)。新增操作 = 添加操作类 + OP_SCHEMAS + OP_HANDLERS 三处。
+  `Plant` / `CollectWater` / `Water` / `Harvest` / `Clear` / `Intercept` /
+  `Charge` / `HarvestRow` / `HarvestCol` / `WaterRow` / `WaterCol` /
+  `InterceptRow` / `InterceptCol`, 均继承 `DroneOperation`, 参数经构造函数传入),
+  引擎按**构造类名**识别操作; 内部传输/引擎仍用判别联合 `DroneOperation`
+  (`types.ts`), 由 `ops.ts` 的 `normalizeOp` 把类实例统一转换为纯对象
+  (同时兼容 `{ type: ... }` 旧写法)。新增操作 = 添加操作类 + OP_SCHEMAS +
+  OP_HANDLERS 三处。
+- **能量机制**: DroneState.energy (上限 MAX_ENERGY=10, 初始 0), Charge 原地 +5;
+  行/列范围操作消耗能量 (收割 4 / 浇灌 3 / 拦截 6, 常量在 config.ts)。
+  行/列收割仅限己方半场; 行/列拦截在回合结束结算 (interceptZone 字段)。
 - 当前作物: 草莓 / 葡萄 / 小麦 (需水) / 荷花 (水生) / 南瓜 (需水),
   完整属性见 agent/CROP.md, 数据在 `CROPS` 注册表 (改文档或加作物只改这一处)。
 

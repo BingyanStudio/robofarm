@@ -76,6 +76,55 @@ export const DOC_OPERATIONS: DocEntry[] = [
     params: ['`at`: `[number, number]` — 拦截目标坐标 (x, y)'],
     example: 'return new Intercept([5, 3]);',
   },
+  {
+    id: 'doc-Charge',
+    name: 'Charge',
+    def: 'class Charge extends DroneOperation',
+    desc: '充能: 本回合原地不动, 能量 +5 (上限 10)。能量用于行/列范围操作。',
+    example: 'return new Charge();',
+  },
+  {
+    id: 'doc-HarvestRow',
+    name: 'HarvestRow',
+    def: 'class HarvestRow extends DroneOperation',
+    desc: '一次性收获自身所在行的全部成熟作物, 消耗 4 能量。竞技模式仅收割自己半场的作物 (不产生偷菜)。',
+    example: 'return new HarvestRow();',
+  },
+  {
+    id: 'doc-HarvestCol',
+    name: 'HarvestCol',
+    def: 'class HarvestCol extends DroneOperation',
+    desc: '一次性收获自身所在列的全部成熟作物, 消耗 4 能量。竞技模式仅收割自己半场的作物 (不产生偷菜)。',
+    example: 'return new HarvestCol();',
+  },
+  {
+    id: 'doc-WaterRow',
+    name: 'WaterRow',
+    def: 'class WaterRow extends DroneOperation',
+    desc: '给所在行作物从左到右浇水, 直到储水耗尽为止, 跳过不需要浇水的作物, 消耗 3 能量。',
+    example: 'return new WaterRow();',
+  },
+  {
+    id: 'doc-WaterCol',
+    name: 'WaterCol',
+    def: 'class WaterCol extends DroneOperation',
+    desc: '给所在列作物从上到下浇水, 直到储水耗尽为止, 跳过不需要浇水的作物, 消耗 3 能量。',
+    example: 'return new WaterCol();',
+  },
+  {
+    id: 'doc-InterceptRow',
+    name: 'InterceptRow',
+    def: 'class InterceptRow extends DroneOperation',
+    desc: '竞技模式专用: 回合结束时拦截所在行全部携带偷菜资金的对方无人机, 消耗 6 能量。',
+    example: 'return new InterceptRow();',
+  },
+  {
+    id: 'doc-InterceptCol',
+    name: 'InterceptCol',
+    def: 'class InterceptCol extends DroneOperation',
+    desc: '竞技模式专用: 回合结束时拦截所在列全部携带偷菜资金的对方无人机, 消耗 6 能量。',
+    example: 'return new InterceptCol();',
+  },
 ];
 
 export const DOC_FUNCTIONS: DocEntry[] = [
@@ -164,6 +213,7 @@ export const DOC_TYPES: DocEntry[] = [
       '`id`: `number` — 本地无人机编号',
       '`position`: `[number, number]` — 当前坐标',
       '`water`: `number` — 储水量 (0..5)',
+      '`energy`: `number` — 能量 (0..10, 经 Charge 补充, 供行/列范围操作消耗)',
       '`isOpponent`: `boolean` — 是否为对方无人机',
       '`bounty`: `number` — 偷菜资金池 (仅对方无人机有意义)',
     ],
@@ -172,9 +222,9 @@ export const DOC_TYPES: DocEntry[] = [
     id: 'doc-TileInfo',
     name: 'TileInfo',
     def: 'interface TileInfo',
-    desc: '地块信息: `type` 为土地或水池, `crop` 为该格作物 (无作物时为 `null`)。',
+    desc: '地块信息: `type` 为土地/水池/沙地, `crop` 为该格作物 (无作物时为 `null`)。',
     params: [
-      '`type`: `\'soil\' | \'water\'` — 地块类型',
+      '`type`: `\'soil\' | \'water\' | \'sand\'` — 地块类型 (沙地上生长周期 ×1.5)',
       '`hasCrop`: `boolean` — 是否有作物',
       '`crop`: `CropInfo | null` — 作物信息',
     ],
@@ -211,7 +261,7 @@ export const DOC_TYPES: DocEntry[] = [
       '`mode`: `\'single\' | \'combat\'` — 游戏模式',
       '`turn`: `number` — 当前回合',
       '`maxTurns`: `number` — 总回合数',
-      '`money`: `number` — 自己的金钱',
+      '`money`: `number` — 自己的金钱 (初始 20)',
     ],
   },
 ];
@@ -251,14 +301,27 @@ export const DOC_RULES: DocParagraphSection[] = [
     title: '作物与缺水',
     paragraphs: [
       '作物有 生长中 / 缺水 / 成熟 三种状态; 进入缺水后长期保持, 生长不推进, 浇水后继续。',
+      '缺水次数按种植时的实际生长周期动态计算 (每约 `thirstInterval` 回合一次, 总次数 = 实际周期 ÷ 间隔), 沙地等生长周期被调整的地块缺水次数相应增加。',
+    ],
+  },
+  {
+    title: '地块与沙地',
+    paragraphs: [
+      '地块类型: 土地 (soil) / 水池 (water) / 沙地 (sand)。沙地上可种植草莓、葡萄、南瓜, 生长所需周期 ×1.5 (向下取整)。',
+    ],
+  },
+  {
+    title: '能量机制',
+    paragraphs: [
+      '无人机拥有能量 (上限 10, 初始 0)。`Charge` 原地充能 +5; 行/列范围操作消耗能量: 收割整行/列 4, 浇灌整行/列 3, 拦截整行/列 6。',
     ],
   },
   {
     title: '竞技模式',
     paragraphs: [
       '地图 14×7, 你的半场在左侧 (与单人地图相同), 对方在右侧; 双方用同一坐标系编程 (对方视角为镜像)。',
-      '偷菜: 对方半场收获的金钱进入无人机临时资金池, 返回己方半场时入账; 对方可用 Intercept 拦截, 命中则资金返还。',
-      '种植不受半场限制 (可到对方半场占位种植); 铲除仅限己方半场。',
+      '偷菜: 对方半场收获的金钱进入无人机临时资金池, 返回己方半场时入账; 对方可用 Intercept / InterceptRow / InterceptCol 拦截, 命中则资金返还。',
+      '种植不受半场限制 (可到对方半场占位种植); 铲除仅限己方半场; 行/列收割仅限己方半场。',
     ],
   },
   {

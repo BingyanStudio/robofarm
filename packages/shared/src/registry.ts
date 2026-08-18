@@ -7,11 +7,44 @@ export interface TileTypeConfig {
   name: string;
   /** 无人机能否在该地块取水 */
   canCollectWater: boolean;
+  /** 种植在该地块上时生长周期倍率 (如沙地 1.5) */
+  growthFactor: number;
+  /** 无作物时的地块贴图名 (public/sprites/<name>.svg) */
+  sprite: string;
+  /** 有作物时的地块贴图名; 无则与 sprite 相同 */
+  spriteWithCrop: string;
+  /** 无贴图时程序化绘制的底色 */
+  color: string;
 }
 
 export const TILES: Record<TileType, TileTypeConfig> = {
-  [TileType.Soil]: { type: TileType.Soil, name: '土地', canCollectWater: false },
-  [TileType.Water]: { type: TileType.Water, name: '水池', canCollectWater: true },
+  [TileType.Soil]: {
+    type: TileType.Soil,
+    name: '土地',
+    canCollectWater: false,
+    growthFactor: 1,
+    sprite: 'grass',
+    spriteWithCrop: 'field',
+    color: '#b08d57',
+  },
+  [TileType.Water]: {
+    type: TileType.Water,
+    name: '水池',
+    canCollectWater: true,
+    growthFactor: 1,
+    sprite: 'water',
+    spriteWithCrop: 'water',
+    color: '#6fb7dd',
+  },
+  [TileType.Sand]: {
+    type: TileType.Sand,
+    name: '沙地',
+    canCollectWater: false,
+    growthFactor: 1.5,
+    sprite: 'sand',
+    spriteWithCrop: 'sand_field',
+    color: '#d8c07c',
+  },
 };
 
 export interface CropTypeConfig {
@@ -28,8 +61,9 @@ export interface CropTypeConfig {
   /** 种植后经过多少回合成熟 */
   growCycles: number;
   /**
-   * 缺水的触发间隔: 生长到剩余回合数为 thirstInterval 的整数倍时进入 Thirsty。
-   * 大约每 thirstInterval 回合生长需浇水一次 (浇水次数 ≈ growCycles / thirstInterval);
+   * 缺水的触发间隔 (回合数): 作物总缺水次数 = floor(实际生长周期 / thirstInterval),
+   * 实际周期在种植时按地块 growthFactor 计算 (如沙地 ×1.5);
+   * 缺水均匀分布在生长过程中 (每约 thirstInterval 回合一次)。
    * null 表示无需浇水。
    */
   thirstInterval: number | null;
@@ -44,7 +78,7 @@ export const CROPS: Record<CropType, CropTypeConfig> = {
     type: CropType.Strawberry,
     name: '草莓',
     description: '零成本的基础作物, 适合快速启动与边角料时间。',
-    habitats: [TileType.Soil],
+    habitats: [TileType.Soil, TileType.Sand],
     plantCost: 0,
     value: 5,
     growCycles: 5,
@@ -54,7 +88,7 @@ export const CROPS: Record<CropType, CropTypeConfig> = {
     type: CropType.Grape,
     name: '葡萄',
     description: '生长周期稍长, 但利率更高。',
-    habitats: [TileType.Soil],
+    habitats: [TileType.Soil, TileType.Sand],
     plantCost: 20,
     value: 40,
     growCycles: 15,
@@ -84,7 +118,7 @@ export const CROPS: Record<CropType, CropTypeConfig> = {
     type: CropType.Pumpkin,
     name: '南瓜',
     description: '生长周期和浇水条件都苛刻的植物, 但收益率高。',
-    habitats: [TileType.Soil],
+    habitats: [TileType.Soil, TileType.Sand],
     plantCost: 100,
     value: 300,
     growCycles: 100,

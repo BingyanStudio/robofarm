@@ -19,10 +19,12 @@
 
 2. Tile
 
-`grass.svg` `field.svg` `water.svg` 是地块贴图
-- `grass.svg`: 土地地块在没有种植作物时的贴图
-- `field.svg`: 土地地块在种植作物后的贴图
-- `water.svg`: 水池地块的贴图
+地块贴图由 TILES 注册表的 sprite / spriteWithCrop 字段驱动 (前端自动按名加载):
+- `grass.svg`: 土地 (soil) 无作物时
+- `field.svg`: 土地 (soil) 有作物时
+- `water.svg`: 水池 (water)
+- `sand.svg`: 沙地 (sand) 无作物时
+- `sand_field.svg`: 沙地 (sand) 有作物时
 
 3. 作物
 

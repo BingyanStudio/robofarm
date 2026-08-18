@@ -1,16 +1,14 @@
 // Canvas 游戏渲染器: 地块/作物/无人机绘制, 支持缩放 (滚轮) 与拖拽平移。
 // 渲染使用绝对坐标; mirror 选项用于以对方视角观察 (竞技模式 P2)。
 import type { SnapshotState, CropInfo, Position } from '@robofarm/shared';
-import { CropState, TileType, cropConfig } from '@robofarm/shared';
+import { CropState, TileType, TILES, cropConfig } from '@robofarm/shared';
 import { loadSprites, cropStageIndex, growCyclesOf } from './sprites';
 import type { Sprites } from './sprites';
 import { el } from './ui';
 
 const TILE = 48;
 const COLORS = {
-  soil: '#b08d57',
   soilGrid: 'rgba(0,0,0,0.12)',
-  water: '#6fb7dd',
   waterBorder: '#4a9cc9',
   cropGrowing: '#4caf50',
   cropThirsty: '#ff9800',
@@ -21,6 +19,23 @@ const COLORS = {
   waterPip: '#38bdf8',
   intercept: '#fde047',
 };
+
+/** 地块特效 (颜色 + 初始不透明度, 随时间线性淡出) */
+const FX = {
+  water: { color: '#7dd3fc', alpha: 0.45 }, // 浅蓝: 浇水
+  harvest: { color: '#f59e0b', alpha: 0.7 }, // 深金: 收获 (初始更不透明)
+  intercept: { color: '#fca5a5', alpha: 0.45 }, // 浅红: 拦截
+} as const;
+
+/** 特效持续时间 (毫秒) */
+const FX_DURATION = 200;
+
+interface TileFx {
+  type: keyof typeof FX;
+  x: number;
+  y: number;
+  start: number;
+}
 
 export interface RenderOptions {
   /** 以镜像视角渲染 (竞技模式 P2 的本地视角) */
@@ -46,6 +61,10 @@ export class Renderer {
   private resizeObserver: ResizeObserver | null = null;
   /** 无人机移动动画 (绝对坐标 from → to) */
   private animations = new Map<number, { from: Position; to: Position; start: number; duration: number }>();
+  /** 地块特效 (浇水/收获/拦截, 0.2s 淡出), 按地块 key 去重 */
+  private fx = new Map<string, TileFx>();
+  /** 充能特效: 无人机 id → 开始时间 (0.2s 绿色调) */
+  private chargeFx = new Map<number, number>();
   private rafId: number | null = null;
   /** 已加载的贴图 (加载完成前为 null, 使用程序化绘制兜底) */
   private sprites: Sprites | null = null;
@@ -171,21 +190,42 @@ export class Renderer {
   animateDrone(id: number, from: Position, to: Position, duration = 250): void {
     if (from[0] === to[0] && from[1] === to[1]) return;
     this.animations.set(id, { from, to, start: performance.now(), duration });
-    if (this.rafId === null) {
-      const step = (now: number) => {
-        let alive = false;
-        for (const [aid, a] of this.animations) {
-          if (now - a.start >= a.duration) {
-            this.animations.delete(aid);
-          } else {
-            alive = true;
-          }
-        }
-        this.draw();
-        this.rafId = alive ? requestAnimationFrame(step) : null;
-      };
-      this.rafId = requestAnimationFrame(step);
-    }
+    this.ensureLoop();
+  }
+
+  /** 地块特效: 浇水 (浅蓝) / 收获 (浅金) / 拦截 (浅红), 覆盖整个 Tile 并在 0.2s 内淡出 */
+  tileFx(type: 'water' | 'harvest' | 'intercept', x: number, y: number): void {
+    this.fx.set(`${x},${y}`, { type, x, y, start: performance.now() });
+    this.ensureLoop();
+  }
+
+  /** 充能特效: 无人机色调偏绿, 0.2s 内恢复 */
+  chargeFxOn(id: number): void {
+    this.chargeFx.set(id, performance.now());
+    this.ensureLoop();
+  }
+
+  /** 确保 rAF 循环在跑 (任何动画/特效存续期间保持) */
+  private ensureLoop(): void {
+    if (this.rafId !== null) return;
+    const step = (now: number) => {
+      let alive = false;
+      for (const [aid, a] of this.animations) {
+        if (now - a.start >= a.duration) this.animations.delete(aid);
+        else alive = true;
+      }
+      for (const [key, f] of this.fx) {
+        if (now - f.start >= FX_DURATION) this.fx.delete(key);
+        else alive = true;
+      }
+      for (const [cid, start] of this.chargeFx) {
+        if (now - start >= FX_DURATION) this.chargeFx.delete(cid);
+        else alive = true;
+      }
+      this.draw();
+      this.rafId = alive ? requestAnimationFrame(step) : null;
+    };
+    this.rafId = requestAnimationFrame(step);
   }
 
   /** 无人机当前渲染位置 (动画插值优先, 否则快照位置) */
@@ -230,20 +270,24 @@ export class Renderer {
     // 1. Tile
     rows.push(
       el('div', { class: 'tt-row' }, [
-        el('span', { class: 'tt-title', text: tile.type === TileType.Water ? '水池' : '土地' }),
+        el('span', { class: 'tt-title', text: TILES[tile.type].name }),
         el('span', { class: 'muted', text: `  (${x}, ${y})` }),
       ])
     );
 
-    // 2. 无人机 (如有)
+    // 2. 无人机 (如有): 编号/归属 + 水/能量 无序列表
     const drone = this.state.drones.find((d) => d.position[0] === dx && d.position[1] === y);
     if (drone) {
       const owner = drone.player === 0 ? '我方' : '对方';
       rows.push(
         el('div', { class: 'tt-row' }, [
           el('span', { class: 'tt-title', text: `无人机 #${drone.id} (${owner})` }),
-          el('span', { text: ` · 水 ${drone.water}/5` }),
-          ...(drone.bounty > 0 ? [el('span', { class: 'muted', text: ` · 偷菜 ${drone.bounty}` })] : []),
+        ])
+      );
+      rows.push(
+        el('ul', { class: 'doc-list' }, [
+          el('li', { text: `💧: ${drone.water}` }),
+          el('li', { text: `⚡: ${drone.energy}` }),
         ])
       );
     }
@@ -327,6 +371,19 @@ export class Renderer {
       }
     }
 
+    // 地块特效 (浇水/收获/拦截): 覆盖当前 Tile, 0.2s 内淡出 (绘制在无人机下方)
+    const fxNow = performance.now();
+    for (const f of this.fx.values()) {
+      const t = (fxNow - f.start) / FX_DURATION;
+      if (t < 0 || t >= 1) continue;
+      const fx = FX[f.type];
+      const alpha = Math.round(fx.alpha * (1 - t) * 255).toString(16).padStart(2, '0');
+      const px = this.ox + this.rx(f.x) * TILE * this.scale;
+      const py = this.oy + f.y * TILE * this.scale;
+      ctx.fillStyle = fx.color + alpha;
+      ctx.fillRect(px, py, TILE * this.scale, TILE * this.scale);
+    }
+
     // 无人机 (后绘制, 位于上层)
     for (const d of drones) {
       const pos = this.animatedPosition(d.id, d.position);
@@ -344,7 +401,7 @@ export class Renderer {
     }
   }
 
-  /** 绘制单个地块: 优先贴图 (grass/field/water), 否则程序化绘制 */
+  /** 绘制单个地块: 优先贴图 (按 TILES 注册表取图), 否则程序化绘制 */
   private drawTile(
     tile: { type: TileType; crop: CropInfo | null },
     px: number,
@@ -352,17 +409,14 @@ export class Renderer {
     s: number
   ): void {
     const ctx = this.ctx;
-    const sprite =
-      tile.type === TileType.Water
-        ? this.sprites?.water
-        : tile.crop
-          ? this.sprites?.field
-          : this.sprites?.grass;
+    const cfg = TILES[tile.type];
+    // 有作物时使用 <type>_field 变体贴图 (如 sand_field.svg)
+    const sprite = this.sprites?.tiles[tile.crop ? cfg.spriteWithCrop : cfg.sprite];
     if (sprite) {
       ctx.drawImage(sprite, px, py, s, s);
       return;
     }
-    ctx.fillStyle = tile.type === TileType.Water ? COLORS.water : COLORS.soil;
+    ctx.fillStyle = cfg.color;
     ctx.fillRect(px, py, s, s);
     if (tile.type === TileType.Water) {
       ctx.strokeStyle = COLORS.waterBorder;
@@ -457,6 +511,16 @@ export class Renderer {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(String(d.id), cx, cy);
+    }
+    // 充能特效: 整体色调偏绿, 0.2s 内恢复
+    const chargeStart = this.chargeFx.get(d.id);
+    if (chargeStart !== undefined) {
+      const t = (performance.now() - chargeStart) / FX_DURATION;
+      if (t < 1) {
+        ctx.fillStyle = `rgba(74, 222, 128, ${(0.45 * (1 - t)).toFixed(2)})`;
+        roundRect(ctx, px, py, s, s, s * 0.08);
+        ctx.fill();
+      }
     }
     // 储水 (画在缩小后机身的下缘)
     for (let i = 0; i < d.water; i++) {

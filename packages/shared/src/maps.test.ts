@@ -28,7 +28,27 @@ describe('maps', () => {
     ];
     for (const [x, y] of waterTiles) expect(w.map[y][x].type).toBe(TileType.Water);
     expect(w.map[3][3].type).toBe(TileType.Soil);
-    expect(w.map[0][0].type).toBe(TileType.Soil);
+  });
+
+  it('单人地图沙地区域正确: (0,0)-(6,1) 与 (0,2)-(2,3) 为沙地, 水池不被覆盖', () => {
+    const w = createSingleWorld(300);
+    for (let x = 0; x <= 6; x++) {
+      for (let y = 0; y <= 1; y++) {
+        const t = w.map[y][x].type;
+        // 水池 (1,1)(2,1) 优先于沙地
+        if ((x === 1 || x === 2) && y === 1) expect(t).toBe(TileType.Water);
+        else expect(t).toBe(TileType.Sand);
+      }
+    }
+    for (let x = 0; x <= 2; x++) {
+      for (let y = 2; y <= 3; y++) {
+        const t = w.map[y][x].type;
+        if (x === 1 && y === 2) expect(t).toBe(TileType.Water);
+        else expect(t).toBe(TileType.Sand);
+      }
+    }
+    // 区域外仍是土地
+    expect(w.map[4][3].type).toBe(TileType.Soil);
   });
 
   it('竞技地图 14x7, 左右半场互为镜像', () => {

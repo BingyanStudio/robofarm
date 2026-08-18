@@ -224,7 +224,7 @@ function apiManualTabs(): HTMLElement {
 }
 
 /** 挂载右侧 API 手册边栏 (默认收起, 点击图标切换) */
-export function mountApiManual(): void {
+export function mountApiManual(): () => void {
   const sidebar = el('div', { class: 'api-sidebar' });
   const closeBtn = button('✕', () => setOpen(false), { class: 'btn btn-small' });
   const head = el('div', { class: 'api-sidebar-head' }, [el('h3', { text: '无人机 API 手册' }), closeBtn]);
@@ -244,4 +244,6 @@ export function mountApiManual(): void {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && open) setOpen(false);
   });
+  // 返回控制句柄 (首次进入时自动展开用)
+  return () => setOpen(true);
 }

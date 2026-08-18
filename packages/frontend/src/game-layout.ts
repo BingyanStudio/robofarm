@@ -13,6 +13,10 @@ export const DEFAULT_CODE = `// RoboFarm 玩家程序
 //   new Harvest()                       收获 (当前格作物成熟时)
 //   new Clear()                         铲除 (当前格作物)
 //   new Intercept([x, y])               拦截 (竞技模式)
+//   new Charge()                        充能 (+5 能量, 上限 10)
+//   new HarvestRow() / new HarvestCol() 收割整行/列 (4 能量)
+//   new WaterRow() / new WaterCol()     浇灌整行/列 (3 能量)
+//   new InterceptRow() / new InterceptCol() 拦截整行/列 (6 能量)
 // 可用的 API: getSelf() / getGame() / getMap() / getTile(p) /
 //             getCrop(p) / getDrone(p)
 function run(droneId: number) {
@@ -172,6 +176,18 @@ export class GameView {
         case 'move':
           // 无人机移动过渡动画
           this.cb.renderer.animateDrone(e.drone, e.from, e.to);
+          break;
+        case 'water':
+          this.cb.renderer.tileFx('water', e.pos[0], e.pos[1]);
+          break;
+        case 'harvest':
+          this.cb.renderer.tileFx('harvest', e.pos[0], e.pos[1]);
+          break;
+        case 'intercept':
+          this.cb.renderer.tileFx('intercept', e.pos[0], e.pos[1]);
+          break;
+        case 'charge':
+          this.cb.renderer.chargeFxOn(e.drone);
           break;
         case 'invalid-op':
           this.cb.onLog([`[警告] 无人机 #${e.drone} 操作无效: ${e.message}`]);

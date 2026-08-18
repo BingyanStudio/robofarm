@@ -22,6 +22,21 @@ export const TURN_INTERVALS_MS = [TURN_INTERVAL_MS, 400, 200] as const;
 /** 玩家初始金钱 */
 export const START_MONEY = 20;
 
+/** 无人机能量上限 */
+export const MAX_ENERGY = 10;
+
+/** Charge 每次补充的能量 */
+export const CHARGE_GAIN = 5;
+
+/** HarvestRow / HarvestCol 的能量消耗 */
+export const HARVEST_ROW_COL_COST = 4;
+
+/** WaterRow / WaterCol 的能量消耗 */
+export const WATER_ROW_COL_COST = 3;
+
+/** InterceptRow / InterceptCol 的能量消耗 */
+export const INTERCEPT_ROW_COL_COST = 6;
+
 /** 每个玩家程序最多保留的日志行数 */
 export const MAX_LOG_LINES = 200;
 

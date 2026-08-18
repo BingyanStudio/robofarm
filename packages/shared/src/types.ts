@@ -8,6 +8,7 @@ export type Position = [number, number];
 export enum TileType {
   Soil = 'soil',
   Water = 'water',
+  Sand = 'sand',
 }
 
 /** 作物类型。未来新增作物时在 registry.ts 中注册 */
@@ -47,7 +48,15 @@ export type InternalOperation =
   | { type: 'water' }
   | { type: 'harvest' }
   | { type: 'clear' }
-  | { type: 'intercept'; at: Position };
+  | { type: 'intercept'; at: Position }
+  // 能量相关操作
+  | { type: 'charge' }
+  | { type: 'harvestRow' }
+  | { type: 'harvestCol' }
+  | { type: 'waterRow' }
+  | { type: 'waterCol' }
+  | { type: 'interceptRow' }
+  | { type: 'interceptCol' };
 
 /** 单个地块的信息 (玩家 API 视角) */
 export interface TileInfo {
@@ -72,6 +81,8 @@ export interface DroneInfo {
   position: Position;
   /** 当前储水量 */
   water: number;
+  /** 当前能量 (上限 MAX_ENERGY) */
+  energy: number;
   /** 是否是对方的无人机 */
   isOpponent: boolean;
   /** 对方无人机偷菜所得金额 (偷菜后未带回/未被拦截的部分) */
@@ -113,6 +124,13 @@ export interface CropData {
   state: CropState;
   /** 距离成熟的剩余生长回合数 (Growing 时递减; Thirsty 时不推进) */
   growthRemaining: number;
+  /**
+   * 总缺水次数: 种植时按该次种植的实际生长周期数 (含地块 growthFactor)
+   * 动态计算, 即 floor(实际周期 / thirstInterval); 0 表示无需浇水。
+   */
+  thirstTotal?: number;
+  /** 已发生的缺水次数 */
+  thirstsDone?: number;
 }
 
 export interface Tile {
@@ -127,10 +145,14 @@ export interface DroneState {
   player: number;
   position: Position;
   water: number;
+  /** 能量储量 (上限 MAX_ENERGY, 经 Charge 补充) */
+  energy: number;
   /** 偷菜所得临时资金池 (离开对方半场前持有) */
   bounty: number;
   /** 本回合的拦截目标, 回合结束时结算 */
   interceptTarget: Position | null;
+  /** 行/列范围拦截 (回合结束时对整行/整列有偷菜资金的对方无人机生效) */
+  interceptZone: 'row' | 'col' | null;
 }
 
 export interface PlayerState {
@@ -164,6 +186,7 @@ export interface SnapshotDrone {
   player: number;
   position: Position;
   water: number;
+  energy: number;
   bounty: number;
   interceptTarget: Position | null;
 }
@@ -207,6 +230,7 @@ export type GameEvent =
   | { type: 'collect-water'; drone: number; pos: Position; water: number }
   | { type: 'water'; drone: number; pos: Position }
   | { type: 'harvest'; drone: number; pos: Position; value: number; stole: boolean }
+  | { type: 'charge'; drone: number; pos: Position; energy: number }
   | { type: 'clear'; drone: number; pos: Position }
   | { type: 'intercept'; drone: number; pos: Position; thief: number; bounty: number }
   | { type: 'stash'; drone: number; pos: Position; bounty: number }

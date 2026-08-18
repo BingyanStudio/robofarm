@@ -16,8 +16,15 @@ import {
   WorldState,
 } from './types';
 import { TILES, cropConfig } from './registry';
-import { MAX_WATER } from './config';
-import { inBounds, isOwnHalf, samePos, tileAt } from './maps';
+import {
+  CHARGE_GAIN,
+  HARVEST_ROW_COL_COST,
+  INTERCEPT_ROW_COL_COST,
+  MAX_ENERGY,
+  MAX_WATER,
+  WATER_ROW_COL_COST,
+} from './config';
+import { inBounds, isOwnHalf, isOwnHalfAt, samePos, tileAt } from './maps';
 
 /** 某架无人机本回合的动作 */
 export interface DroneAction {
@@ -47,7 +54,16 @@ const OP_HANDLERS: Record<string, OpHandler> = {
     const player = world.players[drone.player];
     if (player.money < cfg.plantCost) return { ok: false, message: '金钱不足' };
     player.money -= cfg.plantCost;
-    tile.crop = { type: op.crop, state: CropState.Growing, growthRemaining: cfg.growCycles };
+    // 生长周期受地块类型影响 (如沙地 ×1.5), 数据在 TILES 注册表;
+    // 总缺水次数按该次种植的实际周期动态计算 (不依赖固定的剩余取模)
+    const adjusted = Math.floor(cfg.growCycles * TILES[tile.type].growthFactor);
+    tile.crop = {
+      type: op.crop,
+      state: CropState.Growing,
+      growthRemaining: adjusted,
+      thirstTotal: cfg.thirstInterval === null ? 0 : Math.floor(adjusted / cfg.thirstInterval),
+      thirstsDone: 0,
+    };
     events.push({ type: 'plant', drone: drone.id, pos: [drone.position[0], drone.position[1]], crop: op.crop });
     return { ok: true };
   },
@@ -124,7 +140,120 @@ const OP_HANDLERS: Record<string, OpHandler> = {
     drone.interceptTarget = [op.at[0], op.at[1]];
     return { ok: true };
   },
+
+  charge(ctx, op) {
+    if (op.type !== 'charge') return { ok: false };
+    const { drone, events } = ctx;
+    const gained = Math.min(MAX_ENERGY - drone.energy, CHARGE_GAIN);
+    drone.energy += gained;
+    events.push({
+      type: 'charge',
+      drone: drone.id,
+      pos: [drone.position[0], drone.position[1]],
+      energy: drone.energy,
+    });
+    return { ok: true };
+  },
+
+  harvestRow: (ctx, op) => harvestLine(ctx, op, 'row'),
+  harvestCol: (ctx, op) => harvestLine(ctx, op, 'col'),
+  waterRow: (ctx, op) => waterLine(ctx, op, 'row'),
+  waterCol: (ctx, op) => waterLine(ctx, op, 'col'),
+
+  interceptRow(ctx, op) {
+    if (op.type !== 'interceptRow') return { ok: false };
+    return setInterceptZone(ctx, 'row');
+  },
+  interceptCol(ctx, op) {
+    if (op.type !== 'interceptCol') return { ok: false };
+    return setInterceptZone(ctx, 'col');
+  },
 };
+
+/**
+ * 行/列范围收获: 一次性收获所在行/列的全部成熟作物, 消耗能量。
+ * 竞技模式仅收割自己半场的作物 (对方半场的作物不能由此收割)。
+ */
+function harvestLine(
+  ctx: OpContext,
+  op: InternalOperation,
+  axis: 'row' | 'col'
+): { ok: boolean; message?: string } {
+  if (op.type !== 'harvestRow' && op.type !== 'harvestCol') return { ok: false };
+  const { world, drone, events } = ctx;
+  if (drone.energy < HARVEST_ROW_COL_COST) {
+    return { ok: false, message: `能量不足: ${op.type} 需要 ${HARVEST_ROW_COL_COST} 点能量` };
+  }
+  drone.energy -= HARVEST_ROW_COL_COST;
+  const w = world.map[0].length;
+  const h = world.map.length;
+  const len = axis === 'row' ? w : h;
+  let count = 0;
+  for (let i = 0; i < len; i++) {
+    const pos: Position = axis === 'row' ? [i, drone.position[1]] : [drone.position[0], i];
+    const tile = world.map[pos[1]][pos[0]];
+    const crop = tile.crop;
+    if (!crop || crop.state !== CropState.Grown) continue;
+    if (world.mode === 'combat' && !isOwnHalfAt(world, drone.player, pos)) continue;
+    const cfg = cropConfig(crop.type);
+    tile.crop = null;
+    // 行/列收割只作用于自己半场, 收获直接入账 (不产生偷菜)
+    world.players[drone.player].money += cfg.value;
+    events.push({
+      type: 'harvest',
+      drone: drone.id,
+      pos: [pos[0], pos[1]],
+      value: cfg.value,
+      stole: false,
+    });
+    count++;
+  }
+  return { ok: true, message: count === 0 ? '本行/列没有可收获的作物' : undefined };
+}
+
+/**
+ * 行/列范围浇水: 从左到右 (行) 或从上到下 (列) 给缺水作物浇水直到水耗尽,
+ * 跳过不需要浇水的作物, 消耗能量。
+ */
+function waterLine(
+  ctx: OpContext,
+  op: InternalOperation,
+  axis: 'row' | 'col'
+): { ok: boolean; message?: string } {
+  if (op.type !== 'waterRow' && op.type !== 'waterCol') return { ok: false };
+  const { world, drone, events } = ctx;
+  if (drone.energy < WATER_ROW_COL_COST) {
+    return { ok: false, message: `能量不足: ${op.type} 需要 ${WATER_ROW_COL_COST} 点能量` };
+  }
+  drone.energy -= WATER_ROW_COL_COST;
+  const w = world.map[0].length;
+  const h = world.map.length;
+  const len = axis === 'row' ? w : h;
+  let count = 0;
+  for (let i = 0; i < len; i++) {
+    const pos: Position = axis === 'row' ? [i, drone.position[1]] : [drone.position[0], i];
+    const crop = world.map[pos[1]][pos[0]].crop;
+    if (!crop || crop.state !== CropState.Thirsty) continue; // 跳过不需要浇水的作物
+    if (drone.water < 1) break; // 水耗尽即停止
+    drone.water -= 1;
+    crop.state = CropState.Growing;
+    events.push({ type: 'water', drone: drone.id, pos: [pos[0], pos[1]] });
+    count++;
+  }
+  return { ok: true, message: count === 0 ? '没有浇到任何作物 (水耗尽或本行/列无缺水作物)' : undefined };
+}
+
+/** 行/列范围拦截: 回合结束时对该行/列全部携带偷菜资金的对方无人机生效 */
+function setInterceptZone(ctx: OpContext, zone: 'row' | 'col'): { ok: boolean; message?: string } {
+  const { world, drone } = ctx;
+  if (world.mode !== 'combat') return { ok: false, message: '拦截仅在竞技模式可用' };
+  if (drone.energy < INTERCEPT_ROW_COL_COST) {
+    return { ok: false, message: `能量不足: 范围拦截需要 ${INTERCEPT_ROW_COL_COST} 点能量` };
+  }
+  drone.energy -= INTERCEPT_ROW_COL_COST;
+  drone.interceptZone = zone;
+  return { ok: true };
+}
 
 interface MoveCandidate {
   drone: DroneState;
@@ -209,7 +338,7 @@ export function stepTurn(world: WorldState, actions: Record<number, DroneAction>
     events.push({ type: 'move', drone: m.drone.id, from, to: m.to });
   }
 
-  // 阶段 3: 回合结束结算 —— 拦截, 然后偷菜资金带回
+  // 阶段 3: 回合结束结算 —— 拦截 (单格 / 行 / 列), 然后偷菜资金带回
   for (const drone of world.drones) {
     const target = drone.interceptTarget;
     if (!target) continue;
@@ -224,6 +353,26 @@ export function stepTurn(world: WorldState, actions: Record<number, DroneAction>
         type: 'intercept',
         drone: drone.id,
         pos: [target[0], target[1]],
+        thief: other.id,
+        bounty,
+      });
+    }
+  }
+  for (const drone of world.drones) {
+    const zone = drone.interceptZone;
+    if (!zone) continue;
+    drone.interceptZone = null;
+    for (const other of world.drones) {
+      if (other.player === drone.player || other.bounty <= 0) continue;
+      if (zone === 'row' && other.position[1] !== drone.position[1]) continue;
+      if (zone === 'col' && other.position[0] !== drone.position[0]) continue;
+      const bounty = other.bounty;
+      other.bounty = 0;
+      world.players[drone.player].money += bounty;
+      events.push({
+        type: 'intercept',
+        drone: drone.id,
+        pos: [other.position[0], other.position[1]],
         thief: other.id,
         bounty,
       });
@@ -267,10 +416,23 @@ function tickCrop(crop: CropData, pos: Position, events: GameEvent[]): void {
       crop.state = CropState.Grown;
       crop.growthRemaining = 0;
       events.push({ type: 'crop-grow', pos, state: CropState.Grown, cyclesToGrown: 0 });
-    } else if (cfg.thirstInterval !== null && crop.growthRemaining % cfg.thirstInterval === 0) {
-      // 生长一段时间后进入缺水状态, 需要浇水
-      crop.state = CropState.Thirsty;
-      events.push({ type: 'crop-grow', pos, state: CropState.Thirsty, cyclesToGrown: 0 });
+    } else if (cfg.thirstInterval !== null) {
+      // 缺水触发按种植时记录的"总缺水次数"动态计算:
+      // 第 (thirstsDone+1) 次缺水发生在剩余回合数降到 ceil((剩余次数)·thirstInterval) 时。
+      const total = crop.thirstTotal ?? 0;
+      const done = crop.thirstsDone ?? 0;
+      if (total > 0 && done < total && crop.growthRemaining === Math.ceil((total - done) * cfg.thirstInterval)) {
+        crop.state = CropState.Thirsty;
+        crop.thirstsDone = done + 1;
+        events.push({ type: 'crop-grow', pos, state: CropState.Thirsty, cyclesToGrown: 0 });
+      } else {
+        events.push({
+          type: 'crop-grow',
+          pos,
+          state: CropState.Growing,
+          cyclesToGrown: crop.growthRemaining,
+        });
+      }
     } else {
       events.push({
         type: 'crop-grow',

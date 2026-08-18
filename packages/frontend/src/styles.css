@@ -152,6 +152,27 @@ body {
   margin-right: 6px;
 }
 
+/* 标题栏版本号: 灰色小字, 常驻显示 */
+.version-badge {
+  color: #6b7f76;
+  font-size: 12px;
+  margin-left: auto;
+  flex: none;
+}
+
+/* 更新日志: 与弹窗边缘保持间距 */
+.update-log {
+  padding: 4px 10px;
+}
+
+.update-log h4 {
+  margin: 12px 0 4px;
+}
+
+.update-log ul {
+  margin: 0 0 8px;
+}
+
 .user-chip {
   padding: 4px 12px;
   border-radius: 20px;

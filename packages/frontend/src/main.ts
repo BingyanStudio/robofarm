@@ -8,11 +8,15 @@ import { battleScreen } from './screens/battle';
 import { replayScreen } from './screens/replay';
 import { spectateScreen } from './screens/spectate';
 import { mountApiManual } from './api-manual';
+import { checkVersionOnLoad } from './version';
 
 const app = document.getElementById('app')!;
 
 // 全局右侧 API 手册边栏 (所有界面可用, 默认收起)
-mountApiManual();
+const openManual = mountApiManual();
+
+// 版本检查: 首次进入自动展开 API 手册, 版本升级/无法识别时展示更新日志
+checkVersionOnLoad(openManual);
 
 function route(): void {
   const hash = location.hash.replace(/^#\/?/, '');
