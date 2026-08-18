@@ -630,3 +630,48 @@ describe('engine: 新作物 (西瓜/紫云英/香菇)', () => {
     expect(shiitakeCount).toBeGreaterThanOrEqual(4);
   });
 });
+
+describe('engine: 水仙 (autoWater) 与 ChangeTile', () => {
+  it('水仙: 生长中每 3 周期按 上→右→下→左 顺序给邻格缺水作物浇水, 每回合一次', () => {
+    const w = single();
+    w.players[0].money = 200;
+    w.drones[0].position = [4, 4]; // 水池
+    stepTurn(w, actions([0, { type: 'plant', crop: CropType.Daffodil }]));
+    expect(w.map[4][4].crop!.growthRemaining).toBe(79); // 80 - 1
+    // 邻格缺水作物: 上 (4,3), 右 (5,4)
+    placeCrop(w, [4, 3], { type: CropType.Strawberry, state: CropState.Thirsty, growthRemaining: 10 });
+    placeCrop(w, [5, 4], { type: CropType.Strawberry, state: CropState.Thirsty, growthRemaining: 10 });
+    // 第 2 周期: 无浇水
+    stepTurn(w, actions([0, null]));
+    expect(w.map[3][4].crop!.state).toBe(CropState.Thirsty);
+    // 第 3 周期: 只给 "上" 浇水 (每回合一次)
+    const events = stepTurn(w, actions([0, null]));
+    const waters = eventsOfType(events, 'water');
+    expect(waters).toHaveLength(1);
+    expect((waters[0] as any).pos).toEqual([4, 3]);
+    expect(w.map[3][4].crop!.state).toBe(CropState.Growing);
+    expect(w.map[4][5].crop!.state).toBe(CropState.Thirsty); // 右 未浇
+  });
+
+  it('ChangeTile: 消耗 3 能量, 上下左右须有同类型地块, 有作物时不能转换', () => {
+    const w = single();
+    w.drones[0].energy = 5;
+    w.drones[0].position = [3, 3]; // 四周: (2,3)沙地, 其余土地, 无水池
+    // 无相邻水池 → 转 water 失败
+    let events = stepTurn(w, actions([0, { type: 'changeTile', tileType: TileType.Water }]));
+    expect(eventsOfType(events, 'invalid-op')).toHaveLength(1);
+    expect(w.drones[0].energy).toBe(5); // 未扣能量
+    // 相邻 (2,3) 是沙地 → 转 sand 成功
+    events = stepTurn(w, actions([0, { type: 'changeTile', tileType: TileType.Sand }]));
+    expect(eventsOfType(events, 'change-tile')).toHaveLength(1);
+    expect(w.map[3][3].type).toBe(TileType.Sand);
+    expect(w.drones[0].energy).toBe(2); // 5 - 3
+    // 已存在作物 → 不能转换
+    placeCrop(w, [3, 3], { type: CropType.Strawberry, state: CropState.Growing, growthRemaining: 3 });
+    events = stepTurn(w, actions([0, { type: 'changeTile', tileType: TileType.Soil }]));
+    expect(eventsOfType(events, 'invalid-op')).toHaveLength(1);
+    // 能量不足
+    events = stepTurn(w, actions([0, { type: 'changeTile', tileType: TileType.Soil }]));
+    expect(eventsOfType(events, 'invalid-op')).toHaveLength(1);
+  });
+});

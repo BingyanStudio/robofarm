@@ -21,6 +21,7 @@ export enum CropType {
   Melon = 'melon',
   MilkVetch = 'milk_vetch',
   Shiitake = 'shiitake',
+  Daffodil = 'daffodil',
 }
 
 /** 作物状态 */
@@ -59,7 +60,9 @@ export type InternalOperation =
   | { type: 'waterRow' }
   | { type: 'waterCol' }
   | { type: 'interceptRow' }
-  | { type: 'interceptCol' };
+  | { type: 'interceptCol' }
+  // 地块转换
+  | { type: 'changeTile'; tileType: TileType };
 
 /** 单个地块的信息 (玩家 API 视角) */
 export interface TileInfo {
@@ -236,6 +239,7 @@ export type GameEvent =
   | { type: 'water'; drone: number; pos: Position }
   | { type: 'harvest'; drone: number; pos: Position; value: number; stole: boolean }
   | { type: 'charge'; drone: number; pos: Position; energy: number }
+  | { type: 'change-tile'; drone: number; pos: Position; tileType: TileType }
   | { type: 'clear'; drone: number; pos: Position }
   | { type: 'intercept'; drone: number; pos: Position; thief: number; bounty: number }
   | { type: 'stash'; drone: number; pos: Position; bounty: number }

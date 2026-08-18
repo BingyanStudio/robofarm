@@ -1,7 +1,8 @@
 // 注入玩家沙箱的 API 实现。前后端共用这一份实现, 保证玩家代码
 // 在前端本地执行与在后端验证执行时得到完全相同的结果。
 // API 函数只读取"每回合由宿主传入的视图快照", 因此天然无状态。
-import { CropInfo, CropType, DroneInfo, GameInfo, PlayerView, Position, TileInfo } from './types';
+import { CropInfo, CropType, DroneInfo, GameInfo, PlayerView, Position, TileInfo, TileType } from './types';
+import { TILES } from './registry';
 import { MAX_LOGS_PER_TURN, MAX_LOG_LINES } from './config';
 import { isPosition } from './ops';
 import { isCropType } from './registry';
@@ -134,6 +135,17 @@ export class InterceptCol extends DroneOperation {
   }
 }
 
+/** 转换脚下地块: 消耗 3 能量, 上下左右必须有至少一个与目标类型相同的地块 */
+export class ChangeTile extends DroneOperation {
+  readonly type = 'changeTile';
+  constructor(public tileType: TileType) {
+    super();
+    if (!(tileType in TILES)) {
+      throw new Error(`ChangeTile 的目标类型必须是 soil / water / sand 之一, 收到: ${String(tileType)}`);
+    }
+  }
+}
+
 /** 注入沙箱的全部操作类 (按类名供玩家代码直接引用) */
 export const OPS = {
   DroneOperation,
@@ -151,6 +163,7 @@ export const OPS = {
   WaterCol,
   InterceptRow,
   InterceptCol,
+  ChangeTile,
 };
 
 export interface PlayerApi {

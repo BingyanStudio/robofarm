@@ -2,7 +2,7 @@
 // 结构校验在这里进行 (新增操作类型时, 在此注册 schema),
 // 语义校验 (是否越界、金钱是否足够等) 在 engine.ts 中进行。
 import { InternalOperation, Position } from './types';
-import { isCropType } from './registry';
+import { TILES, isCropType } from './registry';
 
 export type NormalizeResult =
   | { ok: true; op: InternalOperation | null }
@@ -39,6 +39,7 @@ const OP_SCHEMAS: Record<string, OpSchema> = {
   waterCol: { fields: [] },
   interceptRow: { fields: [] },
   interceptCol: { fields: [] },
+  changeTile: { fields: [{ name: 'tileType', kind: 'string' }] },
 };
 
 /**
@@ -47,6 +48,7 @@ const OP_SCHEMAS: Record<string, OpSchema> = {
  * 会丢失原型, 因此统一在 normalizeOp 里按构造类名转换为纯对象。
  */
 const OP_CLASS_TYPES: Record<string, string> = {
+  ChangeTile: 'changeTile',
   Move: 'move',
   Plant: 'plant',
   CollectWater: 'collectWater',
@@ -104,6 +106,9 @@ export function normalizeOp(raw: unknown): NormalizeResult {
   }
   if (type === 'plant' && !isCropType(op.crop)) {
     return { ok: false, error: `未知作物类型: ${String(op.crop)}` };
+  }
+  if (type === 'changeTile' && !(String(op.tileType) in TILES)) {
+    return { ok: false, error: `ChangeTile 的目标类型必须是 soil / water / sand 之一, 收到: ${String(op.tileType)}` };
   }
   // 输出干净的纯对象 (丢弃额外字段, 便于跨 worker 传输)
   const out: Record<string, unknown> = { type };

@@ -100,11 +100,17 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
   行/列范围操作消耗能量 (收割 4 / 浇灌 3 / 拦截 6, 常量在 config.ts)。
   行/列收割仅限己方半场; 行/列拦截在回合结束结算 (interceptZone 字段)。
 - 当前作物: 草莓 / 葡萄 / 小麦 (需水) / 荷花 (水生) / 南瓜 (需水) /
-  西瓜 (需水, 沙地免疫 growthOverride) / 紫云英 (成熟加速邻格 onMature) / 香菇 (成熟自动扩散 onMature),
+  西瓜 (需水, 沙地免疫 growthOverride) / 紫云英 (成熟加速邻格 onMature) / 香菇 (成熟自动扩散 onMature) /
+  水仙 (生长自动浇水 onGrow),
   完整属性见 agent/CROP.md, 数据在 `CROPS` 注册表 (改文档或加作物只改这一处)。
 - **成熟特效 (onMature)**: 每种作物成熟时都会执行其挂接的特效 (多数作物不声明)。
   效果按 id 在 engine.ts 的 `MATURITY_EFFECTS` 表注册 (如 accelerateNeighbors / selfSpread),
   新增特效 = 加一个处理器 + 在注册表声明, 无需 if 硬编码。
+- **生长特效 (onGrow)**: 与 onMature 同构, 每个生长回合执行 (如 Daffodil 的 autoWater,
+  每 3 周期按 上→右→下→左 给邻格缺水作物浇水, 一次/回合, 成熟失效), 处理器在
+  engine.ts 的 `GROWTH_EFFECTS` 表注册。
+- **ChangeTile**: 消耗 CHANGE_TILE_COST (config.ts), 需上下左右有同类型地块 (orthNeighbors 检查),
+  有作物的地块不可转换; 按操作三处注册 (player-api + OP_SCHEMAS + OP_HANDLERS)。
 
 ## 引擎语义 (shared/src/engine.ts, 改前必读)
 

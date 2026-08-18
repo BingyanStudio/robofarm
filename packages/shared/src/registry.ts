@@ -77,6 +77,11 @@ export interface CropTypeConfig {
    * 每种作物成熟时都会执行其挂接的特效; 多数作物不声明 (无特效)。
    */
   onMature?: 'accelerateNeighbors' | 'selfSpread';
+  /**
+   * 生长中的特效 (效果 id): 引擎按 id 在 GROWTH_EFFECTS 表注册处理器,
+   * 每种作物在生长中的每个回合都会执行其挂接的特效; 多数作物不声明 (无特效)。
+   */
+  onGrow?: 'autoWater';
 }
 
 /**
@@ -166,6 +171,17 @@ export const CROPS: Record<CropType, CropTypeConfig> = {
     growCycles: 20,
     thirstInterval: null, // 无需浇水
     onMature: 'selfSpread',
+  },
+  [CropType.Daffodil]: {
+    type: CropType.Daffodil,
+    name: '水仙',
+    description: '功能性作物, 为周围的作物提供缓慢的浇水支持。',
+    habitats: [TileType.Water],
+    plantCost: 150,
+    value: 100,
+    growCycles: 80,
+    thirstInterval: null, // 无需浇水
+    onGrow: 'autoWater', // 生长中每 3 周期自动给邻格缺水作物浇水一次
   },
 };
 

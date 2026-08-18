@@ -55,11 +55,39 @@ export const DOC_OPERATIONS: DocEntry[] = [
     example: 'return new Water();',
   },
   {
+    id: 'doc-WaterRow',
+    name: 'WaterRow',
+    def: 'class WaterRow extends DroneOperation',
+    desc: '给所在行作物从左到右浇水, 直到储水耗尽为止, 跳过不需要浇水的作物, 消耗 3 能量。',
+    example: 'return new WaterRow();',
+  },
+  {
+    id: 'doc-WaterCol',
+    name: 'WaterCol',
+    def: 'class WaterCol extends DroneOperation',
+    desc: '给所在列作物从上到下浇水, 直到储水耗尽为止, 跳过不需要浇水的作物, 消耗 3 能量。',
+    example: 'return new WaterCol();',
+  },
+  {
     id: 'doc-Harvest',
     name: 'Harvest',
     def: 'class Harvest extends DroneOperation',
     desc: '收获当前格已成熟的作物, 获得其价值。竞技模式下在对方半场收获会进入无人机临时资金池 (偷菜)。',
     example: 'return new Harvest();',
+  },
+  {
+    id: 'doc-HarvestRow',
+    name: 'HarvestRow',
+    def: 'class HarvestRow extends DroneOperation',
+    desc: '一次性收获自身所在行的全部成熟作物, 消耗 4 能量。竞技模式仅收割自己半场的作物 (不产生偷菜)。',
+    example: 'return new HarvestRow();',
+  },
+  {
+    id: 'doc-HarvestCol',
+    name: 'HarvestCol',
+    def: 'class HarvestCol extends DroneOperation',
+    desc: '一次性收获自身所在列的全部成熟作物, 消耗 4 能量。竞技模式仅收割自己半场的作物 (不产生偷菜)。',
+    example: 'return new HarvestCol();',
   },
   {
     id: 'doc-Clear',
@@ -77,41 +105,6 @@ export const DOC_OPERATIONS: DocEntry[] = [
     example: 'return new Intercept([5, 3]);',
   },
   {
-    id: 'doc-Charge',
-    name: 'Charge',
-    def: 'class Charge extends DroneOperation',
-    desc: '充能: 本回合原地不动, 能量 +5 (上限 10)。能量用于行/列范围操作。',
-    example: 'return new Charge();',
-  },
-  {
-    id: 'doc-HarvestRow',
-    name: 'HarvestRow',
-    def: 'class HarvestRow extends DroneOperation',
-    desc: '一次性收获自身所在行的全部成熟作物, 消耗 4 能量。竞技模式仅收割自己半场的作物 (不产生偷菜)。',
-    example: 'return new HarvestRow();',
-  },
-  {
-    id: 'doc-HarvestCol',
-    name: 'HarvestCol',
-    def: 'class HarvestCol extends DroneOperation',
-    desc: '一次性收获自身所在列的全部成熟作物, 消耗 4 能量。竞技模式仅收割自己半场的作物 (不产生偷菜)。',
-    example: 'return new HarvestCol();',
-  },
-  {
-    id: 'doc-WaterRow',
-    name: 'WaterRow',
-    def: 'class WaterRow extends DroneOperation',
-    desc: '给所在行作物从左到右浇水, 直到储水耗尽为止, 跳过不需要浇水的作物, 消耗 3 能量。',
-    example: 'return new WaterRow();',
-  },
-  {
-    id: 'doc-WaterCol',
-    name: 'WaterCol',
-    def: 'class WaterCol extends DroneOperation',
-    desc: '给所在列作物从上到下浇水, 直到储水耗尽为止, 跳过不需要浇水的作物, 消耗 3 能量。',
-    example: 'return new WaterCol();',
-  },
-  {
     id: 'doc-InterceptRow',
     name: 'InterceptRow',
     def: 'class InterceptRow extends DroneOperation',
@@ -124,6 +117,21 @@ export const DOC_OPERATIONS: DocEntry[] = [
     def: 'class InterceptCol extends DroneOperation',
     desc: '竞技模式专用: 回合结束时拦截所在列全部携带偷菜资金的对方无人机, 消耗 6 能量。',
     example: 'return new InterceptCol();',
+  },
+  {
+    id: 'doc-Charge',
+    name: 'Charge',
+    def: 'class Charge extends DroneOperation',
+    desc: '充能: 本回合原地不动, 能量 +5 (上限 10)。能量用于行/列范围操作。',
+    example: 'return new Charge();',
+  },
+  {
+    id: 'doc-ChangeTile',
+    name: 'ChangeTile',
+    def: 'class ChangeTile extends DroneOperation',
+    desc: '将脚下地块转换为指定类型 (soil / water / sand), 消耗 3 能量。前提: 上下左右必须有至少一个与目标类型相同的地块, 不允许凭空创造; 有作物的地块不能转换。',
+    params: ['`tileType`: `\'soil\' | \'water\' | \'sand\'` — 目标地块类型'],
+    example: 'return new ChangeTile(\'water\');',
   },
 ];
 
@@ -302,6 +310,7 @@ export const DOC_RULES: DocParagraphSection[] = [
     paragraphs: [
       '作物有 生长中 / 缺水 / 成熟 三种状态; 进入缺水后长期保持, 生长不推进, 浇水后继续。',
       '缺水次数按种植时的实际生长周期动态计算 (每约 `thirstInterval` 回合一次, 总次数 = 实际周期 ÷ 间隔), 沙地等生长周期被调整的地块缺水次数相应增加。',
+      '水仙 (种在水池): 生长中每 3 个周期按 上→右→下→左 顺序自动给邻格缺水作物浇水, 每回合仅一次, 成熟后失效。',
     ],
   },
   {
@@ -313,7 +322,7 @@ export const DOC_RULES: DocParagraphSection[] = [
   {
     title: '能量机制',
     paragraphs: [
-      '无人机拥有能量 (上限 10, 初始 0)。`Charge` 原地充能 +5; 行/列范围操作消耗能量: 收割整行/列 4, 浇灌整行/列 3, 拦截整行/列 6。',
+      '无人机拥有能量 (上限 10, 初始 0)。`Charge` 原地充能 +5; 行/列范围操作消耗能量: 收割整行/列 4, 浇灌整行/列 3, 拦截整行/列 6; `ChangeTile` 转换脚下地块 3 能量 (需相邻同类型地块)。',
     ],
   },
   {

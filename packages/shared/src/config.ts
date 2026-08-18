@@ -37,6 +37,9 @@ export const WATER_ROW_COL_COST = 3;
 /** InterceptRow / InterceptCol 的能量消耗 */
 export const INTERCEPT_ROW_COL_COST = 6;
 
+/** ChangeTile (地块转换) 的能量消耗 */
+export const CHANGE_TILE_COST = 3;
+
 /** 每个玩家程序最多保留的日志行数 */
 export const MAX_LOG_LINES = 200;
 

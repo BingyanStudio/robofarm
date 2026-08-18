@@ -19,6 +19,7 @@ import {
 } from './types';
 import { TILES, cropConfig } from './registry';
 import {
+  CHANGE_TILE_COST,
   CHARGE_GAIN,
   HARVEST_ROW_COL_COST,
   INTERCEPT_ROW_COL_COST,
@@ -171,6 +172,34 @@ const OP_HANDLERS: Record<string, OpHandler> = {
   interceptCol(ctx, op) {
     if (op.type !== 'interceptCol') return { ok: false };
     return setInterceptZone(ctx, 'col');
+  },
+
+  changeTile(ctx, op) {
+    if (op.type !== 'changeTile') return { ok: false };
+    const { world, drone, events } = ctx;
+    if (drone.energy < CHANGE_TILE_COST) {
+      return { ok: false, message: `能量不足: ChangeTile 需要 ${CHANGE_TILE_COST} 点能量` };
+    }
+    const target = op.tileType;
+    const tile = tileAt(world, drone.position);
+    if (tile.type === target) return { ok: false, message: '目标类型与当前地块相同' };
+    if (tile.crop) return { ok: false, message: '该地块有作物, 不能转换地块类型' };
+    // 前提: 上下左右必须有至少一个与目标类型相同的地块, 不允许凭空创造
+    const hasNeighbor = orthNeighbors(drone.position, world).some(
+      ([nx, ny]) => world.map[ny][nx].type === target
+    );
+    if (!hasNeighbor) {
+      return { ok: false, message: `周围没有 ${TILES[target].name} 地块, 不能凭空创造` };
+    }
+    drone.energy -= CHANGE_TILE_COST;
+    world.map[drone.position[1]][drone.position[0]] = { type: target, crop: null };
+    events.push({
+      type: 'change-tile',
+      drone: drone.id,
+      pos: [drone.position[0], drone.position[1]],
+      tileType: target,
+    });
+    return { ok: true };
   },
 };
 
@@ -423,20 +452,35 @@ function tickCrop(world: WorldState, crop: CropData, pos: Position, events: Game
       // 成熟特效: 每种作物成熟时都会执行其挂接的特效 (多数作物未声明, 无操作)
       const effect = cfg.onMature;
       if (effect) MATURITY_EFFECTS[effect]?.({ world, pos, events });
-    } else if (cfg.thirstInterval !== null) {
-      // 缺水触发按种植时记录的"总缺水次数"动态计算, 缺水点在实际生长周期内均匀分布:
-      // 第 (thirstsDone+1) 次缺水发生在剩余回合数降到 ceil((剩余次数)·实际周期/(总次数+1)) 时。
-      const total = crop.thirstTotal ?? 0;
-      const done = crop.thirstsDone ?? 0;
-      const cycles = crop.plantCycles ?? cfg.growCycles;
-      if (
-        total > 0 &&
-        done < total &&
-        crop.growthRemaining === Math.ceil(((total - done) * cycles) / (total + 1))
-      ) {
-        crop.state = CropState.Thirsty;
-        crop.thirstsDone = done + 1;
-        events.push({ type: 'crop-grow', pos, state: CropState.Thirsty, cyclesToGrown: 0 });
+    } else {
+      // 生长特效: 每个生长回合都会执行 (多数作物未声明, 无操作)
+      const growEffect = cfg.onGrow;
+      if (growEffect && crop.state === CropState.Growing) {
+        GROWTH_EFFECTS[growEffect]?.({ world, crop, pos, events });
+      }
+
+      if (cfg.thirstInterval !== null) {
+        // 缺水触发按种植时记录的"总缺水次数"动态计算, 缺水点在实际生长周期内均匀分布:
+        // 第 (thirstsDone+1) 次缺水发生在剩余回合数降到 ceil((剩余次数)·实际周期/(总次数+1)) 时。
+        const total = crop.thirstTotal ?? 0;
+        const done = crop.thirstsDone ?? 0;
+        const cycles = crop.plantCycles ?? cfg.growCycles;
+        if (
+          total > 0 &&
+          done < total &&
+          crop.growthRemaining === Math.ceil(((total - done) * cycles) / (total + 1))
+        ) {
+          crop.state = CropState.Thirsty;
+          crop.thirstsDone = done + 1;
+          events.push({ type: 'crop-grow', pos, state: CropState.Thirsty, cyclesToGrown: 0 });
+        } else {
+          events.push({
+            type: 'crop-grow',
+            pos,
+            state: CropState.Growing,
+            cyclesToGrown: crop.growthRemaining,
+          });
+        }
       } else {
         events.push({
           type: 'crop-grow',
@@ -445,13 +489,6 @@ function tickCrop(world: WorldState, crop: CropData, pos: Position, events: Game
           cyclesToGrown: crop.growthRemaining,
         });
       }
-    } else {
-      events.push({
-        type: 'crop-grow',
-        pos,
-        state: CropState.Growing,
-        cyclesToGrown: crop.growthRemaining,
-      });
     }
   } else if (crop.state === CropState.Thirsty) {
     // 缺水: 长期保持 Thirsty, 不枯萎; 生长不推进, 等待浇水后恢复
@@ -499,6 +536,33 @@ const MATURITY_EFFECTS: Record<string, (ctx: { world: WorldState; pos: Position;
         thirstsDone: 0,
         plantCycles: cfg.growCycles,
       };
+    }
+  },
+};
+
+/**
+ * 生长中特效处理器 (按作物注册表声明的效果 id 注册, 可扩展)。
+ * 每种作物在生长中的每个回合都会执行其挂接的特效; 多数作物不声明 (无操作)。
+ * 新增特效 = 在这里加一个处理器 + 在 CROPS 注册表中声明。
+ */
+const GROWTH_EFFECTS: Record<string, (ctx: { world: WorldState; crop: CropData; pos: Position; events: GameEvent[] }) => void> = {
+  /**
+   * 水仙: 生长中每 3 个周期, 按 上→右→下→左 顺序检查周围 Tile,
+   * 若存在缺水作物则自动浇水 (每回合仅浇水一次), 成熟后无此效果。
+   * 浇水效果与普通 Water 一致 (前端渲染淡蓝色特效)。
+   */
+  autoWater({ world, crop, pos, events }) {
+    const elapsed = (crop.plantCycles ?? cropConfig(crop.type).growCycles) - crop.growthRemaining;
+    if (elapsed % 3 !== 0) return;
+    for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
+      const nx = pos[0] + dx;
+      const ny = pos[1] + dy;
+      if (nx < 0 || nx >= world.map[0].length || ny < 0 || ny >= world.map.length) continue;
+      const nb = world.map[ny][nx].crop;
+      if (!nb || nb.state !== CropState.Thirsty) continue;
+      nb.state = CropState.Growing;
+      events.push({ type: 'water', drone: -1, pos: [nx, ny] });
+      return; // 每回合仅浇水一次
     }
   },
 };

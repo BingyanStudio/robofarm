@@ -29,6 +29,7 @@
       1. HarvestRow / HarvestCol: 一次性收割所在行/列的全部成熟作物, 消耗 4 能量; 竞技模式仅收割自己半场
       2. WaterRow / WaterCol: 给所在行/列浇水, 按 左→右 / 上→下 顺序直到水耗尽, 跳过不需浇水的作物, 消耗 3 能量
       3. InterceptRow / InterceptCol: 回合结束时拦截所在行/列全部携带偷菜资金的对方无人机, 消耗 6 能量 (竞技模式)
+      4. ChangeTile: 消耗 3 能量将脚下地块转换为 soil/water/sand, 前提是上下左右至少有一个同类型地块 (不允许凭空创造)
    5. 上述操作均由 Typescript API 提供
 
 4. 作物

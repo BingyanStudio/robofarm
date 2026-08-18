@@ -28,7 +28,7 @@ export function singleScreen(root: HTMLElement): void {
   root.append(
     topBar([
       userBox,
-      button('👑 排行榜', () => showLeaderboard(), { class: 'btn btn-small btn-gold' }),
+      button('👑 排行榜', () => showLeaderboard(), { class: 'btn btn-gold' }),
       button('我的成绩', () => showHistory()),
     ]),
     layout.root

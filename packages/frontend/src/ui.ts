@@ -54,11 +54,12 @@ export function topBar(right: Node[] = []): HTMLElement {
   return el('div', { class: 'topbar' }, [
     el('div', { class: 'topbar-left' }, [
       el('span', { class: 'logo', text: '🤖 RoboFarm' }),
+      // 版本号显示在标题旁边 (灰色小字)
+      el('span', { class: 'version-badge', text: `v${VERSION}` }),
       button('返回菜单', () => (location.hash = '#/menu'), { class: 'btn btn-small' }),
     ]),
+    // 登录状态 / 排行榜 / 我的成绩等始终位于右侧
     el('div', { class: 'topbar-right' }, right),
-    // 标题栏右上角常驻版本号 (灰色小字)
-    el('span', { class: 'version-badge', text: `v${VERSION}` }),
   ]);
 }
 export const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));

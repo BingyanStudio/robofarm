@@ -148,6 +148,10 @@ export function createMcpServer(): Server {
               growCycles: cfg.growCycles,
               thirstInterval: cfg.thirstInterval,
               habitats: cfg.habitats,
+              // 特殊机制 (未设置则无)
+              growthOverride: cfg.growthOverride,
+              onMature: cfg.onMature,
+              onGrow: cfg.onGrow,
               description: cfg.description,
             }, null, 2),
           }],
@@ -222,13 +226,14 @@ export function createMcpServer(): Server {
               '  - `new Plant(crop)` 在当前位置种植 (crop 用字符串, 如 \'strawberry\')\n' +
               '  - `new CollectWater()` 在池塘取水 (上限 5 格)\n' +
               '  - `new Water()` 给当前格缺水作物浇水\n' +
+              '  - `new WaterRow()` / `new WaterCol()` 给整行/列浇水 (3 能量)\n' +
               '  - `new Harvest()` 收获当前格成熟作物\n' +
+              '  - `new HarvestRow()` / `new HarvestCol()` 收割整行/列 (4 能量, 竞技仅己方半场)\n' +
               '  - `new Clear()` 铲除当前格作物\n' +
               '  - `new Intercept([x, y])` 竞技模式单格拦截\n' +
-              '  - `new Charge()` 原地充能 +5 (能量上限 10)\n' +
-              '  - `new HarvestRow()` / `new HarvestCol()` 收割整行/列 (4 能量, 竞技仅己方半场)\n' +
-              '  - `new WaterRow()` / `new WaterCol()` 给整行/列浇水 (3 能量)\n' +
               '  - `new InterceptRow()` / `new InterceptCol()` 拦截整行/列 (6 能量)\n' +
+              '  - `new Charge()` 原地充能 +5 (能量上限 10)\n' +
+              '  - `new ChangeTile(tileType)` 转换脚下地块为 soil/water/sand (3 能量, 需相邻同类型地块)\n' +
               '- 可用 API: `getSelf()` (含 water/energy) / `getGame()` (含 money) / `getMap()` / `getTile(p)` / `getCrop(p)` / `getDrone(p)`, 坐标越界返回 null。\n' +
               '- 作物列表 (代码名, 成本/收获/成熟回合/需水/可种地块):\n' + cropSummary() + '\n' +
               '- 竞技模式: 自己半场在左侧 (14×7), 对方半场收获进入临时资金池, 返回己方半场入账; 种植不受半场限制 (可到对方半场占位), 铲除仅限己方半场。沙地上生长周期 ×1.5 (西瓜不受影响), 草莓/葡萄/南瓜/西瓜/紫云英可种。\n' +

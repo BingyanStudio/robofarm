@@ -6,7 +6,7 @@
 //   3. 写入当前版本号 (供下次对比)
 import { el, button, modal } from './ui';
 
-export const VERSION = '0.1.1';
+export const VERSION = '0.1.2';
 export const VERSION_KEY = 'robofarm.version';
 
 export interface UpdateEntry {
@@ -17,6 +17,18 @@ export interface UpdateEntry {
 
 /** 更新日志 (按版本从新到旧) */
 export const UPDATE_LOG: UpdateEntry[] = [
+  {
+    version: '0.1.2',
+    title: 'v0.1.2',
+    items: [
+      '新作物: 水仙 (种在水池, 生长中每 3 周期自动给周围缺水作物浇水, 带淡蓝特效) / 西瓜 / 紫云英 / 香菇',
+      '新操作: ChangeTile (3 能量转换脚下地块为土地/水池/沙地, 需相邻同类型地块)',
+      '数值同步: 小麦 (收获 120 / 30 周期)、南瓜 (收获 500)',
+      '排行榜: 金色皇冠按钮, 自己的成绩高亮',
+      '提交优化: 确认弹窗无关闭按钮, 提交后显示加载圈, 完成自动弹排行榜',
+      '首次进入: 自动展开 API 手册并弹出更新日志',
+    ],
+  },
   {
     version: '0.1.1',
     title: 'v0.1.1',
