@@ -8,3 +8,5 @@
 
 - [x] Enhancement: 主界面的 MCP Card 还是改成可折叠的形式，初始默认折叠 
 - [x] Enhancement: 主界面的 Logo 背后给一些模糊的亮光, accent 与界面主色系相符 
+
+- [x] Bug: MCP 的 login 相关工具, 请检查其 callback url 是否与环境变量一致
