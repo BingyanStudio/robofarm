@@ -72,7 +72,7 @@
 /* MCP access strip at the sidebar top. */
 .mcp-strip {
   background: var(--bg-raised);
-  border: 1px solid var(--border);
+  border: 1px solid var(--accent-border);
   border-radius: var(--radius);
   padding: 6px 10px;
   margin-bottom: 20px;
@@ -180,6 +180,19 @@
   font-size: 13px;
   line-height: 1.5;
   margin: 2px 0;
+}
+
+/* Rules tab: larger letter-spacing and line-height for readability. */
+.rules-panel p,
+.rules-panel li {
+  letter-spacing: 0.03em;
+  line-height: 1.7;
+}
+
+.rules-panel hr {
+  margin: 14px 0;
+  border: none;
+  border-top: 1px solid var(--border);
 }
 
 /* In-doc hyperlinks. */

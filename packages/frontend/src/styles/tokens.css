@@ -131,6 +131,6 @@
   /* Readable body font (default). Pixel font is reserved for display headings only. */
   --font-sans: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   /* Pixel display font for brand / large headings. */
-  --font-display: 'Fusion Pixel', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-display: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   --font-mono: 'Maple Mono', ui-monospace, Consolas, monospace;
 }

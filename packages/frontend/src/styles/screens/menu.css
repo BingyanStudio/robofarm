@@ -19,13 +19,14 @@
 }
 
 .menu-logo {
-  height: 90px;
+  height: 135px;
   width: auto;
   display: block;
 }
 
 /* A Minecraft-style, gently breathing pixel tagline pinned over the logo. */
 .menu-slogan {
+  display: none;
   position: absolute;
   top: 2px;
   left: -80px;
@@ -55,7 +56,7 @@
   color: var(--text-faint);
   font-family: var(--font-display);
   font-size: 14px;
-  margin-top: -10px;
+  margin-top: -6px;
 }
 
 .menu-hero {
@@ -63,6 +64,13 @@
   gap: 40px;
   justify-content: center;
   align-items: stretch;
+}
+
+.menu-tagline {
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 15px;
+  margin-top: -6px;
 }
 
 .menu-grid {
@@ -77,9 +85,35 @@
   font-size: 15px;
 }
 
+/* MCP card on the main menu (wider, always expanded). */
+.menu-mcp {
+  width: min(660px, 90vw);
+  text-align: left;
+}
+
+.menu-mcp .mcp-guide {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: var(--bg-raised);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+}
+
+.menu-mcp > .mcp-guide > .mcp-guide-lead {
+  width: 100%;
+  margin: 0 0 2px;
+}
+
+.menu-mcp > .mcp-guide > .mcp-method {
+  flex: 1;
+  min-width: 200px;
+  margin: 0;
+}
+
 /* Studio credit at the bottom of the menu. */
 .menu-powered {
-  margin-top: 8px;
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -90,6 +124,36 @@
 
 .menu-powered:hover {
   color: var(--text-muted);
+}
+
+.menu-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-faint);
+  font-size: 12px;
+  text-decoration: none;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.menu-ghost:hover {
+  color: var(--text-muted);
+  border-color: var(--border-strong);
+}
+
+.ghost-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.menu-footer {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .bystudio-logo {

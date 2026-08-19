@@ -24,13 +24,17 @@ function section(title: string, ...children: (Node | string)[]): HTMLElement {
   return el('div', {}, [el('h3', { text: title }), ...children]);
 }
 
-/** Render text: backtick spans -> inline code, [text](#ref) -> in-doc hyperlink */
+/** Render text: backtick spans -> inline code, [text](#ref) -> in-doc hyperlink, **bold**, *italic* */
 function fmt(text: string): HTMLElement {
-  const tokens = text.split(/(`[^`]*`|\[[^\]]*\]\(#[^)]*\))/g).filter(Boolean);
+  const tokens = text.split(/(`[^`]*`|\[[^\]]*\]\(#[^)]*\)|\*\*[^*]+\*\*|\*[^*]+\*)/g).filter(Boolean);
   const out: (Node | string)[] = [];
   for (const tok of tokens) {
     if (tok.startsWith('`') && tok.endsWith('`')) {
       out.push(el('code', { text: tok.slice(1, -1) }));
+    } else if (tok.startsWith('**') && tok.endsWith('**')) {
+      out.push(el('strong', { text: tok.slice(2, -2) }));
+    } else if (tok.startsWith('*') && tok.endsWith('*') && tok.length > 1) {
+      out.push(el('em', { text: tok.slice(1, -1) }));
     } else if (tok.startsWith('[')) {
       const m = tok.match(/^\[([^\]]*)\]\(#([^)]*)\)$/);
       if (m) out.push(refLink(m[1], m[2]));
@@ -94,9 +98,9 @@ export function mcpGuide(): HTMLElement {
     ]);
 
   const nodes: HTMLElement[] = [
-    el('p', { class: 'mcp-guide-lead', text: '让 AI 直接读取本游戏的文档与规则, 帮你编写无人机代码。两种方式任选:' }),
-    item('llm.txt · 最简单', '把链接交给 AI, 它可直接抓取全部游戏文档', llmUrl, '复制链接'),
-    item('MCP · HTTP', '在支持 MCP 的客户端中添加 HTTP 服务器地址', httpUrl, '复制地址'),
+    el('p', { class: 'mcp-guide-lead', text: '不想亲自 Coding? 让 Agent 帮你!' }),
+    item('llm.txt · 最简单', '把链接交给 AI, 它可直接获取游戏文档', llmUrl, '复制链接'),
+    item('MCP · HTTP', '使用 MCP 接入, 获取文档并直接提交代码', httpUrl, '复制地址'),
   ];
   return el('div', { class: 'manual mcp-guide' }, nodes);
 }
@@ -118,9 +122,20 @@ function docEntry(e: DocEntry): HTMLElement {
   return el('div', { class: 'doc-entry', id: e.id }, rows);
 }
 
-/** Rule section */
+/** Rule section (supports `- ` prefixed paragraphs as list items, **bold**, *italic*) */
 function ruleSection(rs: { title: string; paragraphs: string[] }): HTMLElement {
-  return section(rs.title, ...rs.paragraphs.map((p) => el('p', {}, [fmt(p)])));
+  const children: HTMLElement[] = [];
+  let list: HTMLUListElement | null = null;
+  for (const p of rs.paragraphs) {
+    if (p.startsWith('- ')) {
+      if (!list) { list = el('ul', { class: 'doc-list' }); children.push(list); }
+      list.append(el('li', {}, [fmt(p.slice(2))]));
+    } else {
+      list = null;
+      children.push(el('p', {}, [fmt(p)]));
+    }
+  }
+  return section(rs.title, ...children);
 }
 
 /** Content per tab (order matches tabs; panel ids used for hyperlink jumps) */
@@ -155,9 +170,10 @@ function buildSections(): HTMLElement[] {
     ]),
 
     // ---- 5. Rules ----
-    el('div', { class: 'api-panel', id: 'tab-rules' }, [
+    el('div', { class: 'api-panel rules-panel', id: 'tab-rules' }, [
       section('游戏概览', ...DOC_OVERVIEW.paragraphs.map((p) => el('p', {}, [fmt(p)]))),
-      ...DOC_RULES.map(ruleSection),
+      el('hr'),
+      ...DOC_RULES.flatMap((rs, i) => i > 0 ? [el('hr'), ruleSection(rs)] : [ruleSection(rs)]),
     ]),
   ];
 }

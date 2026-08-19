@@ -163,7 +163,7 @@ export const CROPS: Record<CropType, CropTypeConfig> = {
   [CropType.Shiitake]: {
     type: CropType.Shiitake,
     name: '香菇',
-    description: '总生长周期在种植时动态计算: 20 + 2 × 场上香菇总数 (越多长得越慢); 成熟后每回合向一个方向 (上右下左) 种下新的香菇。',
+    description: '成熟后, 每回合按照 [上右下左] 顺序种下新的香菇，一共四颗。但场上香菇越多，香菇生长越慢。',
     habitats: [TileType.Soil],
     plantCost: 80,
     value: 40,

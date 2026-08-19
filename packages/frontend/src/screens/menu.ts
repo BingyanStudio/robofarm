@@ -1,6 +1,7 @@
 // Main menu.
 import { el, button } from '../ui/ui';
 import { showUpdateLog } from '../docs/version';
+import { mcpGuide } from '../docs/api-manual';
 
 export function menuScreen(root: HTMLElement): void {
   root.replaceChildren();
@@ -10,14 +11,14 @@ export function menuScreen(root: HTMLElement): void {
       class: 'btn-hero',
       onClick: () => (location.hash = '#/single'),
     }, [
-      el('img', { class: 'hero-icon hero-icon-single', src: '/sprites/crop/shiitake_3.avif', alt: '' }),
+      el('img', { class: 'hero-icon hero-icon-single', src: '/sprites/icon_single.svg', alt: '' }),
       el('span', { class: 'hero-label', text: '单人种植' }),
     ]),
     el('button', {
       class: 'btn-hero',
       onClick: () => (location.hash = '#/match'),
     }, [
-      el('img', { class: 'hero-icon hero-icon-match', src: '/img/icon_combat.svg', alt: '' }),
+      el('img', { class: 'hero-icon hero-icon-match', src: '/sprites/icon_match.svg', alt: '' }),
       el('span', { class: 'hero-label', text: '多人竞技' }),
     ]),
   ]);
@@ -35,16 +36,28 @@ export function menuScreen(root: HTMLElement): void {
       el('img', { class: 'menu-logo', src: '/sprites/logo.svg', alt: 'RoboFarm' }),
       el('span', { class: 'menu-slogan', text: '一句话为我烧10亿Tokens' }),
     ]),
+    el('div', { class: 'menu-tagline', text: '基于 TypeScript 编程的回合制农场经营游戏' }),
     hero,
     grid,
-    el('a', {
-      class: 'menu-powered',
-      href: 'https://www.bingyan.net/',
-      target: '_blank',
-      rel: 'noopener noreferrer',
-    }, [
-      el('img', { class: 'bystudio-logo', src: '/img/bystudio-logo.webp', alt: 'Bingyan Studio' }),
-      el('span', { text: '© Powered by Bingyan Studio' }),
+    el('div', { class: 'menu-mcp' }, [mcpGuide()]),
+    el('div', { class: 'menu-footer' }, [
+      el('a', {
+        class: 'menu-powered',
+        href: 'https://www.bingyan.net/',
+        target: '_blank',
+        rel: 'noopener noreferrer',
+      }, [
+        el('img', { class: 'bystudio-logo', src: '/sprites/bystudio-logo.webp', alt: 'Bingyan Studio' }),
+        el('span', { text: '© Powered by Bingyan Studio' }),
+      ]),
+      el('a', {
+        class: 'menu-ghost',
+        href: 'https://github.com/BingyanStudio/robofarm',
+        target: '_blank',
+        rel: 'noopener noreferrer',
+      }, [
+        el('img', { class: 'ghost-icon', src: '/sprites/github.svg', alt: 'GitHub' }),
+      ]),
     ]),
   ]);
   root.append(box);
