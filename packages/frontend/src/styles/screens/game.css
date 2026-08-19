@@ -79,7 +79,8 @@
   top: 10px;
   left: 12px;
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 4px;
   pointer-events: none;
 }

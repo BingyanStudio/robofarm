@@ -22,6 +22,7 @@
 
 .menu-version {
   color: var(--text-faint);
+  font-family: var(--font-display);
   font-size: 14px;
   margin-top: -10px;
 }
@@ -53,6 +54,11 @@
   gap: 5px;
   color: var(--text-faint);
   font-size: 12px;
+  text-decoration: none;
+}
+
+.menu-powered:hover {
+  color: var(--text-muted);
 }
 
 .bystudio-logo {

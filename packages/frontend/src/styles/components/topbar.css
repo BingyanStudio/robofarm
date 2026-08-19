@@ -19,11 +19,30 @@
   gap: 8px;
 }
 
-/* Logo image. */
+/* Logo image. It eases into the menu-route position instead of jumping when
+   the back button is hidden. */
 .logo-img {
   height: 30px;
   width: auto;
   display: block;
+  transition: transform var(--dur-med) var(--ease-out);
+}
+
+.topbar.menu-route .logo-img {
+  transform: translateX(8px);
+}
+
+.topbar-back {
+  transition: width var(--dur-med) var(--ease-out), margin var(--dur-med) var(--ease-out), opacity var(--dur-fast) var(--ease-out), padding var(--dur-med) var(--ease-out);
+  overflow: hidden;
+}
+
+.topbar.menu-route .topbar-back {
+  width: 0;
+  margin: 0 -8px 0 0;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* Icon-only button (back-to-menu). */

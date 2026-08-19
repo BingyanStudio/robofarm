@@ -19,7 +19,6 @@ const app = document.getElementById('app')!;
 // User card is global (always on the right); per-screen actions sit before it.
 const bar = topBar([topActionsEl(), userCard()]);
 app.append(bar);
-const backBtn = bar.querySelector('.topbar-back') as HTMLElement;
 
 // Content area — swapped per route.
 const content = el('div', { class: 'content' });
@@ -61,8 +60,8 @@ function route(): void {
   const [path, queryStr] = hash.split('?');
   const params = new URLSearchParams(queryStr ?? '');
   const key = path === '' ? 'menu' : path;
-  // Hide the back button on the menu itself (nowhere to go back to).
-  backBtn.style.display = key === 'menu' ? 'none' : '';
+  // Keep the persistent navigation shell mounted and animate its menu state.
+  bar.classList.toggle('menu-route', key === 'menu');
   // Clear the previous screen's top-bar actions before loading the next screen.
   setTopActions([]);
   content.replaceChildren();

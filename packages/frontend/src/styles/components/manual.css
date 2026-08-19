@@ -66,12 +66,6 @@
   user-select: text;
 }
 
-.mcp-guide-actions {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: 2px;
-}
-
 /* MCP access card (menu). */
 .mcp-card {
   margin-top: 10px;

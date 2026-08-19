@@ -10,14 +10,14 @@ export function menuScreen(root: HTMLElement): void {
       class: 'btn-hero',
       onClick: () => (location.hash = '#/single'),
     }, [
-      el('img', { class: 'hero-icon hero-icon-single', src: '/sprites/crop/strawberry_4.avif', alt: '' }),
+      el('img', { class: 'hero-icon hero-icon-single', src: '/sprites/crop/shiitake_3.avif', alt: '' }),
       el('span', { class: 'hero-label', text: '单人种植' }),
     ]),
     el('button', {
       class: 'btn-hero',
       onClick: () => (location.hash = '#/match'),
     }, [
-      el('img', { class: 'hero-icon hero-icon-match', src: '/sprites/drone_enemy.svg', alt: '' }),
+      el('img', { class: 'hero-icon hero-icon-match', src: '/img/icon_combat.svg', alt: '' }),
       el('span', { class: 'hero-label', text: '多人竞技' }),
     ]),
   ]);
@@ -34,7 +34,12 @@ export function menuScreen(root: HTMLElement): void {
     el('img', { class: 'menu-logo', src: '/sprites/logo.svg', alt: 'RoboFarm' }),
     hero,
     grid,
-    el('div', { class: 'menu-powered' }, [
+    el('a', {
+      class: 'menu-powered',
+      href: 'https://www.bingyan.net/',
+      target: '_blank',
+      rel: 'noopener noreferrer',
+    }, [
       el('img', { class: 'bystudio-logo', src: '/img/bystudio-logo.webp', alt: 'Bingyan Studio' }),
       el('span', { text: '© Powered by Bingyan Studio' }),
     ]),

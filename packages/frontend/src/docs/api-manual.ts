@@ -75,9 +75,8 @@ function copyButton(url: string, btn: HTMLElement): HTMLElement {
   return btn;
 }
 
-/** MCP onboarding note (reused at start screen / main menu / top of API manual).
- *  `onCollapse` adds an explicit close action when mounted inside a details panel. */
-export function mcpGuide(onCollapse?: () => void): HTMLElement {
+/** MCP onboarding note (reused at start screen / main menu / top of API manual). */
+export function mcpGuide(): HTMLElement {
   // Same-origin priority: prefer VITE_MCP_BASE (env), otherwise default to current origin (dev via vite proxy)
   const envBase = (import.meta.env.VITE_MCP_BASE as string | undefined)?.trim();
   const origin = envBase ? new URL(envBase).origin : location.origin;
@@ -99,13 +98,6 @@ export function mcpGuide(onCollapse?: () => void): HTMLElement {
     item('llm.txt · 最简单', '把链接交给 AI, 它可直接抓取全部游戏文档', llmUrl, '复制链接'),
     item('MCP · HTTP', '在支持 MCP 的客户端中添加 HTTP 服务器地址', httpUrl, '复制地址'),
   ];
-  if (onCollapse) {
-    nodes.push(
-      el('div', { class: 'mcp-guide-actions' }, [
-        button('收起', onCollapse, { class: 'btn btn-small' }),
-      ])
-    );
-  }
   return el('div', { class: 'manual mcp-guide' }, nodes);
 }
 
@@ -248,11 +240,9 @@ function apiManualTabs(): HTMLElement {
     if (i !== 0) p.style.display = 'none';
   });
   const mcpStrip = el('details', { class: 'mcp-strip' }, [
-    el('summary', {}, [icon('bolt', 14), document.createTextNode(' MCP 接入')]),
+    el('summary', { text: 'MCP 接入' }),
   ]);
-  const mcpBody = el('div', { class: 'mcp-collapse-body' }, [
-    mcpGuide(() => closeMcp()),
-  ]);
+  const mcpBody = el('div', { class: 'mcp-collapse-body' }, [mcpGuide()]);
   mcpStrip.append(mcpBody);
 
   // Native <details> removes its content as soon as `open` becomes false, which
@@ -269,21 +259,25 @@ function apiManualTabs(): HTMLElement {
     mcpStrip.classList.remove('is-closing');
     mcpStrip.open = false;
   });
-  mcpStrip.addEventListener('toggle', () => {
-    if (mcpStrip.open) {
-      closing = false;
-      mcpStrip.classList.remove('is-closing');
-    }
-  });
-  // Intercept native summary-close: native <details> would remove its body
-  // immediately, skipping the reverse grid transition.
+  // Browser <details> applies `open` before the first paint, so delay setting
+  // it by one frame to give the collapsed grid state a rendered starting point.
   const mcpSummary = mcpStrip.querySelector('summary')!;
   mcpSummary.addEventListener('click', (event) => {
-    if (!mcpStrip.open) return;
+    if (mcpStrip.open) {
+      event.preventDefault();
+      closeMcp();
+      return;
+    }
     event.preventDefault();
-    closeMcp();
+    requestAnimationFrame(() => {
+      mcpStrip.open = true;
+    });
   });
-
+  mcpStrip.addEventListener('toggle', () => {
+    if (!mcpStrip.open) return;
+    closing = false;
+    mcpStrip.classList.remove('is-closing');
+  });
   const root = el('div', { class: 'api-tabs-root' }, [mcpStrip, tabBar, ...panels]);
   wireDocLinks(root, tabBar, panels);
   return root;

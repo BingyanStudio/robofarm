@@ -75,7 +75,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 6px 10px;
-  margin-bottom: 8px;
+  margin-bottom: 20px;
   overflow: hidden;
 }
 
@@ -83,6 +83,22 @@
   cursor: pointer;
   font-size: 13px;
   color: var(--link);
+  list-style: none;
+}
+
+.mcp-strip summary::-webkit-details-marker {
+  display: none;
+}
+
+.mcp-strip summary::before {
+  content: '▸';
+  display: inline-block;
+  margin-right: 6px;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.mcp-strip[open] summary::before {
+  transform: rotate(90deg);
 }
 
 /* Details cannot animate to/from `height:auto` by CSS alone. The dedicated

@@ -6,88 +6,88 @@
  * (api-docs.ts) read the same tokens through theme.ts, so DOM and canvas
  * stay in sync.
  *
- * Palette: a Stardew-Valley inspired warm, dark, wood-tone theme.
+ * Palette: a muted, dark forest-green theme.
  */
 
 :root {
   color-scheme: dark;
 
-  /* ---------- Background layers (warm dark wood) ---------- */
-  --bg-main: #1a1512;           /* page base */
-  --bg-raised: #241d16;         /* top bars / title bars / controls */
-  --bg-panel: #1f1913;          /* editors / list rows / cards */
-  --bg-canvas: #231c15;         /* game canvas */
-  --bg-surface: #2a2318;        /* modals / cards / sidebars */
-  --bg-surface-hover: #362c1e;  /* sidebar toggle hover */
-  --bg-hover: #2e261a;          /* list-row hover / splitters */
-  --bg-chip: #33291b;           /* user chip */
-  --bg-log: #15100b;            /* log panel / code blocks */
+  /* ---------- Background layers (reference forest green) ---------- */
+  --bg-main: #101614;           /* page base */
+  --bg-raised: #161f1b;         /* top bars / title bars / controls */
+  --bg-panel: #141c18;          /* editors / list rows / cards */
+  --bg-canvas: #18211c;         /* game canvas */
+  --bg-surface: #1a2420;        /* modals / cards / sidebars */
+  --bg-surface-hover: #24352d;  /* sidebar toggle hover */
+  --bg-hover: #202d27;          /* list-row hover / splitters */
+  --bg-chip: #223129;           /* user chip */
+  --bg-log: #0b100e;            /* log panel / code blocks */
 
-  /* ---------- Borders (deep wood) ---------- */
-  --border: #3a2f1f;            /* primary border */
-  --border-strong: #4a3a26;     /* strong border (buttons / dialogs) */
-  --border-subtle: #2e2518;     /* fine divider */
+  /* ---------- Borders (muted green) ---------- */
+  --border: #2a3a33;            /* primary border */
+  --border-strong: #3d5348;     /* strong border (buttons / dialogs) */
+  --border-subtle: #202d27;     /* fine divider */
 
-  /* ---------- Text (cream) ---------- */
-  --text-primary: #e8dcc0;      /* main text */
-  --text-muted: #a89b7c;        /* secondary / hints */
-  --text-faint: #7d7158;        /* faint (version badges) */
-  --text-strong: #fff7e6;       /* inverted / highlight text */
+  /* ---------- Text (soft mist) ---------- */
+  --text-primary: #e7ece9;      /* main text */
+  --text-muted: #a6b5ac;        /* secondary / hints */
+  --text-faint: #75867b;        /* faint (version badges) */
+  --text-strong: #ffffff;       /* inverted / highlight text */
 
-  /* ---------- Accent (harvest gold) ---------- */
-  --accent: #d8a82a;            /* gold CTA / leaderboard / medals */
-  --accent-hover: #e8bb3f;
-  --accent-border: #f0c94a;
-  --accent-fg: #2a1f08;        /* text on the accent bg */
+  /* ---------- Accent (meadow green) ---------- */
+  --accent: #6fbf73;            /* green CTA / leaderboard / medals */
+  --accent-hover: #87cf8b;
+  --accent-border: #9bdd9c;
+  --accent-fg: #112617;         /* text on the accent bg */
 
-  /* ---------- Semantic: success (meadow green) ---------- */
-  --success: #7ac04c;
-  --success-bg: #2a3a1e;
-  --success-border: #4d6b3a;
-  --success-hover: #3a4d29;
+  /* ---------- Semantic: success (olive green) ---------- */
+  --success: #8acb5a;
+  --success-bg: #2f3b1f;
+  --success-border: #5a7a40;
+  --success-hover: #40542b;
 
-  /* ---------- Semantic: danger (barn red) ---------- */
-  --danger-border: #8a4d3a;
-  --danger-bg: #4a241e;
-  --danger-hover: #5a2e26;
-  --danger-text: #f0a08a;      /* enemy money etc. */
+  /* ---------- Semantic: danger (brick red) ---------- */
+  --danger-border: #a7553e;
+  --danger-bg: #501f18;
+  --danger-hover: #672b20;
+  --danger-text: #f3a18d;      /* enemy money etc. */
 
-  /* ---------- Link / doc blue ---------- */
-  --link: #87b7f7;
-  --link-hover: #a5c9f8;
+  /* ---------- Link / documentation green ---------- */
+  --link: #8fd19a;
+  --link-hover: #b7e5bd;
 
   /* ---------- Generic button hover ---------- */
-  --btn-hover-bg: #4a3d29;
+  --btn-hover-bg: #2c4437;
 
   /* ---------- Money / showcase ---------- */
-  --money: #f5d76e;
+  --money: #f2cf62;
 
   /* ---------- Editor lock bar ---------- */
-  --lock-bg: #4a3820;
-  --lock-border: #8a6a2e;
-  --lock-text: #f5dfb0;
+  --lock-bg: #293d2c;
+  --lock-border: #56775a;
+  --lock-text: #cce6c9;
 
   /* ---------- Splitter active ---------- */
-  --splitter-active: #5a4a30;
+  --splitter-active: #3d5c49;
 
   /* ---------- Spinner ---------- */
-  --spinner-track: #3a2f1f;
-  --spinner-accent: #f0c94a;
+  --spinner-track: #2a3a33;
+  --spinner-accent: #9bdd9c;
 
   /* ---------- Canvas render colors (renderer.ts) ---------- */
   --color-grid: rgba(0, 0, 0, 0.16);
-  --color-water-border: #4a9cc9;
-  --color-crop-growing: #86c94a;
-  --color-crop-thirsty: #f0a030;
-  --color-crop-grown: #e06838;
-  --color-p1: #7ac04c;
-  --color-p2: #e05848;
-  --color-bounty: #f5c042;
-  --color-water-pip: #4aace0;
-  --color-intercept-mark: #f5d148;
-  --color-fx-water: #7dd3fc;
-  --color-fx-harvest: #f5a03b;
-  --color-fx-intercept: #f8a5a5;
+  --color-water-border: #5796b0;
+  --color-crop-growing: #70b866;
+  --color-crop-thirsty: #8aa368;
+  --color-crop-grown: #5f9f68;
+  --color-p1: #6fbf73;
+  --color-p2: #c97b62;
+  --color-bounty: #9ec77a;
+  --color-water-pip: #62a8b8;
+  --color-intercept-mark: #9dcf83;
+  --color-fx-water: #75b8c5;
+  --color-fx-harvest: #80ba70;
+  --color-fx-intercept: #d28d82;
 
   /* Canvas neutral strokes / text (renderer.ts) */
   --color-half-line: rgba(255, 255, 255, 0.5);   /* combat half-field line */
@@ -99,12 +99,12 @@
   --color-charge-tint: 74, 222, 128;           /* charge effect (RGB) */
 
   /* ---------- API method badges (api-docs.ts) ---------- */
-  --method-get: #7ac04c;
-  --method-post: #4a8be0;
-  --method-ws: #b070e0;
-  --method-delete: #e05848;
-  --method-put: #f5a03b;
-  --method-default: #7d7158;
+  --method-get: #6fbf73;
+  --method-post: #5d9cad;
+  --method-ws: #8a9f79;
+  --method-delete: #bd6d5d;
+  --method-put: #8cae67;
+  --method-default: #75867b;
 
   /* ---------- Radius ---------- */
   --radius-sm: 4px;

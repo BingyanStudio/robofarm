@@ -70,6 +70,17 @@ body {
   font-family: var(--font-display);
 }
 
+/* Game-like UI landmarks use the pixel face; prose and code retain their
+   readable sans/mono faces. */
+.topbar h3,
+.game-title,
+.game-log-title,
+.api-sidebar-head h3,
+.modal-title,
+.update-version {
+  font-family: var(--font-display);
+}
+
 #app {
   height: 100vh;
   /* No vertical scroll for the app shell — the whole page is fixed; panels scroll internally (hidden bars). */
