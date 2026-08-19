@@ -38,6 +38,11 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
 - **注意**: esbuild-wasm 浏览器入口在 Node 下需要 `globalThis.self` 垫片
   (index.ts 里设置) 且 `initialize({ wasmModule, worker: false })`
   (compile.ts 的 setWasmModule 分支)。
+- **wasm 单独部署 (ESBUILD_WASM_URL)**: esbuild.wasm 过大时可放到另一台服务器,
+  在 `.env` 配置 `ESBUILD_WASM_URL`。后端启动时 `loadCompilerWasm()` 从该 URL 下载
+  并 `setWasmModule` (下载失败回退本地文件); `GET /config` 返回该 URL,
+  前端 main.ts 启动时拉取并 `setWasmUrl()` (浏览器编译改从远程加载, 未配置保持同源
+  /esbuild.wasm)。
 - 其他文件: `runner/runner.worker.js` (沙箱, 经 node-program.ts 的
   `resolveWorkerPath()` 候选路径 `__dirname/runner/` 找到)、`public/` (前端产物,
   由 app.ts 的 `resolveFrontendDist()` 探测)、`start.sh`/`start.cmd`、`.env.example`。

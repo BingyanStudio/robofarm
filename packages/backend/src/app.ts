@@ -185,6 +185,11 @@ export function createApp(): express.Express {
   // MCP over HTTP: 向任意 Agent 提供游戏 API 文档
   mountMcp(app);
 
+  // 运行时配置 (前端启动时拉取): esbuild.wasm 可能单独部署在其他服务器
+  app.get('/config', (_req: Request, res: Response) => {
+    res.json({ esbuildWasmUrl: process.env.ESBUILD_WASM_URL?.trim() || null });
+  });
+
   // LLM 友好文档: 全部文档按章节拼接 (Base URL 按实际请求动态生成)
   app.get('/llm.txt', (req: Request, res: Response) => {
     res.type('text/plain; charset=utf-8').send(llmTxt(requestBaseUrl(req)));

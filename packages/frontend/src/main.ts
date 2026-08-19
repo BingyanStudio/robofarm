@@ -1,4 +1,5 @@
 // 应用入口 + 极简 hash 路由。
+import { setWasmUrl } from '@robofarm/shared';
 import { menuScreen } from './screens/menu';
 import { singleScreen } from './screens/single';
 import { simulateScreen } from './screens/simulate';
@@ -17,6 +18,18 @@ const openManual = mountApiManual();
 
 // 版本检查: 首次进入自动展开 API 手册, 版本升级/无法识别时展示更新日志
 checkVersionOnLoad(openManual);
+
+// 运行时配置: esbuild.wasm 可能单独部署在其他服务器 (后端 .env 的 ESBUILD_WASM_URL),
+// 有值则浏览器编译时改从该地址加载; 未配置保持同源 /esbuild.wasm
+void (async () => {
+  try {
+    const res = await fetch('/config');
+    const cfg = (await res.json()) as { esbuildWasmUrl?: string | null };
+    if (cfg?.esbuildWasmUrl) setWasmUrl(cfg.esbuildWasmUrl);
+  } catch {
+    // 保持默认同源加载
+  }
+})();
 
 function route(): void {
   const hash = location.hash.replace(/^#\/?/, '');

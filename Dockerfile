@@ -17,6 +17,7 @@
 #   GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET (不配置则开发模式, 自动登录 local-dev)
 #   FRONTEND_ORIGIN / GITHUB_REDIRECT_URI (部署在独立域名时)
 #   TURN_INTERVAL_MS / SINGLE_MAX_CONCURRENT / SINGLE_SUBMIT_LIMIT_PER_MIN
+#   ESBUILD_WASM_URL (esbuild.wasm 单独部署时指向其远程地址; 未配置用镜像内文件)
 
 # ---------- 阶段 1: 构建发布版 (release/, 完全自包含) ----------
 FROM node:24-slim AS build

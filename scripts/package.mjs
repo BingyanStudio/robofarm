@@ -64,6 +64,11 @@ GITHUB_CLIENT_SECRET=
 # 数据库文件路径 (默认 data.db, 放在启动时所在目录 pwd 下, 即 pwd/data.db)
 DB_PATH=data.db
 
+# esbuild.wasm 单独部署在其他服务器时, 填写其完整 URL (如 https://cdn.example.com/esbuild.wasm)。
+# 后端启动时从该地址下载并进程内编译; 前端 (浏览器编译) 也从该地址加载。
+# 留空则使用本地文件 (后端 __dirname/esbuild.wasm, 浏览器同源 /esbuild.wasm)。
+ESBUILD_WASM_URL=
+
 # 竞技对战回合间隔 (毫秒)
 TURN_INTERVAL_MS=800
 `);

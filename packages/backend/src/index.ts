@@ -25,34 +25,60 @@ tryLoadDotEnv();
 
 // 编译玩家代码使用 esbuild-wasm, 按运行形态选择加载方式:
 // - 打包发布版 (server.cjs, ROBOFARM_EMBEDDED_WASM=1 由打包脚本注入):
-//   用 esbuild-wasm 的浏览器入口在进程内编译, wasm 从旁边的 esbuild.wasm 文件读取
+//   用 esbuild-wasm 的浏览器入口在进程内编译; wasm 优先从 ESBUILD_WASM_URL
+//   (单独部署的远程服务器) 下载, 未配置或下载失败时回退到旁边的 esbuild.wasm 文件
 // - 常规运行: esbuild-wasm 自动使用 node_modules 内磁盘上的 wasm 文件
-if (process.env.ROBOFARM_EMBEDDED_WASM === '1') {
-  // browser 入口需要 self 全局 (Node 无 window/self)
-  (globalThis as unknown as Record<string, unknown>).self = globalThis;
-  const wasmPath = join(__dirname, 'esbuild.wasm');
-  if (!existsSync(wasmPath)) {
-    console.error(`[robofarm] 缺少 ${wasmPath}, 请使用打包脚本生成发布版`);
-    process.exit(1);
+async function loadCompilerWasm(): Promise<void> {
+  if (process.env.ROBOFARM_EMBEDDED_WASM === '1') {
+    // browser 入口需要 self 全局 (Node 无 window/self)
+    (globalThis as unknown as Record<string, unknown>).self = globalThis;
+    const remote = process.env.ESBUILD_WASM_URL?.trim();
+    if (remote) {
+      try {
+        const res = await fetch(remote);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const buf = new Uint8Array(await res.arrayBuffer());
+        setWasmModule(new WebAssembly.Module(buf));
+        console.log(`[robofarm] 已从远程服务器加载 esbuild.wasm (${(buf.byteLength / 1024 / 1024).toFixed(1)} MB): ${remote}`);
+        return;
+      } catch (err) {
+        // 回退到本地文件
+        console.error(
+          `[robofarm] 从 ${remote} 下载 esbuild.wasm 失败: ${err instanceof Error ? err.message : String(err)}, 回退本地文件`
+        );
+      }
+    }
+    const wasmPath = join(__dirname, 'esbuild.wasm');
+    if (!existsSync(wasmPath)) {
+      console.error(`[robofarm] 缺少 ${wasmPath}, 请使用打包脚本生成发布版, 或配置 ESBUILD_WASM_URL 指向远程 esbuild.wasm`);
+      process.exit(1);
+    }
+    setWasmModule(new WebAssembly.Module(readFileSync(wasmPath)));
+  } else {
+    setWasmUrl(pathToFileURL(require.resolve('esbuild-wasm/esbuild.wasm')).href);
   }
-  setWasmModule(new WebAssembly.Module(readFileSync(wasmPath)));
-} else {
-  setWasmUrl(pathToFileURL(require.resolve('esbuild-wasm/esbuild.wasm')).href);
 }
 
-const port = Number(process.env.PORT ?? 3001);
-const host = process.env.HOST; // 绑定地址, 默认监听所有网卡
-const server = host
-  ? createApp().listen(port, host, onListen)
-  : createApp().listen(port, onListen);
-attachWebSocket(server);
-
-function onListen(): void {
-  console.log(`[robofarm-backend] listening on ${host ?? '0.0.0.0'}:${port}`);
-  if (!process.env.GITHUB_CLIENT_ID) {
-    console.log('[robofarm-backend] 未配置 GITHUB_CLIENT_ID, 已启用开发模式 (自动登录 local-dev)');
-  }
+async function main(): Promise<void> {
+  await loadCompilerWasm();
+  const port = Number(process.env.PORT ?? 3001);
+  const host = process.env.HOST; // 绑定地址, 默认监听所有网卡
+  const onListen = (): void => {
+    console.log(`[robofarm-backend] listening on ${host ?? '0.0.0.0'}:${port}`);
+    if (!process.env.GITHUB_CLIENT_ID) {
+      console.log('[robofarm-backend] 未配置 GITHUB_CLIENT_ID, 已启用开发模式 (自动登录 local-dev)');
+    }
+  };
+  const server = host
+    ? createApp().listen(port, host, onListen)
+    : createApp().listen(port, onListen);
+  attachWebSocket(server);
 }
+
+main().catch((err) => {
+  console.error('[robofarm-backend] 启动失败:', err);
+  process.exit(1);
+});
 
 function tryLoadDotEnv(): void {
   const file = join(process.cwd(), '.env');

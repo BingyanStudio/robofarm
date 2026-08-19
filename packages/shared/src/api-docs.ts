@@ -290,6 +290,13 @@ export const API_DOC_GROUPS: ApiDocGroup[] = [
       },
       {
         method: 'GET',
+        path: '/config',
+        title: '运行时配置',
+        description: '前端启动时拉取的运行时配置: esbuild.wasm 单独部署时返回其 URL (字段 esbuildWasmUrl, 未配置为 null)。',
+        responses: [{ code: '200', body: '{ "esbuildWasmUrl": "https://cdn.example.com/esbuild.wasm" | null }' }],
+      },
+      {
+        method: 'GET',
         path: '/api-docs',
         title: 'API 文档 (Markdown)',
         description: '本 API 文档的纯 Markdown 版本。',
