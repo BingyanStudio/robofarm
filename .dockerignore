@@ -1,0 +1,12 @@
+# Docker 构建上下文排除项
+.git
+.gitignore
+node_modules
+**/node_modules
+**/dist
+release
+data.db
+*.log
+.env
+.tmp
+**/*.tmp
