@@ -248,6 +248,13 @@ body {
   min-height: 0;
   /* 背景浅色动态发光 (径向渐变 + 呼吸动画) */
   position: relative;
+  /* 隐藏滚动条 (内容超出仍可滚动, 展开 MCP 卡片不会露出滚动条) */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.menu-box::-webkit-scrollbar {
+  display: none;
 }
 
 .menu-box::before {

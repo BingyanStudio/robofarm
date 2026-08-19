@@ -225,6 +225,8 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
   1. 清空 `combat_codes` (所有人恢复"未上传代码"状态)
   2. 冻结当前排行榜为上一大版本快照 (`leaderboard_snapshots` 表,
      标签见 `PREV_LEADERBOARD_VERSION`), 之后以 Tab 展示
+  3. 清空 `single_submissions` (旧成绩已冻结进快照, 新版本排行榜从空开始;
+     注意快照必须先于清空执行)
 - 当前大版本标签: `LEADERBOARD_VERSION` (db.ts), 改版本号时同步改这两个常量。
 - WS 协议: `match-start` / `replay-buffer` (迟到观众回放) / `turn {turn, events}` /
   `match-end {matchId, result}` / `error`。对局在服务器按 `TURN_INTERVAL_MS` 节奏推演。

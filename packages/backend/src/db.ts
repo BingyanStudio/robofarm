@@ -157,6 +157,7 @@ function migrate(d: DatabaseSync): void {
  * V1.0.0 一次性数据迁移 (用 meta 表记录, 幂等):
  * 1. 清空多人代码匹配池 (所有玩家恢复"未上传代码"状态)
  * 2. 冻结旧版本排行榜 (V0.x 时代的最后一版排行榜成为快照 Tab)
+ * 3. 清空单人提交: 旧成绩已冻结进快照, 新版本的排行榜从空开始
  */
 function applyV100Migrations(d: DatabaseSync): void {
   const applied = (key: string): boolean =>
@@ -169,9 +170,14 @@ function applyV100Migrations(d: DatabaseSync): void {
     d.exec('DELETE FROM combat_codes');
     mark('v1.0.0.clear-combat-codes');
   }
+  // 快照必须先于清空执行, 否则 V0.x 冻结榜会变成空榜
   if (!applied('v1.0.0.leaderboard-snapshot')) {
     takeLeaderboardSnapshot(d, PREV_LEADERBOARD_VERSION);
     mark('v1.0.0.leaderboard-snapshot');
+  }
+  if (!applied('v1.0.0.clear-single-submissions')) {
+    d.exec('DELETE FROM single_submissions');
+    mark('v1.0.0.clear-single-submissions');
   }
 }
 

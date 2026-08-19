@@ -7,7 +7,7 @@
 - [x] Feature: 大版本更新意味着平衡性调整，此时，老版本的数据需要迁移:
     1. 单人排行榜: 请给排行榜增加 Tab, 每个 Tab 都是历次大版本更新的最后一版排行榜。例如，当前更新 V1.0.0, 则 V0.x 的排行榜固定，成为一个 Tab
     2. 多人代码匹配池: 清空, 让所有玩家恢复 "未上传代码" 状态
-    - 结果: `db.ts` 新增 `applyV100Migrations` (meta 表幂等, 首次启动执行): ①清空 `combat_codes`; ②冻结当前排行榜为 `v0.x` 快照 (`leaderboard_snapshots` 表)。`GET /single/leaderboard` 改为返回 `{ tabs: [{version, entries}] }` (历史快照 + 当前版本实时榜), 前端弹窗按 Tab 展示
+    - 结果: `db.ts` 新增 `applyV100Migrations` (meta 表幂等, 首次启动执行): ①清空 `combat_codes`; ②冻结当前排行榜为 `v0.x` 快照 (`leaderboard_snapshots` 表, 必须先于清空); ③清空 `single_submissions` (新版本排行榜从空开始, v0.x 榜在快照中保留)。`GET /single/leaderboard` 改为返回 `{ tabs: [{version, entries}] }` (历史快照 + 当前版本实时榜), 前端弹窗按 Tab 展示
 
 - [x] Feature: 无人机增加操作:
     1. PlantRow(plants: []string): 一次种植一行, 从左到右按照 plants 数组顺序种植, 跳过无法种植的情况 (Tile 不适配，没钱等), 直到到达行末或 plants 数组耗尽, 消耗 3 能量
