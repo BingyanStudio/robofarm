@@ -6,7 +6,7 @@
 //   3. Write current version number (for next comparison)
 import { el, modal } from '../ui/ui';
 
-export const VERSION = '1.0.3';
+export const VERSION = '1.0.4';
 export const VERSION_KEY = 'robofarm.version';
 
 export interface UpdateEntry {
@@ -17,6 +17,18 @@ export interface UpdateEntry {
 
 /** Update log (from newest to oldest) */
 export const UPDATE_LOG: UpdateEntry[] = [
+    {
+        version: '1.0.4',
+        title: 'v1.0.4',
+        items: [
+            '## 登录',
+            '修复: GitHub 登录偶尔提示 "OAuth 状态无效或已过期, 请重新登录" 的问题 (state 校验不再依赖进程内存, 服务器重启或多实例部署也能正常登录)',
+            '登录后右上角头像显示为 GitHub 头像 (本地开发账号仍为首字母色块)',
+            '## 界面',
+            '作物缺水时右上角新增 💧 提示图标, 更直观',
+            '排行榜前三名分别以 🥇🥈🥉 标注',
+        ],
+    },
     {
         version: '1.0.3',
         title: 'v1.0.3',
