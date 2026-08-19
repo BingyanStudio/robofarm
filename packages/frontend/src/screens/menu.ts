@@ -39,7 +39,7 @@ export function menuScreen(root: HTMLElement): void {
     el('div', { class: 'menu-tagline', text: '基于 TypeScript 编程的回合制农场经营游戏' }),
     hero,
     grid,
-    el('div', { class: 'menu-mcp' }, [mcpCollapse()]),
+    el('div', { class: 'menu-mcp' }, [mcpCollapse('Agent 接入')]),
     el('div', { class: 'menu-footer' }, [
       el('a', {
         class: 'menu-powered',

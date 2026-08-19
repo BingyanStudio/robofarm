@@ -127,7 +127,6 @@
   flex-wrap: wrap;
   gap: 8px;
   background: var(--bg-raised);
-  border: 1px solid var(--accent-border);
   border-radius: var(--radius-md);
   padding: 10px 14px;
 }

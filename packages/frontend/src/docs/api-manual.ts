@@ -106,9 +106,9 @@ export function mcpGuide(): HTMLElement {
 }
 
 /** Collapsible MCP onboarding strip (<details>, collapsed by default). */
-export function mcpCollapse(): HTMLElement {
+export function mcpCollapse(label = 'MCP 接入'): HTMLElement {
   const strip = el('details', { class: 'mcp-strip' }, [
-    el('summary', { text: 'MCP 接入' }),
+    el('summary', { text: label }),
   ]);
   const mcpBody = el('div', { class: 'mcp-collapse-body' }, [mcpGuide()]);
   strip.append(mcpBody);
