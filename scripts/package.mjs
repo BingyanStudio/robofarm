@@ -51,26 +51,65 @@ cpSync(join(root, 'node_modules/esbuild-wasm/esbuild.wasm'), join(release, 'esbu
 // 前端产物整体复制到 public/
 cpSync(join(frontend, 'dist'), join(release, 'public'), { recursive: true });
 
-writeFileSync(join(release, '.env.example'), `# 端口 (默认 3001)
+writeFileSync(join(release, '.env.example'), `# ============================================================
+# RoboFarm 服务端环境变量配置
+# ============================================================
+# 启动时从当前工作目录的 .env 文件读取 (start.sh / start.cmd 自动加载)。
+# 留空或未设置时使用默认值。
+
+# ---------- 基础 ----------
+
+# 服务端口 (默认 3001)
 PORT=3001
 
-# GitHub OAuth (不配置则进入开发模式, 自动登录 local-dev)
-GITHUB_CLIENT_ID=
-GITHUB_CLIENT_SECRET=
-# 部署在独立域名时设置以下两项 (默认按访问请求的 Host 自动推导, 无需配置):
-# FRONTEND_ORIGIN=https://farm.example.com
-# GITHUB_REDIRECT_URI=https://farm.example.com/auth/github/callback
+# 绑定地址 (留空则监听所有网卡)
+# HOST=0.0.0.0
 
-# 数据库文件路径 (默认 data.db, 放在启动时所在目录 pwd 下, 即 pwd/data.db)
+# 数据库文件路径, 相对于启动目录 (默认 data.db)
 DB_PATH=data.db
 
-# esbuild.wasm 单独部署在其他服务器时, 填写其完整 URL (如 https://cdn.example.com/esbuild.wasm)。
+# 前端静态目录 (发布版自动探测 public/, 源码开发时探测 frontend/dist/)
+# 仅当自动探测失败或需要覆盖时设置
+# FRONTEND_DIST=
+
+# ---------- GitHub OAuth (不配置则进入开发模式, 自动登录 local-dev) ----------
+
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+# 部署在独立域名时设置以下三项 (默认按请求 Host 自动推导):
+# FRONTEND_ORIGIN=https://farm.example.com
+# BACKEND_ORIGIN=https://farm.example.com
+# GITHUB_REDIRECT_URI=https://farm.example.com/auth/github/callback
+
+# ---------- 竞技对战 ----------
+
+# 回合间隔 (毫秒, 默认 800)
+TURN_INTERVAL_MS=800
+
+# ---------- 单人验证 ----------
+
+# 全局并发验证上限 (每个验证使用一个 worker_thread, 默认按 CPU 核心数, 上限 32)
+# 超限返回 HTTP 409 "服务器繁忙"
+# SINGLE_MAX_CONCURRENT=
+
+# 每用户每分钟提交上限 (0 = 不限流, 默认 0)
+# 超限返回 HTTP 429
+# SINGLE_SUBMIT_LIMIT_PER_MIN=0
+
+# ---------- 高级部署 ----------
+
+# esbuild.wasm 单独部署在其他服务器时, 填写其完整 URL。
 # 后端启动时从该地址下载并进程内编译; 前端 (浏览器编译) 也从该地址加载。
 # 留空则使用本地文件 (后端 __dirname/esbuild.wasm, 浏览器同源 /esbuild.wasm)。
-ESBUILD_WASM_URL=
+# ESBUILD_WASM_URL=https://cdn.example.com/esbuild.wasm
 
-# 竞技对战回合间隔 (毫秒)
-TURN_INTERVAL_MS=800
+# ============================================================
+# 前端构建期环境变量 (仅构建时生效, 运行时无需设置)
+# 参考 packages/frontend/.env.example
+# ============================================================
+# VITE_MCP_BASE=                    # MCP 服务器地址, 默认同源 /mcp
+# VITE_BACKEND_TARGET=              # 开发代理后端地址, 默认 http://localhost:3001
+# WEBSITE_EXTRA_HEADER=             # 注入 <head> 的自定义 HTML (统计脚本等)
 `);
 
 writeFileSync(
