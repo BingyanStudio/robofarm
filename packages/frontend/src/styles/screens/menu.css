@@ -85,10 +85,18 @@
   font-size: 15px;
 }
 
-/* MCP card on the main menu (wider, always expanded). */
+/* MCP card on the main menu (collapsible, collapsed by default). */
 .menu-mcp {
   width: min(660px, 90vw);
   text-align: left;
+  margin-bottom: 0;
+  padding: 8px 12px;
+}
+
+.menu-mcp summary {
+  font-size: 14px;
+  font-weight: 600;
+  padding: 2px 0;
 }
 
 .menu-mcp .mcp-guide {
@@ -101,12 +109,12 @@
   padding: 10px 14px;
 }
 
-.menu-mcp > .mcp-guide > .mcp-guide-lead {
+.menu-mcp .mcp-guide .mcp-guide-lead {
   width: 100%;
   margin: 0 0 2px;
 }
 
-.menu-mcp > .mcp-guide > .mcp-method {
+.menu-mcp .mcp-guide .mcp-method {
   flex: 1;
   min-width: 200px;
   margin: 0;

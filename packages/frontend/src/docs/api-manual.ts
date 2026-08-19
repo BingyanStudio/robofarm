@@ -105,6 +105,50 @@ export function mcpGuide(): HTMLElement {
   return el('div', { class: 'manual mcp-guide' }, nodes);
 }
 
+/** Collapsible MCP onboarding strip (<details>, collapsed by default). */
+export function mcpCollapse(): HTMLElement {
+  const strip = el('details', { class: 'mcp-strip' }, [
+    el('summary', { text: 'MCP 接入' }),
+  ]);
+  const mcpBody = el('div', { class: 'mcp-collapse-body' }, [mcpGuide()]);
+  strip.append(mcpBody);
+
+  // Native <details> removes its content as soon as `open` becomes false, which
+  // prevents a closing animation. Keep it open until the CSS grid collapse ends.
+  let closing = false;
+  function closeMcp(): void {
+    if (!strip.open || closing) return;
+    closing = true;
+    strip.classList.add('is-closing');
+  }
+  mcpBody.addEventListener('transitionend', (event) => {
+    if (event.propertyName !== 'grid-template-rows' || !closing) return;
+    closing = false;
+    strip.classList.remove('is-closing');
+    strip.open = false;
+  });
+  // Browser <details> applies `open` before the first paint, so delay setting
+  // it by one frame to give the collapsed grid state a rendered starting point.
+  const summary = strip.querySelector('summary')!;
+  summary.addEventListener('click', (event) => {
+    if (strip.open) {
+      event.preventDefault();
+      closeMcp();
+      return;
+    }
+    event.preventDefault();
+    requestAnimationFrame(() => {
+      strip.open = true;
+    });
+  });
+  strip.addEventListener('toggle', () => {
+    if (!strip.open) return;
+    closing = false;
+    strip.classList.remove('is-closing');
+  });
+  return strip;
+}
+
 /** Render a doc entry (content from shared docs) */
 function docEntry(e: DocEntry): HTMLElement {
   const rows: HTMLElement[] = [
@@ -271,45 +315,7 @@ function apiManualTabs(): HTMLElement {
   panels.forEach((p, i) => {
     if (i !== 0) p.style.display = 'none';
   });
-  const mcpStrip = el('details', { class: 'mcp-strip' }, [
-    el('summary', { text: 'MCP 接入' }),
-  ]);
-  const mcpBody = el('div', { class: 'mcp-collapse-body' }, [mcpGuide()]);
-  mcpStrip.append(mcpBody);
-
-  // Native <details> removes its content as soon as `open` becomes false, which
-  // prevents a closing animation. Keep it open until the CSS grid collapse ends.
-  let closing = false;
-  function closeMcp(): void {
-    if (!mcpStrip.open || closing) return;
-    closing = true;
-    mcpStrip.classList.add('is-closing');
-  }
-  mcpBody.addEventListener('transitionend', (event) => {
-    if (event.propertyName !== 'grid-template-rows' || !closing) return;
-    closing = false;
-    mcpStrip.classList.remove('is-closing');
-    mcpStrip.open = false;
-  });
-  // Browser <details> applies `open` before the first paint, so delay setting
-  // it by one frame to give the collapsed grid state a rendered starting point.
-  const mcpSummary = mcpStrip.querySelector('summary')!;
-  mcpSummary.addEventListener('click', (event) => {
-    if (mcpStrip.open) {
-      event.preventDefault();
-      closeMcp();
-      return;
-    }
-    event.preventDefault();
-    requestAnimationFrame(() => {
-      mcpStrip.open = true;
-    });
-  });
-  mcpStrip.addEventListener('toggle', () => {
-    if (!mcpStrip.open) return;
-    closing = false;
-    mcpStrip.classList.remove('is-closing');
-  });
+  const mcpStrip = mcpCollapse();
   const root = el('div', { class: 'api-tabs-root' }, [mcpStrip, tabBar, ...panels]);
   wireDocLinks(root, tabBar, panels);
   return root;
