@@ -16,6 +16,7 @@
     "@robofarm/shared": "*",
     "esbuild-wasm": "^0.25.0",
     "express": "^4.21.2",
+    "undici": "^8.10.0",
     "ws": "^8.18.0",
     "zod": "^3.22.4"
   },

@@ -9,6 +9,17 @@ import { workDir } from './db';
 // 加载 .env (若存在): 简单键值解析, 支持 KEY=VALUE 与引号
 tryLoadDotEnv();
 
+// 读取代理环境变量, 设置全局 fetch 代理 (Node 原生 fetch 不自动读取 HTTP_PROXY 等变量)
+{
+  const proxyUrl = process.env.HTTPS_PROXY ?? process.env.HTTP_PROXY ?? process.env.https_proxy ?? process.env.http_proxy;
+  if (proxyUrl) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { setGlobalDispatcher, ProxyAgent } = require('undici');
+    setGlobalDispatcher(new ProxyAgent(proxyUrl));
+    console.log(`[robofarm] 已配置出站代理: ${proxyUrl.replace(/\/\/.*@/, '//***@')}`);
+  }
+}
+
 // 无条件把 cwd 切到稳定工作目录 (tmp/robofarm-work):
 // 启动目录可能在运行中被删除 (如重新打包 release/), 导致 worker_threads /
 // esbuild 子进程以 "uv_cwd ENOENT" 崩溃; 在 esbuild-wasm 首次加载前
