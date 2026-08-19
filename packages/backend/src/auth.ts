@@ -86,10 +86,22 @@ function frontendOrigin(req: Request): string {
   return explicit ? explicit : `${requestProto(req)}://${req.get('host')}`;
 }
 
+/** GitHub 回调地址: 优先显式配置 (GITHUB_REDIRECT_URI / BACKEND_ORIGIN),
+ *  否则以传入的 baseUrl 推导。Web 登录与 MCP 登录共用, 保证两处生成的
+ *  redirect_uri 与 GitHub OAuth 应用注册值一致 (MCP 客户端常从本机/内网
+ *  直连, 请求 Host 推导出的地址可能与注册值不符 → redirect_uri_mismatch)。 */
+function resolveCallbackUrl(fallbackBase: string): string {
+  const explicit = process.env.GITHUB_REDIRECT_URI?.trim();
+  if (explicit) return explicit;
+  const origin = process.env.BACKEND_ORIGIN?.trim();
+  if (origin) return `${origin}/auth/github/callback`;
+  const base = fallbackBase || 'http://127.0.0.1:3001';
+  return `${base}/auth/github/callback`;
+}
+
 /** GitHub 回调地址: 优先显式配置, 否则按请求推导 (需与 GitHub OAuth 应用注册值一致) */
 function redirectUri(req: Request): string {
-  const explicit = process.env.GITHUB_REDIRECT_URI?.trim();
-  return explicit ? explicit : `${backendOrigin(req)}/auth/github/callback`;
+  return resolveCallbackUrl(backendOrigin(req));
 }
 
 /** MCP 登录第一步: 返回 GitHub 授权地址 (含 state); 开发模式直接返回 dev 标记 */
@@ -97,7 +109,7 @@ export function mcpLoginStart(baseUrl: string): { authorizeUrl?: string; state?:
   if (devMode()) return { dev: true };
   const state = randomBytes(16).toString('hex');
   pendingStates.set(state, { state, createdAt: Date.now() });
-  const callback = `${baseUrl}/auth/github/callback`;
+  const callback = resolveCallbackUrl(baseUrl);
   // 最小权限: 不申请任何 scope —— 只用 GET /user 取用户名 (login), 零 scope 的令牌即可
   const url =
     `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(clientId())}` +

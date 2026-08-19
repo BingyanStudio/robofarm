@@ -44,3 +44,13 @@
   重启/多实例仍可登录; 回调带 GitHub error 参数 (用户取消授权等) 时静默跳回
   前端而非误报状态无效; 失败路径统一 302 到 /#/menu 由 /auth/me 判定登录态
   (不再返回 400 错误页)。已重新打包 release/ 与 robofarm.tgz。
+- [x] **MCP login_start 生成的 OAuth callback url 未遵循环境变量配置**
+  现象: 配置了 `GITHUB_REDIRECT_URI` / `BACKEND_ORIGIN` 的部署下, MCP
+  `login_start` 返回的 GitHub 授权地址仍按**请求 Host** 推导回调地址
+  (MCP 客户端常从本机/内网直连后端, Host 与公网域名不同) → 与 GitHub
+  OAuth 应用注册值不一致 → 授权时 `redirect_uri_mismatch`, MCP 登录失败。
+  修复 (packages/backend/src/auth.ts): 抽取共用 `resolveCallbackUrl()`,
+  Web 登录 (`redirectUri`) 与 MCP 登录 (`mcpLoginStart`) 统一按
+  `GITHUB_REDIRECT_URI` → `BACKEND_ORIGIN` → 请求推导 的优先级解析回调
+  地址, 两处生成的 redirect_uri 始终一致, 并与 `/auth/github/callback`
+  令牌交换使用的地址匹配。已重新打包 release/。
