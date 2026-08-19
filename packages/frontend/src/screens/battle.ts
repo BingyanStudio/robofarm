@@ -68,8 +68,12 @@ export function battleScreen(root: HTMLElement, params: URLSearchParams): void {
       el('p', { class: 'hint', text: '对手代码不可见' })
     );
     void (async () => {
-      const { data } = await api.get('/combat/state');
-      if (data?.code) createEditor(codeHost, { initial: data.code, readonly: true });
+      try {
+        const { data } = await api.get('/combat/state');
+        if (data?.code) createEditor(codeHost, { initial: data.code, readonly: true });
+      } catch {
+        // 出战代码加载失败: 保持空编辑器
+      }
     })();
     if (roomId && !spectate) connect(roomId);
     btnStart = button('开始', () => void startMatch());

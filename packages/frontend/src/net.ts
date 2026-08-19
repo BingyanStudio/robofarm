@@ -26,8 +26,13 @@ export const api = {
 };
 
 export async function fetchUser(): Promise<UserInfo | null> {
-  const { status, data } = await api.get('/auth/me');
-  return status === 200 ? (data.user as UserInfo) : null;
+  try {
+    const { status, data } = await api.get('/auth/me');
+    return status === 200 ? (data.user as UserInfo) : null;
+  } catch {
+    // 网络异常时按未登录处理 (调用方无需再捕获)
+    return null;
+  }
 }
 
 /** 打开战斗房间的 WebSocket */

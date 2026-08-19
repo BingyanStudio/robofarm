@@ -73,29 +73,35 @@ export function matchScreen(root: HTMLElement): void {
       listHost.replaceChildren(el('p', { class: 'hint', text: '登录后查看可挑战的玩家' }));
       return;
     }
-    const state = await api.get('/combat/state');
-    if (state.data) {
-      const { wins, losses } = state.data;
-      stateLine.textContent = `出战状态: 已上传 · 胜 ${wins} / 负 ${losses}`;
-    } else {
-      stateLine.textContent = '出战状态: 尚未上传代码';
-    }
-    const list = await api.get('/combat/list');
-    const entries = (list.data?.entries ?? []) as { id: number; name: string; wins: number; losses: number }[];
-    listHost.replaceChildren();
-    if (entries.length === 0) {
-      listHost.append(el('p', { class: 'hint', text: '暂无其他玩家上传出战代码' }));
-      return;
-    }
-    for (const e of entries) {
-      const total = e.wins + e.losses;
-      const rate = total > 0 ? Math.round((e.wins / total) * 100) : 0;
-      const card = el('div', { class: 'card' }, [
-        el('div', { class: 'card-name', text: e.name }),
-        el('div', { class: 'card-meta', text: `胜 ${e.wins} / 负 ${e.losses} · 胜率 ${rate}%` }),
-        button('挑战', () => (location.hash = `#/battle?opponentId=${e.id}`), { class: 'btn btn-small' }),
-      ]);
-      listHost.append(card);
+    try {
+      const state = await api.get('/combat/state');
+      if (state.data) {
+        const { wins, losses } = state.data;
+        stateLine.textContent = `出战状态: 已上传 · 胜 ${wins} / 负 ${losses}`;
+      } else {
+        stateLine.textContent = '出战状态: 尚未上传代码';
+      }
+      const list = await api.get('/combat/list');
+      const entries = (list.data?.entries ?? []) as { id: number; name: string; wins: number; losses: number }[];
+      listHost.replaceChildren();
+      if (entries.length === 0) {
+        listHost.append(el('p', { class: 'hint', text: '暂无其他玩家上传出战代码' }));
+        return;
+      }
+      for (const e of entries) {
+        const total = e.wins + e.losses;
+        const rate = total > 0 ? Math.round((e.wins / total) * 100) : 0;
+        const card = el('div', { class: 'card' }, [
+          el('div', { class: 'card-name', text: e.name }),
+          el('div', { class: 'card-meta', text: `胜 ${e.wins} / 负 ${e.losses} · 胜率 ${rate}%` }),
+          button('挑战', () => (location.hash = `#/battle?opponentId=${e.id}`), { class: 'btn btn-small' }),
+        ]);
+        listHost.append(card);
+      }
+    } catch {
+      // 网络异常: 避免占位符永久停留
+      stateLine.textContent = '出战状态: 加载失败, 请刷新重试';
+      listHost.replaceChildren(el('p', { class: 'hint', text: '网络异常, 无法加载玩家列表' }));
     }
   }
 

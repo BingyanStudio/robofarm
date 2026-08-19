@@ -85,6 +85,14 @@ export function singleScreen(root: HTMLElement): void {
     runner.layout.root
   );
 
+  // 右上角登录状态 (与主菜单一致): 已登录显示用户名, 未登录可点击跳转 GitHub
+  void (async () => {
+    const user = await fetchUser();
+    userBox.textContent = user ? `👤 ${user.name}${user.dev ? ' (本地)' : ''}` : '未登录 (点击登录)';
+    userBox.className = 'user-chip' + (user ? ' user-on' : '');
+    if (!user) userBox.onclick = () => (location.href = '/auth/github');
+  })();
+
   function handleEnd(result: GameResult): void {
     if (result.type === 'finished') {
       const money = result.scores[0]?.money ?? 0;
