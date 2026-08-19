@@ -43,6 +43,18 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
   由 app.ts 的 `resolveFrontendDist()` 探测)、`start.sh`/`start.cmd`、`.env.example`。
 - 改了打包逻辑后重新 `npm run package` 并启动 `release/start.sh` 冒烟验证
   (单人验证会走内嵌 wasm 编译路径, 竞技对战会走 release/runner/ 的 worker)。
+
+## 容器化 (Dockerfile)
+
+- 多阶段构建: `node:24-slim` 构建阶段 `npm ci && npm run package` 生成 `release/`,
+  运行阶段只拷贝 `release/` (无需 node_modules)。对外单端口 3001 暴露全部服务:
+  前端页面 / 后端 API / MCP (POST /mcp) / WS 直播。`.dockerignore` 排除 node_modules /
+  dist / release / .env / data.db。
+- **数据卷**: 容器内 `/data` (node 用户, UID 1000) 为挂载点, 启动 cwd=/data →
+  `data.db` 与 `.env` 都落在卷内 (db.ts 的 startCwd 在模块加载时捕获, 不会被
+  index.ts 的 chdir 切走), 挂载 `-v 卷:/data` 即可持久化/备份。bind mount 需宿主目录
+  对 UID 1000 可写。
+- server.cjs 按 `__dirname` 解析 esbuild.wasm / runner / public, 必须放在 /app。
 - **start.sh 尊重 pwd**: 不再 cd 到脚本目录, `.env` 从当前目录读取, `data.db` 也存当前目录。
   实现关键: db.ts 在模块加载时捕获 `startCwd` (此时尚未被 index.ts 的 chdir 切走),
   `getDbPath()` 用 `resolve(startCwd, DB_PATH ?? 'data.db')` 解析 —— 改这块要小心顺序。

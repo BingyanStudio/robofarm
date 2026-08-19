@@ -6,7 +6,7 @@
 //   3. 写入当前版本号 (供下次对比)
 import { el, button, modal } from './ui';
 
-export const VERSION = '1.0.0';
+export const VERSION = '1.0.1';
 export const VERSION_KEY = 'robofarm.version';
 
 export interface UpdateEntry {
@@ -17,6 +17,21 @@ export interface UpdateEntry {
 
 /** 更新日志 (按版本从新到旧) */
 export const UPDATE_LOG: UpdateEntry[] = [
+  {
+    version: '1.0.1',
+    title: 'v1.0.1',
+    items: [
+      '## 性能与稳定性',
+      '单人验证增加全局并发上限 (SINGLE_MAX_CONCURRENT, 默认 4, 超限返回繁忙); 预留每用户每分钟提交限流 (SINGLE_SUBMIT_LIMIT_PER_MIN, 默认不限流, 超限返回 429)',
+      '首次编译会下载编译器 (esbuild), 日志中明确提示"首次编译, 正在下载编译器…"',
+      '## 界面',
+      '多人竞技左侧面板: 出战状态与"模拟竞技 / 上传代码"按钮移到"出战代码"栏右对齐; "上传代码"按钮改为绿色 accent',
+      '## 安全',
+      'GitHub 登录最小权限: 移除 read:user scope (仅通过 GET /user 获取用户名)',
+      '## 重构',
+      '抽取 GameRunner 统一单人种植 / 模拟竞技的回合循环 (编译→开始→步进/暂停/调速→结束), 消除两处重复实现',
+    ],
+  },
   {
     version: '1.0.0',
     title: 'v1.0.0',
