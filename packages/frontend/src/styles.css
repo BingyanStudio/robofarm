@@ -398,12 +398,45 @@ body {
   line-height: 1.5;
 }
 
-/* 多人竞技左侧边栏: 模拟竞技 + 上传出战代码 居中排列 */
-.match-actions {
+/* 多人竞技左侧头部: "出战代码"标题 + 出战状态右对齐, 按钮行也右对齐 */
+.match-head {
   display: flex;
-  justify-content: center;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  font-weight: 600;
+  border-bottom: 1px solid #2a3a33;
+  background: #16201b;
+}
+
+.match-head .state-line {
+  font-size: 13px;
+  font-weight: 400;
+  color: #8aa39a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.match-head-sub {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 8px 14px 0;
+}
+
+.match-head-actions {
+  display: flex;
+  justify-content: flex-end;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.match-head-sub .hint {
+  margin: 0;
+  text-align: right;
 }
 
 /* ---------- 游戏布局 ---------- */

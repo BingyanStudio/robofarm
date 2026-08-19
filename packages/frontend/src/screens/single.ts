@@ -1,30 +1,79 @@
 // 单人种植: 本地执行玩家代码, 支持开始/步进/重启/调速, 可提交到服务器验证。
+// 回合循环 (编译/开始/暂停/步进/调速/结束) 由 GameRunner 提供, 这里只保留
+// 单人专属逻辑: 编辑器、提交成绩、排行榜、回放录制。
 import { BrowserProgram } from '../browser-program';
 import {
   GameController,
   compilePlayerCode,
   createSingleWorld,
-  snapshotOf,
   DEFAULT_MAX_TURNS,
-  TURN_INTERVALS_MS,
   GameResult,
   ReplayRecorder,
   ReplayFile,
 } from '@robofarm/shared';
-import { createGameLayout, DEFAULT_CODE, GameView } from '../game-layout';
+import { DEFAULT_CODE } from '../game-layout';
 import { createEditor } from '../editor';
-import { Renderer } from '../renderer';
 import { el, button, modal, toast, topBar, sleep, downloadJson } from '../ui';
 import { api, fetchUser } from '../net';
+import { GameRunner } from '../game-runner';
 
 const CODE_KEY = 'robofarm.single';
 
 export function singleScreen(root: HTMLElement): void {
   root.replaceChildren();
-  const layout = createGameLayout('单人种植 · 在限定回合内赚取最多金钱');
-  const renderer = new Renderer(layout.canvas);
-  const logBox = el('div', { class: 'log-box' });
-  layout.logHost.append(logBox);
+
+  const lockBar = el('div', { class: 'editor-lock-bar', style: 'display:none' }, [
+    el('span', { text: '🔒 游戏进行中, 代码已锁定' }),
+    button('停止游戏', () => runner.stopForEdit(), { class: 'btn btn-small' }),
+  ]);
+
+  /** 回放录制器: 记录每回合操作与输出 (每次新对局重建) */
+  let recorder: ReplayRecorder | null = null;
+  let replayFile: ReplayFile | null = null;
+
+  const runner = new GameRunner({
+    title: '单人种植 · 在限定回合内赚取最多金钱',
+    previewWorld: () => createSingleWorld(DEFAULT_MAX_TURNS),
+    buildGame: async (log) => {
+      const code = editor.getValue();
+      const compiled = await compilePlayerCode(code);
+      if (!compiled.ok) {
+        for (const e of compiled.errors) {
+          log(`[编译错误]${e.line ? ` 第 ${e.line} 行` : ''}: ${e.message}`);
+        }
+        return null;
+      }
+      let program: BrowserProgram;
+      try {
+        program = await BrowserProgram.create(compiled.js);
+      } catch (err) {
+        log(`[错误] ${err instanceof Error ? err.message : String(err)}`);
+        return null;
+      }
+      // 录制回放: 包装程序捕获每回合操作
+      recorder = new ReplayRecorder();
+      replayFile = null;
+      const controller = new GameController({
+        mode: 'single',
+        players: [{ name: '玩家', frame: 'normal', program: recorder.wrap(program) }],
+        maxTurns: DEFAULT_MAX_TURNS,
+      });
+      return { controller, programs: [program] };
+    },
+    setEditorLocked: (locked) => {
+      editor.setReadOnly(locked);
+      lockBar.style.display = locked ? 'flex' : 'none';
+    },
+    gameStartLog: '[系统] 新对局开始',
+    onEnd: (result) => handleEnd(result),
+  });
+
+  // 编辑器挂载到运行器布局的编辑区 (锁定条在上, 编辑器在下)
+  runner.layout.editorHost.append(lockBar);
+  const editor = createEditor(runner.layout.editorHost, {
+    initial: localStorage.getItem(CODE_KEY) ?? DEFAULT_CODE,
+    onChange: (v) => localStorage.setItem(CODE_KEY, v),
+  });
 
   let userBox = el('span', { class: 'user-chip', text: '…' });
   root.append(
@@ -33,212 +82,14 @@ export function singleScreen(root: HTMLElement): void {
       button('排行榜', () => showLeaderboard(), { class: 'btn btn-gold' }),
       button('我的成绩', () => showHistory()),
     ]),
-    layout.root
+    runner.layout.root
   );
 
-  // 游戏进行中的代码锁定提示条 + 停止按钮
-  const lockBar = el('div', { class: 'editor-lock-bar', style: 'display:none' }, [
-    el('span', { text: '🔒 游戏进行中, 代码已锁定' }),
-    button('停止游戏', () => stopForEdit(), { class: 'btn btn-small' }),
-  ]);
-  layout.editorHost.append(lockBar);
-
-  const editor = createEditor(layout.editorHost, {
-    initial: localStorage.getItem(CODE_KEY) ?? DEFAULT_CODE,
-    onChange: (v) => localStorage.setItem(CODE_KEY, v),
-  });
-
-  let controller: GameController | null = null;
-  let programs: BrowserProgram[] = [];
-  let playing = false;
-  let speedIdx = 0;
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  /** 首次点击开始时会远程拉取 esbuild, 编译完成前禁用开始/步进按钮 */
-  let compiling = false;
-  /** 回放录制器: 记录每回合操作与输出 (每次新对局重建) */
-  let recorder: ReplayRecorder | null = null;
-  let replayFile: ReplayFile | null = null;
-
-  // 速度档位标签, 与 TURN_INTERVALS_MS 对齐 (0 正常 / 1 两倍 / 2 四倍 / 3 八倍)
-  const SPEED_LABELS = ['速度: 正常', '速度: ×2', '速度: ×4', '速度: ×8'];
-
-  const view = new GameView({
-    renderer,
-    onStatus: (t) => (statusText.textContent = t),
-    onLog: (lines) => appendLog(lines),
-    onEnd: (result) => handleEnd(result),
-    moneyEl: layout.moneyHost,
-  });
-  const statusText = el('span', { class: 'status-text', text: `回合 0 / ${DEFAULT_MAX_TURNS}` });
-  layout.statusHost.append(statusText);
-
-  // 未开始前也先展示地图 (初始状态: 无人机在出生点)
-  view.apply([{ type: 'snapshot', state: snapshotOf(createSingleWorld(DEFAULT_MAX_TURNS)) }]);
-  statusText.textContent = `回合 0 / ${DEFAULT_MAX_TURNS}`;
-
-  function appendLog(lines: string[]): void {
-    for (const line of lines) {
-      logBox.append(el('div', { class: 'log-line', text: line }));
-    }
-    while (logBox.children.length > 300) logBox.firstElementChild?.remove();
-    logBox.scrollTop = logBox.scrollHeight;
-  }
-
-  function log(text: string): void {
-    appendLog([text]);
-  }
-
-  function stopGame(): void {
-    playing = false;
-    if (timer) clearTimeout(timer);
-    timer = null;
-    for (const p of programs) p.dispose();
-    programs = [];
-    controller = null;
-    updateStartStop();
-    updatePauseButton();
-  }
-
-  /** 开始/停止合并按钮: 有进行中的对局显示红色"停止", 否则显示绿色"开始"; 编译中禁用 */
-  function updateStartStop(): void {
-    const running = controller !== null && !controller.over;
-    btnStartStop.disabled = compiling;
-    btnStartStop.textContent = compiling ? '编译中…' : running ? '停止' : '开始';
-    btnStartStop.classList.toggle('btn-stop', running && !compiling);
-    btnStartStop.classList.toggle('btn-start', !running && !compiling);
-  }
-
-  /** 暂停/继续按钮: 播放中显示"暂停", 暂停/步进模式显示"继续"; 无对局时禁用 */
-  function updatePauseButton(): void {
-    const active = controller !== null && !controller.over;
-    btnPause.textContent = active ? (playing ? '暂停' : '继续') : '暂停';
-    btnPause.disabled = !active;
-  }
-
-  /** 切换播放/暂停模式 (仅对进行中的对局有效) */
-  function togglePause(): void {
-    if (!controller || controller.over) return;
-    playing = !playing;
-    if (playing) {
-      scheduleNext();
-    } else if (timer) {
-      clearTimeout(timer);
-      timer = null;
-    }
-    updatePauseButton();
-  }
-
-  /** 合并按钮: 未开始时编译并开始新对局, 进行中则停止并允许修改代码 */
-  async function onStartStop(): Promise<void> {
-    if (compiling) return; // 编译中禁止再次点击
-    if (controller && !controller.over) {
-      stopForEdit();
-      return;
-    }
-    compiling = true;
-    updateStartStop();
-    try {
-      await newGame(true);
-    } finally {
-      compiling = false;
-      updateStartStop();
-    }
-  }
-
-  /** 锁定/解锁代码编辑器 (游戏进行中锁定) */
-  function setEditorLocked(locked: boolean): void {
-    editor.setReadOnly(locked);
-    lockBar.style.display = locked ? 'flex' : 'none';
-  }
-
-  /** 停止游戏并允许修改代码 (回到初始地图预览) */
-  function stopForEdit(): void {
-    stopGame();
-    setEditorLocked(false);
-    view.apply([{ type: 'snapshot', state: snapshotOf(createSingleWorld(DEFAULT_MAX_TURNS)) }]);
-    statusText.textContent = `回合 0 / ${DEFAULT_MAX_TURNS}`;
-    log('[系统] 游戏已停止, 可以修改代码');
-  }
-
-  async function newGame(autoPlay: boolean): Promise<void> {
-    stopGame();
-    const code = editor.getValue();
-    log('[系统] 正在编译代码…');
-    const compiled = await compilePlayerCode(code);
-    if (!compiled.ok) {
-      setEditorLocked(false);
-      for (const e of compiled.errors) {
-        log(`[编译错误]${e.line ? ` 第 ${e.line} 行` : ''}: ${e.message}`);
-      }
-      return;
-    }
-    let program: BrowserProgram;
-    try {
-      program = await BrowserProgram.create(compiled.js);
-    } catch (err) {
-      setEditorLocked(false);
-      log(`[错误] ${err instanceof Error ? err.message : String(err)}`);
-      return;
-    }
-    programs = [program];
-    // 录制回放: 包装程序捕获每回合操作
-    recorder = new ReplayRecorder();
-    replayFile = null;
-    controller = new GameController({
-      mode: 'single',
-      players: [{ name: '玩家', frame: 'normal', program: recorder.wrap(program) }],
-      maxTurns: DEFAULT_MAX_TURNS,
-    });
-    // 立即渲染初始地图 (重启/步进未播放时也能看到场景)
-    view.apply([{ type: 'snapshot', state: snapshotOf(controller.world) }]);
-    statusText.textContent = `回合 0 / ${DEFAULT_MAX_TURNS}`;
-    log('[系统] 新对局开始');
-    setEditorLocked(true);
-    updateStartStop();
-    if (autoPlay) {
-      playing = true;
-      scheduleNext();
-    }
-    updatePauseButton();
-  }
-
-  async function stepOnce(): Promise<void> {
-    if (!controller || controller.over) {
-      playing = false;
-      return;
-    }
-    const events = await controller.step();
-    recorder?.afterStep(events, controller.world.turn);
-    view.apply(events);
-  }
-
-  function scheduleNext(delay: number = TURN_INTERVALS_MS[speedIdx]): void {
-    if (!playing) return;
-    if (timer) clearTimeout(timer);
-    // 先等当前回合 (含玩家代码执行) 彻底结束后再进入下一回合, 防止回合重叠
-    timer = setTimeout(async () => {
-      const t0 = performance.now();
-      await stepOnce();
-      const dur = performance.now() - t0;
-      if (playing && controller && !controller.over) {
-        const interval = TURN_INTERVALS_MS[speedIdx];
-        // ×8: 回合间延迟取 0.1s 与程序实际执行时间的最大值 (自本回合开始计时)
-        const next = speedIdx >= 3 ? Math.max(interval - dur, 0) : interval;
-        scheduleNext(next);
-      }
-    }, delay);
-  }
-
   function handleEnd(result: GameResult): void {
-    playing = false;
-    // 游戏结束, 解锁代码编辑
-    setEditorLocked(false);
-    updateStartStop();
-    updatePauseButton();
     if (result.type === 'finished') {
       const money = result.scores[0]?.money ?? 0;
-      statusText.textContent = `对局结束 · 金钱 ${money}`;
-      log(`[系统] 对局结束, 最终金钱: ${money}`);
+      runner.statusText.textContent = `对局结束 · 金钱 ${money}`;
+      runner.log(`[系统] 对局结束, 最终金钱: ${money}`);
       // 生成回放文件
       if (recorder) {
         replayFile = recorder.buildFile({
@@ -255,12 +106,16 @@ export function singleScreen(root: HTMLElement): void {
       const m = modal('对局结束', body);
       const actions = [button('提交成绩', () => submitScore(m))];
       if (replayFile) {
-        actions.push(button('保存回放', () => downloadJson(replayFile, `robofarm-replay-single.json`), { class: 'btn btn-gold' }));
+        actions.push(
+          button('保存回放', () => downloadJson(replayFile, `robofarm-replay-single.json`), {
+            class: 'btn btn-gold',
+          })
+        );
       }
       body.append(el('div', { class: 'row' }, actions));
     } else {
-      statusText.textContent = '对局中止';
-      log(`[错误] ${result.message}`);
+      runner.statusText.textContent = '对局中止';
+      runner.log(`[错误] ${result.message}`);
       modal('对局中止', el('p', { text: result.message }));
     }
   }
@@ -399,16 +254,8 @@ export function singleScreen(root: HTMLElement): void {
     })();
   }
 
-  const btnStartStop = button('开始', () => void onStartStop());
-  const btnPause = button('暂停', () => togglePause());
-  const btnStep = button('步进', () => void onStep());
-  const btnSpeed = button('速度: 正常', () => {
-    speedIdx = (speedIdx + 1) % SPEED_LABELS.length;
-    btnSpeed.textContent = SPEED_LABELS[speedIdx];
-  });
   const btnSubmit = button('提交', () => void submitFromButton(), { class: 'btn btn-submit' });
-  layout.controlsHost.append(btnStartStop, btnPause, btnStep, btnSpeed, btnSubmit);
-  updatePauseButton();
+  runner.addControl(btnSubmit);
 
   // 主动查询验证状态: 后端有程序在运行时禁用提交按钮 (避免 409)
   const validatePoll = setInterval(async () => {
@@ -426,17 +273,6 @@ export function singleScreen(root: HTMLElement): void {
     }
   }, 2000);
 
-  /** 步进: 没有对局时先编译并创建, 再运行 1 回合 (创建后为暂停模式) */
-  async function onStep(): Promise<void> {
-    if (compiling) return; // 编译中禁止
-    playing = false;
-    if (!controller) {
-      await newGame(false);
-    }
-    await stepOnce();
-    updatePauseButton();
-  }
-
   async function submitFromButton(): Promise<void> {
     const user = await fetchUser();
     if (!user) {
@@ -453,64 +289,18 @@ export function singleScreen(root: HTMLElement): void {
             m.close();
             resolve(true);
           }, { class: 'btn btn-submit' }),
-          button('取消', () => {
-            m.close();
-            resolve(false);
-          }),
         ]),
       ]);
       const m = modal('提交确认', body, { noClose: true });
     });
     if (!confirmed) return;
-    const check = await api.get('/single/validate');
-    if (check.data?.busy) {
-      toast('已有程序正在服务器运行');
-      return;
-    }
     const code = editor.getValue();
-
-    // 提交后: 弹窗变为圆圈加载条 + "隐藏"按钮
-    let hidden = false;
-    let progressModal: { close: () => void } | null = null;
-    const progressBody = el('div', { class: 'submit-progress' }, [
-      el('div', { class: 'spinner' }),
-      el('p', { class: 'hint', text: '服务器验证中…' }),
-      el('div', { class: 'row' }, [
-        button('隐藏', () => {
-          hidden = true;
-          progressModal?.close();
-        }),
-      ]),
-    ]);
-    progressModal = modal('提交验证', progressBody, { noClose: true });
-
     const res = await api.post('/single/validate', { code });
-    if (res.status !== 200) {
-      progressModal.close();
-      toast(res.data?.error ?? '提交失败');
-      return;
-    }
-    // 轮询直到服务器执行完毕
-    const r = await pollValidationOnce();
-    if (!hidden) {
-      progressModal.close();
-      if (r.error) modal('验证失败', el('p', { text: r.error }));
-      else if (r.timeout) toast('验证超时, 请稍后查询');
-      else showLeaderboard(); // 弹窗未被隐藏: 立即弹出排行榜
-    } else if (r.error) {
-      toast(`验证失败: ${r.error}`);
-    } else if (r.timeout) {
-      toast('验证超时, 请稍后查询');
+    if (res.status === 200) {
+      toast('已提交, 服务器验证中…');
+      void pollThenToast();
     } else {
-      toast(`验证完成, 得分: ${r.score}`);
+      toast(res.data?.error ?? '提交失败');
     }
   }
-
-  // 登录状态
-  void (async () => {
-    const user = await fetchUser();
-    userBox.textContent = user ? `👤 ${user.name}${user.dev ? ' (本地)' : ''}` : '未登录';
-    userBox.className = 'user-chip' + (user ? ' user-on' : '');
-    if (!user) userBox.onclick = () => (location.href = '/auth/github');
-  })();
 }

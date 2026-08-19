@@ -91,13 +91,14 @@ export const API_DOC_GROUPS: ApiDocGroup[] = [
         path: '/single/validate',
         auth: true,
         title: '提交代码验证',
-        description: '提交玩家代码, 启动服务器端验证执行 (同一用户同时只能运行一个)。',
+        description: '提交玩家代码, 启动服务器端验证执行 (同一用户同时只能运行一个; 全局并发受限时返回 409 繁忙; 可通过 env SINGLE_SUBMIT_LIMIT_PER_MIN 开启每用户每分钟提交限流, 超限返回 429)。',
         headers: ['Content-Type: application/json'],
         request: '{ "code": "function run(droneId) { ... }" }',
         responses: [
           { code: '200', body: '{ "ok": true }' },
           { code: '400', body: '{ "error": "缺少代码" }' },
           { code: '409', body: '{ "error": "已有程序正在运行, 请等待完成" }' },
+          { code: '429', body: '{ "error": "提交过于频繁, 请 N 秒后再试" }' },
         ],
       },
       {

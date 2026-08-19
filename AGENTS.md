@@ -183,6 +183,10 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
   - 作物: `crop/<type>_<n>.avif` 正方形铺满一格, 生长阶段由
     `cropStageIndex()` (进度 = 1 - 剩余/总生长) 均匀映射。
 - 本地执行: `BrowserProgram` (看门狗超时) + `player-worker.ts` (new Function 沙箱)。
+- **GameRunner** (`game-runner.ts`): 单人种植 / 模拟竞技共用的回合循环
+  (编译→开始→步进/暂停/调速→结束, 含首次编译下载日志与编译锁)。
+  屏幕只注入 buildGame (编译+构建控制器) / setEditorLocked / gameStartLog / onEnd,
+  不要在两个 screen 里重复实现开始/暂停/步进逻辑。
 - localStorage 键: `robofarm.single`、`robofarm.simulate.me` (与多人匹配页同步)、
   `robofarm.simulate.enemy`、`robofarm.log-height`。
 
@@ -212,7 +216,9 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
 ## 后端 API 速览
 
 - `GET /auth/me`, `GET /auth/github[/callback]` (OAuth, 未配置时 dev 模式)
-- 单人: `GET/POST /single/validate` (busy/progress/score/error), `GET /single/history`,
+- 单人: `GET/POST /single/validate` (busy/progress/score/error; 全局并发上限
+  `SINGLE_MAX_CONCURRENT` 默认 4, 超限 409"服务器繁忙"; 每用户限流预留:
+  `SINGLE_SUBMIT_LIMIT_PER_MIN` 默认 0 不限流, 超限 429), `GET /single/history`,
   `GET /single/leaderboard` (按大版本分 Tab: 历史冻结快照 + 当前版本实时榜, 见下方"版本迁移")
 - 竞技: `GET /combat/state`, `POST /combat/upload` (清空胜败),
   `GET /combat/list`, `POST /combat/start {id}` → roomId,

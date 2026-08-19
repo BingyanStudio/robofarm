@@ -17,12 +17,17 @@ const states = new Map<number, ValidationStatus>();
 
 const IDLE: ValidationStatus = { busy: false, progress: 1, score: null, error: null };
 
+/** 全局并发验证上限 (env: SINGLE_MAX_CONCURRENT), 防止大量提交同时占用 worker 拖垮服务器 */
+const MAX_CONCURRENT = Number(process.env.SINGLE_MAX_CONCURRENT ?? 4);
+let activeValidations = 0;
+
 function statusOf(userId: number): ValidationStatus {
   return states.get(userId) ?? IDLE;
 }
 
 /**
- * 启动一次验证。同一用户同时只能运行一次 (busy)。
+ * 启动一次验证。同一用户同时只能运行一次 (busy);
+ * 全局并发超过上限时返回繁忙错误。
  */
 export async function startValidation(
   userId: number,
@@ -30,10 +35,18 @@ export async function startValidation(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const st = statusOf(userId);
   if (st.busy) return { ok: false, error: '已有程序正在运行, 请等待完成' };
+  if (activeValidations >= MAX_CONCURRENT) {
+    return { ok: false, error: '服务器繁忙, 请稍后重试' };
+  }
+  activeValidations += 1;
   states.set(userId, { busy: true, progress: 0, score: null, error: null });
-  runValidation(userId, code).catch(() => {
-    // runValidation 内部已处理错误
-  });
+  runValidation(userId, code)
+    .catch(() => {
+      // runValidation 内部已处理错误
+    })
+    .finally(() => {
+      activeValidations -= 1;
+    });
   return { ok: true };
 }
 

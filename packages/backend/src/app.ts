@@ -10,6 +10,7 @@ import { createAuthRouter, requireUser, currentUser, AuthUser } from './auth';
 import { llmTxt, apiDocsMarkdown } from './api-docs';
 import * as single from './services/single';
 import * as combat from './services/combat';
+import { checkRateLimit } from './services/ratelimit';
 import { getCombatCode, upsertCombatCode } from './db';
 import { createMcpServer } from './mcp/server';
 
@@ -102,6 +103,13 @@ export function createApp(): express.Express {
     const code = req.body?.code;
     if (typeof code !== 'string' || !code.trim()) {
       res.status(400).json({ error: '缺少代码' });
+      return;
+    }
+    // 预留限流: 每用户每分钟提交次数上限 (env SINGLE_SUBMIT_LIMIT_PER_MIN, 0 = 不限流)
+    const limit = Number(process.env.SINGLE_SUBMIT_LIMIT_PER_MIN ?? 0);
+    const rl = checkRateLimit(`single:${userOf(req).id}`, limit);
+    if (!rl.ok) {
+      res.status(429).json({ error: `提交过于频繁, 请 ${Math.ceil(rl.retryAfterMs / 1000)} 秒后再试` });
       return;
     }
     const result = await single.startValidation(userOf(req).id, code);

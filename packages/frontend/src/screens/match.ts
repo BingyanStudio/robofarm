@@ -20,9 +20,22 @@ export function matchScreen(root: HTMLElement): void {
   const right = el('div', { class: 'match-right' });
   layout.append(left, right);
 
+  // 左侧头部栏: "出战代码" + 出战状态 (右对齐); 模拟竞技/上传代码按钮也在此右对齐
+  const stateLine = el('span', { class: 'state-line', text: '出战状态: 查询中…' });
+  const headBar = el('div', { class: 'match-head' }, [
+    el('span', { class: 'match-title-text', text: '出战代码' }),
+    stateLine,
+  ]);
+  const actionsRow = el('div', { class: 'match-head-actions' }, [
+    button('模拟竞技', () => (location.hash = '#/simulate')),
+    button('上传代码', () => void upload(), { class: 'btn btn-start' }),
+  ]);
   left.append(
-    el('div', { class: 'game-title', text: '出战代码' }),
-    el('p', { class: 'hint', text: '与模拟竞技的"我方无人机"代码同步; 上传后胜败记录清零' })
+    headBar,
+    el('div', { class: 'match-head-sub' }, [
+      actionsRow,
+      el('p', { class: 'hint', text: '与模拟竞技的"我方无人机"代码同步; 上传后胜败记录清零' }),
+    ])
   );
   const editorHost = el('div', { class: 'editor-host' });
   left.append(editorHost);
@@ -30,14 +43,6 @@ export function matchScreen(root: HTMLElement): void {
     initial: localStorage.getItem(KEY) ?? DEFAULT_CODE,
     onChange: (v) => localStorage.setItem(KEY, v),
   });
-
-  const stateLine = el('div', { class: 'state-line', text: '出战状态: 查询中…' });
-  // 模拟竞技入口 + 上传出战代码: 二者居中排列在左侧边栏
-  const actionsRow = el('div', { class: 'match-actions' }, [
-    button('模拟竞技', () => (location.hash = '#/simulate')),
-    button('上传出战代码', () => void upload()),
-  ]);
-  left.append(stateLine, actionsRow);
 
   right.append(el('div', { class: 'game-title', text: '选择对手' }));
   const listHost = el('div', { class: 'card-list' });

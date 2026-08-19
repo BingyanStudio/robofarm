@@ -55,6 +55,11 @@ function ensureInit(): Promise<void> {
   return initPromise;
 }
 
+/** 编译器是否已初始化过 (首次编译会下载 esbuild.wasm, 之后复用) */
+export function isCompilerInitialized(): boolean {
+  return initPromise !== null;
+}
+
 export interface CompileError {
   message: string;
   line?: number;
