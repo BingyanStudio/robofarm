@@ -1,7 +1,7 @@
 // GitHub OAuth2 登录。
 // 未配置 GITHUB_CLIENT_ID 时进入开发模式: 自动创建并登录一个本地演示账号。
 import { Router, Request, Response, NextFunction } from 'express';
-import { randomBytes } from 'node:crypto';
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { createSession, getUserBySession, upsertUserByLogin } from './db';
 
 const SESSION_COOKIE = 'robofarm_session';
@@ -16,6 +16,36 @@ const pendingStates = new Map<string, OAuthState>();
 
 /** OAuth 回调成功后暂存的会话令牌 (按 state), 供 MCP 等无 Cookie 客户端领取 */
 const pendingLoginTokens = new Map<string, { token: string; createdAt: number }>();
+
+/** OAuth state 随 Cookie 下发, 回调时无需依赖进程内状态 (重启/多实例仍可登录) */
+const OAUTH_STATE_COOKIE = 'robofarm_oauth_state';
+
+/** state 签名密钥: 由 GITHUB_CLIENT_SECRET 派生, 保证跨进程/重启稳定 */
+function stateSignKey(): Buffer {
+  const secret = process.env.GITHUB_CLIENT_SECRET ?? 'robofarm-oauth-state-dev';
+  return createHmac('sha256', 'robofarm-oauth-state').update(secret).digest();
+}
+
+/** 生成带签名的一次性 state (格式 state:exp:sig, 过期时间内置) */
+function makeSignedState(): { state: string; cookieValue: string } {
+  const state = randomBytes(16).toString('hex');
+  const exp = Date.now() + STATE_TTL_MS;
+  const payload = `${state}:${exp}`;
+  const sig = createHmac('sha256', stateSignKey()).update(payload).digest('hex');
+  return { state, cookieValue: `${payload}:${sig}` };
+}
+
+/** 校验回调携带的 state 与 Cookie 中的签名是否匹配 */
+function stateValid(cookieValue: string | undefined, queryState: string): boolean {
+  if (!cookieValue || !queryState) return false;
+  const [state, expStr, sig] = cookieValue.split(':');
+  if (!state || !expStr || !sig || state !== queryState) return false;
+  if (Number(expStr) < Date.now()) return false;
+  const expected = createHmac('sha256', stateSignKey()).update(`${state}:${expStr}`).digest('hex');
+  const a = Buffer.from(sig, 'utf8');
+  const b = Buffer.from(expected, 'utf8');
+  return a.length === b.length && timingSafeEqual(a, b);
+}
 
 export interface AuthUser {
   id: number;
@@ -123,8 +153,9 @@ export function createAuthRouter(): Router {
       res.redirect('/#/menu');
       return;
     }
-    const state = randomBytes(16).toString('hex');
+    const { state, cookieValue } = makeSignedState();
     pendingStates.set(state, { state, createdAt: Date.now() });
+    res.setHeader('Set-Cookie', cookie(OAUTH_STATE_COOKIE, cookieValue, STATE_TTL_MS / 1000));
     // 最小权限: 不申请任何 scope (只用 GET /user 取用户名)
     const url =
       `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(clientId())}` +
@@ -135,8 +166,20 @@ export function createAuthRouter(): Router {
 
   router.get('/github/callback', async (req, res) => {
     const { code, state } = req.query;
+    if (typeof state === 'string' && req.query.error !== undefined) {
+      // GitHub 带错误跳回 (如用户取消授权 access_denied): 非状态失效, 静默回前端
+      res.redirect(`${frontendOrigin(req)}/#/menu`);
+      return;
+    }
     const stored = typeof state === 'string' ? pendingStates.get(state) : undefined;
-    if (typeof code !== 'string' || !stored || Date.now() - stored.createdAt > STATE_TTL_MS) {
+    const cookies = parseCookies(req);
+    const stateStr = typeof state === 'string' ? state : '';
+    const stateOk =
+      (stateStr !== '' &&
+        stored !== undefined &&
+        Date.now() - stored.createdAt <= STATE_TTL_MS) ||
+      stateValid(cookies[OAUTH_STATE_COOKIE], stateStr);
+    if (typeof code !== 'string' || !stateOk) {
       // 状态已消费 (刷新页面)、已过期或服务器重启: 跳转前端而非报错,
       // 让前端检查 /auth/me 决定是否已登录。
       res.redirect(`${frontendOrigin(req)}/#/menu`);
@@ -147,7 +190,10 @@ export function createAuthRouter(): Router {
       const login = await fetchGithubLogin(code, req);
       const user = upsertUserByLogin(login);
       const token = createSession(user.id);
-      res.setHeader('Set-Cookie', cookie(SESSION_COOKIE, token));
+      res.setHeader('Set-Cookie', [
+        cookie(SESSION_COOKIE, token),
+        cookie(OAUTH_STATE_COOKIE, '', 0),
+      ]);
       // 供 MCP 客户端领取 (浏览器登录后, MCP 用 state 换取令牌)
       pendingLoginTokens.set(state as string, { token, createdAt: Date.now() });
       res.redirect(`${frontendOrigin(req)}/#/menu`);
@@ -192,6 +238,6 @@ async function fetchGithubLogin(code: string, req: Request): Promise<string> {
   return userData.login;
 }
 
-function cookie(name: string, value: string): string {
-  return `${name}=${encodeURIComponent(value)}; HttpOnly; Path=/; Max-Age=${60 * 60 * 24 * 30}; SameSite=Lax`;
+function cookie(name: string, value: string, maxAgeSec = 60 * 60 * 24 * 30): string {
+  return `${name}=${encodeURIComponent(value)}; HttpOnly; Path=/; Max-Age=${maxAgeSec}; SameSite=Lax`;
 }

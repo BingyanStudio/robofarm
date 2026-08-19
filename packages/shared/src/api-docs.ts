@@ -66,6 +66,7 @@ export const API_DOC_GROUPS: ApiDocGroup[] = [
         path: '/auth/github',
         title: 'GitHub 登录入口',
         description: '302 重定向到 GitHub 授权页 (生产); 开发模式直接重定向回前端菜单。',
+        headers: ['Cookie: robofarm_oauth_state=<签名 state> (下发, 回调时校验)'],
         responses: [{ code: '302', body: '重定向 (Location 头)' }],
       },
       {
@@ -75,8 +76,8 @@ export const API_DOC_GROUPS: ApiDocGroup[] = [
         description: 'OAuth 回调, 登录成功后写入会话 Cookie 并重定向回前端。',
         headers: ['Query: code, state'],
         responses: [
-          { code: '302', body: '重定向到 /#/menu (写入 Set-Cookie)' },
-          { code: '400', body: 'OAuth 状态无效或已过期' },
+          { code: '302', body: '成功时写入会话 Cookie 并重定向到 /#/menu' },
+          { code: '302', body: 'state 无效/已过期或用户取消授权时, 同样重定向到 /#/menu (前端经 /auth/me 判定登录态)' },
         ],
       },
     ],
