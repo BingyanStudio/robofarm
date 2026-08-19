@@ -26,6 +26,7 @@ export function apiDocsScreen(root: HTMLElement): void {
   // 标题 + 通用约定
   const head = el('div', { class: 'api-docs-head' }, [
     el('h2', { text: 'RoboFarm 后端 API 文档' }),
+    el('p', { class: 'hint', text: '此处为游戏服务器后端 API (HTTP / WebSocket / MCP); 无人机 API (getSelf / getTile 等) 请参考右侧 API 手册边栏。' }),
     el('p', { class: 'hint', text: '后端当前暴露的全部 HTTP 接口与 WebSocket 通道。纯 Markdown 版本见 /api-docs。' }),
     el('div', { class: 'doc-list' }, [
       el('li', { text: `Base URL: ${location.origin}` }),
