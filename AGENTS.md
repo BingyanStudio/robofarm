@@ -206,6 +206,9 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
   不要在两个 screen 里重复实现开始/暂停/步进逻辑。
 - localStorage 键: `robofarm.single`、`robofarm.simulate.me` (与多人匹配页同步)、
   `robofarm.simulate.enemy`、`robofarm.log-height`。
+- **head 注入**: `WEBSITE_EXTRA_HEADER` 环境变量 (来自 shell 或 `packages/frontend/.env`,
+  vite.config.ts 用 loadEnv 读取) 在构建时经插件 `inject-extra-header` 注入 `</head>` 前,
+  未设置则 HTML 不变。
 
 ## MCP 服务器 (游戏 API 文档)
 

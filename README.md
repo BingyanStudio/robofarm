@@ -283,6 +283,7 @@ node dist/index.js        # 自动托管 packages/frontend/dist
 | 变量 | 默认值 | 说明 |
 | --- | --- | --- |
 | `VITE_MCP_BASE` | 同源 `/mcp` | MCP 服务器地址（前后端分离部署时覆盖） |
+| `WEBSITE_EXTRA_HEADER` | 空 | 构建时注入网页 `<head>` 的自定义 HTML（如统计脚本），未设置则不变 |
 
 ## 玩家程序约束
 
