@@ -39,6 +39,6 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ github.ref_name }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
