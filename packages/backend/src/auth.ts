@@ -51,6 +51,14 @@ export interface AuthUser {
   id: number;
   name: string;
   dev: boolean;
+  avatar: string | null;
+}
+
+/** GitHub 用户头像 URL (按用户 id 稳定寻址; 兼容老数据用登录名兜底) */
+function githubAvatarUrl(githubId: number | null, login: string): string | null {
+  return githubId != null
+    ? `https://avatars.githubusercontent.com/u/${githubId}?v=4`
+    : `https://github.com/${encodeURIComponent(login)}.png`;
 }
 
 const clientId = () => process.env.GITHUB_CLIENT_ID ?? '';
@@ -138,11 +146,16 @@ export function currentUser(req: Request): AuthUser | null {
   const cookies = parseCookies(req);
   if (devMode()) {
     const u = upsertUserByLogin('local-dev');
-    return { id: u.id, name: u.github_login, dev: true };
+    return { id: u.id, name: u.github_login, dev: true, avatar: null };
   }
   const row = getUserBySession(cookies[SESSION_COOKIE] ?? null);
   if (!row) return null;
-  return { id: row.id, name: row.github_login, dev: false };
+  return {
+    id: row.id,
+    name: row.github_login,
+    dev: false,
+    avatar: githubAvatarUrl(row.github_id, row.github_login),
+  };
 }
 
 export function createAuthRouter(): Router {
@@ -187,8 +200,8 @@ export function createAuthRouter(): Router {
     }
     pendingStates.delete(state as string);
     try {
-      const login = await fetchGithubLogin(code, req);
-      const user = upsertUserByLogin(login);
+      const gh = await fetchGithubLogin(code, req);
+      const user = upsertUserByLogin(gh.login, gh.id);
       const token = createSession(user.id);
       res.setHeader('Set-Cookie', [
         cookie(SESSION_COOKIE, token),
@@ -215,7 +228,7 @@ export function createAuthRouter(): Router {
   return router;
 }
 
-async function fetchGithubLogin(code: string, req: Request): Promise<string> {
+async function fetchGithubLogin(code: string, req: Request): Promise<{ login: string; id: number }> {
   const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
     method: 'POST',
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
@@ -233,9 +246,9 @@ async function fetchGithubLogin(code: string, req: Request): Promise<string> {
   const userRes = await fetch('https://api.github.com/user', {
     headers: { Authorization: `Bearer ${tokenData.access_token}`, Accept: 'application/json' },
   });
-  const userData = (await userRes.json()) as { login?: string };
-  if (!userData.login) throw new Error('无法获取 GitHub 用户信息');
-  return userData.login;
+  const userData = (await userRes.json()) as { login?: string; id?: number };
+  if (!userData.login || !userData.id) throw new Error('无法获取 GitHub 用户信息');
+  return { login: userData.login, id: userData.id };
 }
 
 function cookie(name: string, value: string, maxAgeSec = 60 * 60 * 24 * 30): string {

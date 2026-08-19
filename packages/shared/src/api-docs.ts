@@ -57,7 +57,7 @@ export const API_DOC_GROUPS: ApiDocGroup[] = [
         description: '返回当前登录的用户信息。开发模式始终返回本地账号。',
         headers: ['Cookie: robofarm_session=<token> (可选; 开发模式无需)'],
         responses: [
-          { code: '200', body: '{ "user": { "id": 1, "name": "local-dev", "dev": true } }' },
+          { code: '200', body: '{ "user": { "id": 1, "name": "local-dev", "dev": true, "avatar": null } }' },
           { code: '401', body: '{ "error": "unauthorized" }' },
         ],
       },

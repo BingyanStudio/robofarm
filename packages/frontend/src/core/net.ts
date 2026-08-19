@@ -3,6 +3,7 @@ export interface UserInfo {
   id: number;
   name: string;
   dev: boolean;
+  avatar?: string | null;
 }
 
 async function jsonFetch(path: string, init: RequestInit = {}): Promise<{ status: number; data: any }> {

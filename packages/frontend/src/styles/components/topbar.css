@@ -104,6 +104,11 @@
   color: #fff7e6;
 }
 
+.user-avatar-img {
+  object-fit: cover;
+  background: var(--border-strong);
+}
+
 .user-avatar-off {
   background: var(--border-strong);
   color: var(--text-muted);

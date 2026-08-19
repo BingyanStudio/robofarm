@@ -7,6 +7,7 @@ import { dirname, join, resolve } from 'node:path';
 export interface UserRow {
   id: number;
   github_login: string;
+  github_id: number | null;
   created_at: number;
 }
 
@@ -150,6 +151,12 @@ function migrate(d: DatabaseSync): void {
   } catch {
     // 列已存在
   }
+  // 老库迁移: users 增加 github_id 列 (GitHub 头像用, 已存在则忽略)
+  try {
+    d.exec('ALTER TABLE users ADD COLUMN github_id INTEGER');
+  } catch {
+    // 列已存在
+  }
   applyV100Migrations(d);
 }
 
@@ -224,12 +231,19 @@ export function userRank(login: string): { name: string; score: number; rank: nu
   return { name: row.name, score: row.score, rank: better.cnt + 1 };
 }
 
-export function upsertUserByLogin(login: string): UserRow {
+export function upsertUserByLogin(login: string, githubId: number | null = null): UserRow {
   const d = getDb();
   const existing = d.prepare('SELECT * FROM users WHERE github_login = ?').get(login) as unknown as UserRow | undefined;
-  if (existing) return existing;
-  const info = d.prepare('INSERT INTO users (github_login, created_at) VALUES (?, ?)').run(login, Date.now());
-  return { id: Number(info.lastInsertRowid), github_login: login, created_at: Date.now() };
+  if (existing) {
+    // 老用户首次带 github_id 登录时补全
+    if (existing.github_id == null && githubId != null) {
+      d.prepare('UPDATE users SET github_id = ? WHERE id = ?').run(githubId, existing.id);
+      return { ...existing, github_id: githubId };
+    }
+    return existing;
+  }
+  const info = d.prepare('INSERT INTO users (github_login, github_id, created_at) VALUES (?, ?, ?)').run(login, githubId, Date.now());
+  return { id: Number(info.lastInsertRowid), github_login: login, github_id: githubId, created_at: Date.now() };
 }
 
 export function getUserById(id: number): UserRow | null {

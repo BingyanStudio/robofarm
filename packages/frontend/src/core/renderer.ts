@@ -441,12 +441,9 @@ export class Renderer {
       const img = stages[Math.min(idx, stages.length - 1)];
       if (img) {
         ctx.drawImage(img, px, py, s, s);
-        // Thirsty marker: a small water drop pip in the top-right corner.
+        // Thirsty marker: a 💧 emoji in the top-right corner.
         if (crop.state === CropState.Thirsty) {
-          ctx.fillStyle = COLORS.waterPip;
-          ctx.beginPath();
-          ctx.arc(px + s * 0.78, py + s * 0.22, s * 0.09, 0, Math.PI * 2);
-          ctx.fill();
+          this.drawThirstyMarker(px + s * 0.78, py + s * 0.22, s);
         }
         return;
       }
@@ -464,11 +461,8 @@ export class Renderer {
       ctx.beginPath();
       ctx.arc(cx, cy, s * 0.16, 0, Math.PI * 2);
       ctx.fill();
-      // Thirsty marker: a small water drop pip offset above the crop.
-      ctx.fillStyle = COLORS.waterPip;
-      ctx.beginPath();
-      ctx.arc(cx + s * 0.25, cy - s * 0.2, s * 0.08, 0, Math.PI * 2);
-      ctx.fill();
+      // Thirsty marker: a 💧 emoji offset above the crop.
+      this.drawThirstyMarker(cx + s * 0.25, cy - s * 0.2, s);
     } else if (crop.state === CropState.Grown) {
       // Strawberry: red circle + green calyx.
       ctx.fillStyle = COLORS.cropGrown;
@@ -483,6 +477,15 @@ export class Renderer {
       ctx.closePath();
       ctx.fill();
     }
+  }
+
+  // Thirsty marker: 💧 emoji at the given screen position.
+  private drawThirstyMarker(x: number, y: number, s: number): void {
+    const ctx = this.ctx;
+    ctx.font = `${Math.max(10, s * 0.2)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('💧', x, y);
   }
 
   private drawDrone(

@@ -201,8 +201,10 @@ export function singleScreen(root: HTMLElement): void {
           return;
         }
         rows.forEach((r, i) => {
-          // Top three use a trophy icon; the rest use a numeric rank.
-          const rankNode = i < 3 ? icon('trophy', 14) : document.createTextNode(`${i + 1}.`);
+          // Top three use medal emoji (🥇🥈🥉); the rest use a numeric rank.
+          const rankNode = i < 3
+            ? document.createTextNode(['🥇', '🥈', '🥉'][i])
+            : document.createTextNode(`${i + 1}.`);
           listHost.append(
             el('div', { class: 'list-row' + (r.me ? ' mine' : '') }, [
               el('span', {}, [rankNode, document.createTextNode(` ${r.name}${r.me ? ' (我)' : ''}`)]),
