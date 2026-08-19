@@ -56,10 +56,11 @@ export function mcpLoginStart(baseUrl: string): { authorizeUrl?: string; state?:
   const state = randomBytes(16).toString('hex');
   pendingStates.set(state, { state, createdAt: Date.now() });
   const callback = `${baseUrl}/auth/github/callback`;
+  // 最小权限: 不申请任何 scope —— 只用 GET /user 取用户名 (login), 零 scope 的令牌即可
   const url =
     `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(clientId())}` +
     `&redirect_uri=${encodeURIComponent(callback)}` +
-    `&scope=read:user&state=${state}`;
+    `&state=${state}`;
   return { authorizeUrl: url, state, dev: false };
 }
 
@@ -124,10 +125,11 @@ export function createAuthRouter(): Router {
     }
     const state = randomBytes(16).toString('hex');
     pendingStates.set(state, { state, createdAt: Date.now() });
+    // 最小权限: 不申请任何 scope (只用 GET /user 取用户名)
     const url =
       `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(clientId())}` +
       `&redirect_uri=${encodeURIComponent(redirectUri(req))}` +
-      `&scope=read:user&state=${state}`;
+      `&state=${state}`;
     res.redirect(url);
   });
 
