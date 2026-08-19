@@ -18,3 +18,8 @@
 
 - [x] Enhancement: 将网站的 Favicon 修改为 `packages/frontend/public/favicon.svg`
     - 结果: index.html 增加 `<link rel="icon" type="image/svg+xml" href="/favicon.svg">` (public/ 已被 vite 复制, 开发与发布版均生效)
+
+- [x] Enhancement: 将排行榜 "v1.0.0" 修改为 "v1.x"
+    - 结果: db.ts `LEADERBOARD_VERSION` 改为 `'v1.x'` (仅作为当前版本 Tab 的显示标签, 不影响迁移逻辑)
+- [x] Enhancement: 当前排行榜弹窗本身，在排行榜过场的时候也会产生一个滚动条, 希望没有
+    - 结果: 根因是 `.leaderboard { max-height: 70vh }` 未扣除弹窗头部与 body padding, 内容高时超出 modal 的 80vh, 导致 `.modal-body` 出现第二根滚动条。改为 `max-height: calc(80vh - 96px)`, 仅列表内部 (`.lb-scroll`) 滚动, 无第二根滚动条

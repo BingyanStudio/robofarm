@@ -705,7 +705,8 @@ body {
   flex-direction: column;
   gap: 10px;
   min-width: 320px;
-  max-height: 70vh;
+  /* 高度限制为弹窗可用空间 (80vh - 头部与 padding), 避免 modal-body 出现第二根滚动条 */
+  max-height: calc(80vh - 96px);
 }
 
 /* 大版本 Tab 切换 */

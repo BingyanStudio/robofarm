@@ -51,8 +51,8 @@ export interface LeaderboardSnapshotRow {
   created_at: number;
 }
 
-/** 当前大版本的排行榜版本号 (每版冻结一次旧排行榜) */
-export const LEADERBOARD_VERSION = 'v1.0.0';
+/** 当前大版本的排行榜版本号 (每版冻结一次旧排行榜; 显示为 v1.x 系列标签) */
+export const LEADERBOARD_VERSION = 'v1.x';
 /** 上一个大版本的排行榜标签 (V1.0.0 发布时冻结整个 V0.x 时代) */
 export const PREV_LEADERBOARD_VERSION = 'v0.x';
 
