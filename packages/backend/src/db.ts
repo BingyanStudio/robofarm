@@ -91,6 +91,7 @@ export function ensureCwd(): void {
 export function getDb(): DatabaseSync {
   if (db) return db;
   const file = getDbPath();
+  console.log(`[db][debug] 首次 getDb(), 数据库路径: ${file}`);
   mkdirSync(dirname(file), { recursive: true });
   db = new DatabaseSync(file);
   migrate(db);
@@ -98,10 +99,12 @@ export function getDb(): DatabaseSync {
 }
 
 function migrate(d: DatabaseSync): void {
+  console.log('[db][debug] migrate() 开始执行');
   d.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       github_login TEXT NOT NULL UNIQUE,
+      github_id INTEGER,
       created_at INTEGER NOT NULL
     );
     CREATE TABLE IF NOT EXISTS sessions (
@@ -152,10 +155,14 @@ function migrate(d: DatabaseSync): void {
     // 列已存在
   }
   // 老库迁移: users 增加 github_id 列 (GitHub 头像用, 已存在则忽略)
-  try {
+  // 先用 PRAGMA 检查列是否存在, 避免 try/catch 吞掉其他错误
+  const cols = d.prepare("PRAGMA table_info('users')").all() as unknown as { name: string }[];
+  if (!cols.some((c) => c.name === 'github_id')) {
+    console.log('[db][debug] users 表缺少 github_id 列, 执行 ALTER TABLE 添加');
     d.exec('ALTER TABLE users ADD COLUMN github_id INTEGER');
-  } catch {
-    // 列已存在
+    console.log('[db][debug] github_id 列已添加');
+  } else {
+    console.log('[db][debug] users 表已有 github_id 列, 跳过迁移');
   }
   applyV100Migrations(d);
 }
