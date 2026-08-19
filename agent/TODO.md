@@ -2,10 +2,9 @@
 
 此处放置所有待办事项
 
-## V1.0.3 Milestone
+## V1.0.5 Milestone
 
-本仓库刚刚 pull 了他人更新的内容，因此部分代码需要重读
+请每完成下面一个任务, 都进行一次 git commit
 
-- [x] Bug: 首页大按钮内的图标应为白色, 实际为黑色
-- [x] Enhancement: 将首页的 github 按钮替换成 Github 的 Icon (章鱼猫)
-- [x] Enhancement: MCP Card 中的命令行, 字体换成 Maple Mono
+- [x] Enhancement: 主界面的 MCP Card 还是改成可折叠的形式，初始默认折叠 
+- [x] Enhancement: 主界面的 Logo 背后给一些模糊的亮光, accent 与界面主色系相符 
