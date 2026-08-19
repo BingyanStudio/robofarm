@@ -3,31 +3,40 @@ import { el, button } from './ui';
 import type { GameEvent, GameResult, SnapshotState } from '@robofarm/shared';
 import { Renderer } from './renderer';
 
-export const DEFAULT_CODE = `// RoboFarm 玩家程序
-// 每回合, run(droneId) 会被调用一次 (droneId 为你的无人机编号),
-// 返回一个操作类实例即可控制无人机:
-//   new Move([x, y])                    移动 (仅限周围 8 格)
-//   new Teleport([x, y])                 传送 (任意距离, 能量 = ceil(距离); 竞技仅限己方半场)
-//   new Plant('strawberry')             种植 (当前格)
-//   new CollectWater()                  取水 (需在池塘上)
-//   new Water()                         浇水 (当前格作物缺水时)
-//   new Harvest()                       收获 (当前格作物成熟时)
-//   new Clear()                         铲除 (当前格作物)
-//   new Intercept([x, y])               拦截 (竞技模式)
-//   new Charge()                        充能 (+5 能量, 上限 10)
-//   new HarvestRow() / new HarvestCol() 收割整行/列 (4 能量)
-//   new WaterRow() / new WaterCol()     浇灌整行/列 (3 能量)
-//   new PlantRow(plants) / new PlantCol(plants) 种植整行/列 (3 能量)
-//   new InterceptRow() / new InterceptCol() 拦截整行/列 (6 能量)
-//   new NewDrone([x, y])  花费 4000 金钱创建新无人机 (上限: 单人 2 / 竞技 3)
-// 可用的 API: getSelf() / getGame() / getMap() / getTile(p) /
-//             getCrop(p) / getDrone(p)
-function run(droneId: number) {
-  const g = getGame();
-  // 示例: 先移动到旁边的格子, 再返回原地
-  if (g.turn === 1) return new Move([2, 2]);
-  if (g.turn === 2) return new Move([3, 3]);
-  return null;
+export const DEFAULT_CODE = `/**
+ *  示例程序, 无人机会在 4 格内种植草莓, 直到游戏结束
+ *  详细 API 参考请见右侧边栏 (📖 图标)
+ */
+
+var state: number = 0
+
+// ---------- 每回合入口 ----------
+function run(droneId: number): DroneOperation | null {
+  const self = getSelf();  // 获取自身信息
+  const crop = getCrop(self.position)  // 当前 Tile 的作物
+
+  if(crop && crop.state == 'grown') {
+    return new Harvest();  // 作物成熟, 则收获
+  }
+
+  if(!crop) {
+    return new Plant('strawberry');  // 没有作物, 则种植草莓
+  }
+
+  // 根据当前状态，决定下一步去哪里
+  if (state == 0) {
+    state = 1;
+    return new Move([3, 2]);
+  } else if (state == 1) {
+    state = 2;
+    return new Move([4, 2]);
+  } else if (state == 2) {
+    state = 3;
+    return new Move([4, 3]);
+  } else if (state == 3) {
+    state = 0;
+    return new Move([3, 3]);
+  }
 }
 `;
 
