@@ -39,7 +39,7 @@ export interface ApiDocGroup {
 export const API_DOC_CONVENTIONS: string[] = [
   '请求与响应均为 application/json (除特殊说明外)',
   '认证: Cookie 会话 (robofarm_session); 未配置 GITHUB_CLIENT_ID 时为开发模式, 自动登录本地账号',
-  '🔒 标注的接口要求登录, 未登录返回 401 {"error":"unauthorized"}',
+  '需要登录的接口在未登录时返回 401 {"error":"unauthorized"}',
   '非 2xx 响应体统一为 {"error": string}',
 ];
 
