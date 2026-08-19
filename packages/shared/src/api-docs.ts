@@ -77,7 +77,7 @@ export const API_DOC_GROUPS: ApiDocGroup[] = [
         headers: ['Query: code, state'],
         responses: [
           { code: '302', body: '成功时写入会话 Cookie 并重定向到 /#/menu' },
-          { code: '302', body: 'state 无效/已过期或用户取消授权时, 同样重定向到 /#/menu (前端经 /auth/me 判定登录态)' },
+          { code: '302', body: '失败 (state 无效/已过期/用户取消/GitHub 错误) 时重定向到 /#/menu?login_error=<原因>, 前端提示后再经 /auth/me 判定登录态' },
         ],
       },
     ],

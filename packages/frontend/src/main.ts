@@ -6,7 +6,7 @@
 // action slot) lives in #app permanently; only the #content area swaps per
 // route, so the top bar never rebuilds on navigation (Astro-style shell).
 import { setWasmUrl } from '@robofarm/shared';
-import { el, topBar } from './ui/ui';
+import { el, topBar, toast } from './ui/ui';
 import { userCard } from './ui/user-card';
 import { topActionsEl, setTopActions } from './ui/topbar-state';
 import { menuScreen } from './screens/menu';
@@ -55,10 +55,25 @@ const NAVIGATE: Record<string, ScreenLoader> = {
   'api-docs': async () => (await import('./screens/api-docs')).apiDocsScreen(content),
 };
 
+/** GitHub OAuth 回调错误 → 用户可读提示 (后端跳转 /#/menu?login_error=<code>) */
+const LOGIN_ERROR_MSG: Record<string, string> = {
+  redirect_uri_mismatch:
+    'GitHub 登录失败: 回调地址不匹配。请检查服务器 .env 的 GITHUB_REDIRECT_URI / BACKEND_ORIGIN 与 GitHub OAuth 应用的回调 URL 是否一致 (https)',
+  access_denied: '已取消 GitHub 授权',
+  state: '登录状态已失效, 请重新登录',
+  exchange: 'GitHub 登录失败, 请重试',
+};
+
 function route(): void {
   const hash = location.hash.replace(/^#\/?/, '');
   const [path, queryStr] = hash.split('?');
   const params = new URLSearchParams(queryStr ?? '');
+  const loginError = params.get('login_error');
+  if (loginError) {
+    toast(LOGIN_ERROR_MSG[loginError] ?? `GitHub 登录失败 (${loginError})`);
+    // 清除错误标记, 避免刷新/返回时重复弹出
+    history.replaceState(null, '', location.hash.replace(/[?&]login_error=[^&]*/, '') || '#/menu');
+  }
   const key = path === '' ? 'menu' : path;
   // Keep the persistent navigation shell mounted and animate its menu state.
   bar.classList.toggle('menu-route', key === 'menu');

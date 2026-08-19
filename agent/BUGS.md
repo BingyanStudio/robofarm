@@ -7,6 +7,21 @@
   修复 (packages/frontend/src/core/renderer.ts): 新增 `drawThirstyMarker()`,
   Thirsty 状态在作物贴图右上角 (程序化绘制时在作物上方) 用 Canvas fillText
   绘制 💧 Emoji, 替代原来的小圆点。
+- [x] **GitHub 登录在 https 部署下仍无法登录 (回调地址 http/https 不匹配)**
+  现象: 站点经反向代理 (nginx 等) 以 https 对外, 但代理未转发
+  `X-Forwarded-Proto` 时, 后端推导出 `http://...` 回调地址; GitHub 会跳回
+  **注册的回调 URL** 并携带 `error=redirect_uri_mismatch`, 前端此前静默丢弃
+  该错误 → 用户看似"无法登录"。
+  修复:
+  - auth.ts: `requestProto` 优先 X-Forwarded-Proto, 回退 `req.secure`
+    (需要 trust proxy); `/auth/github` 推导出 http 回调时输出一次性诊断日志。
+  - app.ts: `app.set('trust proxy', true)`, MCP/文档 baseUrl 复用同一协议判断。
+  - 错误不再静默: 回调携带 GitHub error / state 无效 / code 交换失败时,
+    302 到 `/#/menu?login_error=<原因>`; 前端 (main.ts) 弹出对应提示
+    (redirect_uri_mismatch → 提示检查 .env 与 GitHub OAuth 应用回调 URL)。
+  部署检查清单: .env 设置 `GITHUB_REDIRECT_URI=https://域名/auth/github/callback`
+  (或 `BACKEND_ORIGIN=https://域名`), 并确认 GitHub OAuth 应用的回调 URL 与之一致;
+  反向代理需转发 `X-Forwarded-Proto`。
 - [x] **GitHub 登录后头像应显示 GitHub 头像, 而非首字母色块**
   修复:
   - 后端 (db.ts / auth.ts): users 表新增 `github_id` 列 (登录时从 GET /user 捕获,

@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
 import { WebSocketServer, WebSocket } from 'ws';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { createAuthRouter, requireUser, currentUser, AuthUser } from './auth';
+import { createAuthRouter, requireUser, currentUser, AuthUser, requestProto } from './auth';
 import { llmTxt, apiDocsMarkdown } from './api-docs';
 import * as single from './services/single';
 import * as combat from './services/combat';
@@ -77,6 +77,9 @@ export function mountMcp(app: express.Express): void {
 export function createApp(): express.Express {
   const app = express();
   app.use(express.json({ limit: '1mb' }));
+  // 生产部署通常位于反向代理 (nginx/caddy/网关) 之后, 信任代理头以正确识别
+  // https 与来源 (X-Forwarded-Proto / X-Forwarded-For), OAuth 回调地址依赖此判断
+  app.set('trust proxy', true);
 
   // 生产部署: 直接托管前端构建产物 (发布版为 public/, 开发为 frontend/dist/)
   const frontendDist = resolveFrontendDist();
@@ -216,9 +219,7 @@ export function createApp(): express.Express {
 
 /** 按实际请求推导部署地址 (兼容反向代理的 X-Forwarded-Proto) */
 function requestBaseUrl(req: Request): string {
-  const fwd = req.get('x-forwarded-proto');
-  const proto = fwd ? fwd.split(',')[0]!.trim() : req.protocol;
-  return `${proto}://${req.get('host')}`;
+  return `${requestProto(req)}://${req.get('host')}`;
 }
 
 /** 定位前端静态目录: 优先 FRONTEND_DIST 环境变量, 其次发布版 public/, 再次开发版 frontend/dist */
