@@ -275,7 +275,7 @@ node dist/index.js        # 自动托管 packages/frontend/dist
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | 空 | 未配置时进入开发模式 |
 | `ESBUILD_WASM_URL` | 空 | esbuild.wasm 远程地址（分离部署时配置） |
 | `TURN_INTERVAL_MS` | 800 | 竞技对战回合间隔（毫秒） |
-| `SINGLE_MAX_CONCURRENT` | 4 | 单人验证全局并发上限，超限返回 409 |
+| `SINGLE_MAX_CONCURRENT` | 按 CPU 核心数, 上限 32 | 单人验证全局并发上限 (每个验证一个 worker_thread)，超限返回 409 |
 | `SINGLE_SUBMIT_LIMIT_PER_MIN` | 0（不限流） | 单人验证每用户每分钟提交上限，超限返回 429 |
 
 ### 前端（`packages/frontend/.env`）

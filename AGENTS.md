@@ -234,7 +234,7 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
 
 - `GET /auth/me`, `GET /auth/github[/callback]` (OAuth, 未配置时 dev 模式)
 - 单人: `GET/POST /single/validate` (busy/progress/score/error; 全局并发上限
-  `SINGLE_MAX_CONCURRENT` 默认 4, 超限 409"服务器繁忙"; 每用户限流预留:
+  `SINGLE_MAX_CONCURRENT` 默认按 CPU 核心数 (上限 32, 可用 env 覆盖), 超限 409"服务器繁忙"; 每用户限流预留:
   `SINGLE_SUBMIT_LIMIT_PER_MIN` 默认 0 不限流, 超限 429), `GET /single/history`,
   `GET /single/leaderboard` (按大版本分 Tab: 历史冻结快照 + 当前版本实时榜, 见下方"版本迁移")
 - 竞技: `GET /combat/state`, `POST /combat/upload` (清空胜败),

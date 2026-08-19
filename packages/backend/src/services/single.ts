@@ -3,6 +3,7 @@
 import { GameController, compilePlayerCode, DEFAULT_MAX_TURNS, ReplayRecorder } from '@robofarm/shared';
 import { NodeProgram } from '../runner/node-program';
 import { listSingleHistory, leaderboard, recordSingleSubmission, getSingleSubmission, ensureCwd, listLeaderboardSnapshots, LEADERBOARD_VERSION } from '../db';
+import { availableParallelism } from 'node:os';
 
 const stamp = () => new Date().toISOString();
 
@@ -17,8 +18,16 @@ const states = new Map<number, ValidationStatus>();
 
 const IDLE: ValidationStatus = { busy: false, progress: 1, score: null, error: null };
 
-/** 全局并发验证上限 (env: SINGLE_MAX_CONCURRENT), 防止大量提交同时占用 worker 拖垮服务器 */
-const MAX_CONCURRENT = Number(process.env.SINGLE_MAX_CONCURRENT ?? 4);
+/**
+ * 全局并发验证上限 (env: SINGLE_MAX_CONCURRENT)。
+ * 每个验证占一个 worker_thread (线程), 默认按 CPU 核心数自动选择 (感知容器 cgroup 限额),
+ * 以 32 为上限防止小内存机器被并发拖垮。
+ */
+const MAX_CONCURRENT = (() => {
+  const explicit = Number(process.env.SINGLE_MAX_CONCURRENT);
+  if (Number.isFinite(explicit) && explicit > 0) return explicit;
+  return Math.min(32, Math.max(1, availableParallelism()));
+})();
 let activeValidations = 0;
 
 function statusOf(userId: number): ValidationStatus {
