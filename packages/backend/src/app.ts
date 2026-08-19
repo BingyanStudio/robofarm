@@ -1,6 +1,6 @@
 // Express 应用与路由。
 import express, { Request, Response } from 'express';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
@@ -84,7 +84,7 @@ export function createApp(): express.Express {
   // 生产部署: 直接托管前端构建产物 (发布版为 public/, 开发为 frontend/dist/)
   const frontendDist = resolveFrontendDist();
   const hasFrontend = frontendDist !== null;
-  if (hasFrontend) app.use(express.static(frontendDist as string));
+  if (hasFrontend) app.use(express.static(frontendDist as string, { index: false }));
 
   app.use('/auth', createAuthRouter());
 
@@ -216,13 +216,9 @@ export function createApp(): express.Express {
     const indexFinal = extraHeader
       ? indexTemplate.replace('</head>', `${extraHeader}\n  </head>`)
       : indexTemplate;
-    writeFileSync(indexHtmlPath, indexFinal)
-    if (extraHeader.length > 0) {
-        console.log(`[robofarm] Extra header applied: ${extraHeader}`)
-    }
-    // app.get('*', (_req, res) => {
-    //   res.type('html').send(indexFinal);
-    // });
+    app.get('*', (_req, res) => {
+      res.type('html').send(indexFinal);
+    });
   }
 
   return app;
