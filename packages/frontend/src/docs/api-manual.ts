@@ -122,6 +122,7 @@ function docEntry(e: DocEntry): HTMLElement {
   return el('div', { class: 'doc-entry', id: e.id }, rows);
 }
 
+<<<<<<< HEAD
 /** Render one rule paragraph. A leading short "label:" is split off into a badge so the dense rules tier into scannable term + description rows; backticked code keeps its chip styling. */
 function ruleParagraph(text: string): HTMLElement {
   const m = text.match(/^([^:：]{1,12}?)\s*[:：]\s*(.+)$/s);
@@ -141,6 +142,22 @@ function ruleSection(rs: { title: string; paragraphs: string[] }): HTMLElement {
     el('h3', { class: 'rule-card-title', text: rs.title }),
     ...rs.paragraphs.map(ruleParagraph),
   ]);
+=======
+/** Rule section (supports `- ` prefixed paragraphs as list items, **bold**, *italic*) */
+function ruleSection(rs: { title: string; paragraphs: string[] }): HTMLElement {
+  const children: HTMLElement[] = [];
+  let list: HTMLUListElement | null = null;
+  for (const p of rs.paragraphs) {
+    if (p.startsWith('- ')) {
+      if (!list) { list = el('ul', { class: 'doc-list' }); children.push(list); }
+      list.append(el('li', {}, [fmt(p.slice(2))]));
+    } else {
+      list = null;
+      children.push(el('p', {}, [fmt(p)]));
+    }
+  }
+  return section(rs.title, ...children);
+>>>>>>> main
 }
 
 /** Content per tab (order matches tabs; panel ids used for hyperlink jumps) */
@@ -175,12 +192,19 @@ function buildSections(): HTMLElement[] {
     ]),
 
     // ---- 5. Rules ----
+<<<<<<< HEAD
     el('div', { class: 'api-panel', id: 'tab-rules' }, [
       el('div', { class: 'rule-card rule-card-lead' }, [
         el('h3', { class: 'rule-card-title', text: DOC_OVERVIEW.title }),
         ...DOC_OVERVIEW.paragraphs.map(ruleParagraph),
       ]),
       el('div', { class: 'rule-cards' }, DOC_RULES.map(ruleSection)),
+=======
+    el('div', { class: 'api-panel rules-panel', id: 'tab-rules' }, [
+      section('游戏概览', ...DOC_OVERVIEW.paragraphs.map((p) => el('p', {}, [fmt(p)]))),
+      el('hr'),
+      ...DOC_RULES.flatMap((rs, i) => i > 0 ? [el('hr'), ruleSection(rs)] : [ruleSection(rs)]),
+>>>>>>> main
     ]),
   ];
 }
