@@ -236,7 +236,8 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
 - 单人: `GET/POST /single/validate` (busy/progress/score/error; 全局并发上限
   `SINGLE_MAX_CONCURRENT` 默认按 CPU 核心数 (上限 32, 可用 env 覆盖), 超限 409"服务器繁忙"; 每用户限流预留:
   `SINGLE_SUBMIT_LIMIT_PER_MIN` 默认 0 不限流, 超限 429), `GET /single/history`,
-  `GET /single/leaderboard` (按大版本分 Tab: 历史冻结快照 + 当前版本实时榜, 见下方"版本迁移")
+  `GET /single/leaderboard` (无参数返回前 50 名 (登录用户带 me 标记);
+  `?user=<用户名>` 查询个人最高分与全榜名次)
 - 竞技: `GET /combat/state`, `POST /combat/upload` (清空胜败),
   `GET /combat/list`, `POST /combat/start {id}` → roomId,
   `GET /combat/room` (观战列表), `GET /combat/history`,
@@ -251,6 +252,8 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
   3. 清空 `single_submissions` (旧成绩已冻结进快照, 新版本排行榜从空开始;
      注意快照必须先于清空执行)
 - 当前大版本标签: `LEADERBOARD_VERSION` (db.ts), 改版本号时同步改这两个常量。
+- 排行榜 (v1.0.2): Tab 按大版本展示前 50 名; 登录玩家排名经 `?user=` 查询
+  (db.ts `userRank`) 固定吸附弹窗底端, 在前 50 名内则原位高亮。
 - WS 协议: `match-start` / `replay-buffer` (迟到观众回放) / `turn {turn, events}` /
   `match-end {matchId, result}` / `error`。对局在服务器按 `TURN_INTERVAL_MS` 节奏推演。
 - 对战推演用 `services/combat.ts` 的 runMatch: 编译双方代码 → 两个 NodeProgram →

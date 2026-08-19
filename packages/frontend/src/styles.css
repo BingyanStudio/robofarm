@@ -705,8 +705,10 @@ body {
   flex-direction: column;
   gap: 10px;
   min-width: 320px;
+  max-height: 70vh;
 }
 
+/* 大版本 Tab 切换 */
 .lb-tabs {
   display: flex;
   gap: 6px;
@@ -729,6 +731,24 @@ body {
   border-color: #7aa2f7;
   color: #e7ece9;
   font-weight: 600;
+}
+
+/* 前 50 名列表: 条目过多时内部滚动 */
+.lb-scroll {
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1;
+}
+
+/* 未进前 50 的登录玩家行: 列表内双向吸附 (滚到上方贴底 / 滚到下方贴顶 / 可见时原位)。
+   top 与 bottom 同时设置时, sticky 约束矩形即整个滚动视口, 两个方向都吸附。 */
+.lb-sticky {
+  position: sticky;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+  background: #3a2f14; /* 不透明底色, 覆盖滚动经过的行 */
+  border: 1px solid #e8c04a;
 }
 
 /* 提交验证: 圆圈加载条 + 提示 + 隐藏按钮 */

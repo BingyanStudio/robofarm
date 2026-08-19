@@ -123,11 +123,11 @@ export const API_DOC_GROUPS: ApiDocGroup[] = [
         method: 'GET',
         path: '/single/leaderboard',
         title: '排行榜',
-        description: '公开排行榜, 按大版本分 Tab (tabs): 每个历史大版本的冻结快照 + 当前版本的实时榜 (登录用户的成绩带 me 标记)。',
-        responses: [{
-          code: '200',
-          body: '{ "tabs": [ { "version": "v0.x", "entries": [ { "name": "alice", "score": 1200, "me": false } ] }, { "version": "v1.0.0", "entries": [ { "name": "bob", "score": 1500, "me": true } ] } ] }',
-        }],
+        description: '公开排行榜, 按大版本分 Tab (tabs): 历史冻结快照 + 当前版本实时榜前 50 名 (登录用户带 me 标记)。携带 ?user=<用户名> 查询指定玩家的最高分与其在当前版本全榜的名次。',
+        responses: [
+          { code: '200', body: '{ "tabs": [ { "version": "v0.x", "entries": [ { "name": "alice", "score": 1200, "me": false } ] }, { "version": "v1.0.2", "entries": [ { "name": "bob", "score": 1500, "me": true } ] } ] }' },
+          { code: '200', body: '{ "user": { "name": "alice", "score": 1200, "rank": 3 } }' },
+        ],
       },
       {
         method: 'GET',

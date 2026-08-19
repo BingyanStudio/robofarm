@@ -2,7 +2,7 @@
 // 正常结束记录分数进排行榜, 否则记录报错信息。
 import { GameController, compilePlayerCode, DEFAULT_MAX_TURNS, ReplayRecorder } from '@robofarm/shared';
 import { NodeProgram } from '../runner/node-program';
-import { listSingleHistory, leaderboard, recordSingleSubmission, getSingleSubmission, ensureCwd, listLeaderboardSnapshots, LEADERBOARD_VERSION } from '../db';
+import { listSingleHistory, leaderboard, recordSingleSubmission, getSingleSubmission, ensureCwd, userRank, listLeaderboardSnapshots, LEADERBOARD_VERSION } from '../db';
 import { availableParallelism } from 'node:os';
 
 const stamp = () => new Date().toISOString();
@@ -146,16 +146,21 @@ export function singleHistory(userId: number) {
 }
 
 export function singleLeaderboard(userId: number | null) {
+  // 历次大版本的冻结排行榜 + 当前版本的实时榜 (前端以 Tab 展示)
   const live = leaderboard(50).map((e) => ({
     name: e.name,
     score: e.score,
     me: e.user_id === userId,
   }));
-  // 历次大版本的冻结排行榜 + 当前版本的实时排行榜 (前端以 Tab 展示)
   const tabs = listLeaderboardSnapshots().map((s) => ({
     version: s.version,
     entries: (JSON.parse(s.payload) as { name: string; score: number }[]).map((e) => ({ ...e, me: false })),
   }));
   tabs.push({ version: LEADERBOARD_VERSION, entries: live });
   return { tabs };
+}
+
+/** 指定玩家在当前版本的得分与全榜名次 */
+export function singleUserRank(name: string) {
+  return userRank(name);
 }

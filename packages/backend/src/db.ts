@@ -202,6 +202,28 @@ export function listLeaderboardSnapshots(): LeaderboardSnapshotRow[] {
     .all() as unknown as LeaderboardSnapshotRow[];
 }
 
+/** 指定用户的最高分及其在整个榜单上的名次 (1-based), 无成绩返回 null */
+export function userRank(login: string): { name: string; score: number; rank: number } | null {
+  const d = getDb();
+  const row = d
+    .prepare(
+      `SELECT u.github_login AS name, MAX(s.score) AS score
+       FROM single_submissions s JOIN users u ON u.id = s.user_id
+       WHERE u.github_login = ? AND s.score IS NOT NULL
+       GROUP BY s.user_id`
+    )
+    .get(login) as unknown as { name: string; score: number } | undefined;
+  if (!row) return null;
+  const better = d
+    .prepare(
+      `SELECT COUNT(DISTINCT s.user_id) AS cnt
+       FROM single_submissions s JOIN users u ON u.id = s.user_id
+       WHERE s.score IS NOT NULL AND s.score > ?`
+    )
+    .get(row.score) as unknown as { cnt: number };
+  return { name: row.name, score: row.score, rank: better.cnt + 1 };
+}
+
 export function upsertUserByLogin(login: string): UserRow {
   const d = getDb();
   const existing = d.prepare('SELECT * FROM users WHERE github_login = ?').get(login) as unknown as UserRow | undefined;

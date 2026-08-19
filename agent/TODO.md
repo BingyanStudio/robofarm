@@ -2,24 +2,19 @@
 
 此处放置所有待办事项
 
-## V1.0.1 Milestone
+## V1.0.2 Milestone
 
-- [x] Enhancement: 第一次编译会下载编译器, 请将这个事件在日志中打出, 而不是直接打 "编译中"
-    - 结果: shared `compile.ts` 导出 `isCompilerInitialized()`; single.ts / simulate.ts 首次编译时日志显示 "[系统] 首次编译, 正在下载编译器…", 之后显示 "正在编译代码…"
+- [x] Enhancement: 排行榜 UI 和后端改动:
+    1. 排行榜 API 语义修改: 
+        1. 不携带任何参数, 则返回前 50 名的用户名和得分
+        2. 携带参数 "user", 则查询指定玩家的得分，返回得分和该玩家在整个榜单上的位置
+    2. 前端显示修改: 
+        1. 始终显示前 50 名
+        2. 如果前端已经登录，则也查询登录玩家的排名
+        3. 若登录玩家在 50 名内，则直接高亮标记
+        4. 若登录玩家不在，则在排行榜最下方添加显示登录玩家的排名和分数并高亮
+        5. 无论哪种情况，已登录玩家的那一行都必须始终可见，吸附在弹窗底端
+    - 结果: ① API: `GET /single/leaderboard` 无参 → `{ entries }` 前 50 名 (登录用户带 me); `?user=<用户名>` → `{ user: { name, score, rank } }` (全榜 1-based 名次, db.ts 新增 `userRank`); 原按大版本 Tab 的返回结构移除 (迁移快照数据保留但不再展示); ② 前端: 始终展示前 50 (前三名奖牌), 登录后查询个人排名——在 50 名内原位高亮, 同时排名行固定吸附弹窗底端 (`.lb-pinned` 位于滚动区外, 列表内部滚动 `.lb-scroll`), 未登录不显示底端行; 已端到端验证 (50 条/rank 正确/榜尾用户/不存在用户返回 null)
 
-- [x] Enhancement: 多人竞技界面的左侧面板:
-    1. 左侧 "出战状态: 尚未上传代码" 放到上方 "出战代码" 栏 右对齐
-    2. "上传出战代码" 改为 "上传代码", 且加上绿色 accent
-    3. "模拟竞技" 和 "上传代码" 按钮也放到上方 "出战代码" 栏 右对齐
-    - 结果: match.ts 重构左侧头部: `.match-head` ("出战代码" 标题 + 出战状态右对齐), `.match-head-actions` (模拟竞技 + 绿色 `btn-start` 的 "上传代码" 按钮, 右对齐), 提示文字右对齐保留; 原 `.match-actions` 样式移除
-
-- [x] Performance: 检查性能: 
-    1. 当前单人种植模式的服务器校验是否能承受较多的流量? 如果有优化空间，请进行优化
-    2. 请预留限流接口, 后续可能需要单人种植模式每个用户一分钟最多提交 xx 次
-    - 结果: ① services/single.ts 增加全局并发上限 (`SINGLE_MAX_CONCURRENT` 默认 4, 超限返回 409"服务器繁忙"), 防止大量提交同时占用 NodeProgram worker 拖垮服务器; esbuild 初始化本身已是进程级单次 (compile.ts ensureInit 缓存); ② 新增 `services/ratelimit.ts` (固定窗口, 进程内存, 每 key 每分钟 N 次), `POST /single/validate` 预留接入 (`SINGLE_SUBMIT_LIMIT_PER_MIN` 默认 0 不限流, 超限返回 429 + retryAfter), 冒烟验证通过 (200 → 409 → 429)
-
-- [x] Bug: Uncaught (in promise) TypeError: Cannot read properties of undefined (reading 'getValue'), 该错误在模拟多人竞技时点击 "开始" 触发
-    - 结果: 根因是 GameRunner 重构后 buildGame 直接读 `editors.enemy!.getValue()`, 但"对方无人机"编辑器是懒创建的——用户若从未切到该 Tab, editors.enemy 为 undefined (原代码 newGame 前会先 ensureEditor 两个)。修复: buildGame 开头先 `ensureEditor('me')` / `ensureEditor('enemy')` 再取值
-
-- [x] Enhancement: 多人竞技 & 多人竞技模拟中，目前 "对方金钱" 的显示是 "对方" 金色, "金钱" 红色, 希望改为 "对方: xxx" 均为红色
-    - 结果: game-layout.ts 竞技金钱行改为 "💰 我方 20 · 对方: 20", "对方: xxx" 整段套用淡红色 `.money-enemy` (对战与模拟竞技共用 GameView, 一处修改两处生效)
+- [x] Enhancement: 将网站的 Favicon 修改为 `packages/frontend/public/favicon.svg`
+    - 结果: index.html 增加 `<link rel="icon" type="image/svg+xml" href="/favicon.svg">` (public/ 已被 vite 复制, 开发与发布版均生效)

@@ -35,7 +35,7 @@ export interface McpServerOptions {
 
 export function createMcpServer(opts: McpServerOptions = {}): Server {
   const server = new Server(
-    { name: 'robofarm-docs', version: '1.0.1' },
+    { name: 'robofarm-docs', version: '1.0.2' },
     { capabilities: { resources: {}, tools: {}, prompts: {} } }
   );
   /** 该 MCP 会话的登录令牌 (经 login_start / login_finish 获得) */

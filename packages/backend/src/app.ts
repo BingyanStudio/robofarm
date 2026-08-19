@@ -125,7 +125,12 @@ export function createApp(): express.Express {
   });
 
   app.get('/single/leaderboard', (req: Request, res: Response) => {
-    // 排行榜公开可读; 登录用户的成绩标记 me: true, 供前端高亮显示
+    // 携带 ?user=<用户名> 时查询指定玩家的得分与全榜名次; 否则返回按大版本分 Tab 的前 50 名
+    const name = typeof req.query.user === 'string' ? req.query.user.trim() : '';
+    if (name) {
+      res.json({ user: single.singleUserRank(name) });
+      return;
+    }
     const user = currentUser(req);
     res.json(single.singleLeaderboard(user?.id ?? null));
   });

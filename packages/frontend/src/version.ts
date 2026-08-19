@@ -6,7 +6,7 @@
 //   3. 写入当前版本号 (供下次对比)
 import { el, button, modal } from './ui';
 
-export const VERSION = '1.0.1';
+export const VERSION = '1.0.2';
 export const VERSION_KEY = 'robofarm.version';
 
 export interface UpdateEntry {
@@ -17,6 +17,18 @@ export interface UpdateEntry {
 
 /** 更新日志 (按版本从新到旧) */
 export const UPDATE_LOG: UpdateEntry[] = [
+  {
+    version: '1.0.2',
+    title: 'v1.0.2',
+    items: [
+      '## 排行榜',
+      '排行榜按版本 Tab 展示, 每个版本始终显示前 50 名, 前三名用奖牌 Emoji 标注',
+      '登录玩家的排名: 在前 50 名内则原位高亮; 未进入则作为吸附行追加在榜单内 (滚动时贴住可视区边缘, 可见时原位); 未提交过代码则不显示',
+      '新增按用户名查询个人得分与全榜名次的能力',
+      '## 其他',
+      '网站图标更新为 RoboFarm 专属图标',
+    ],
+  },
   {
     version: '1.0.1',
     title: 'v1.0.1',

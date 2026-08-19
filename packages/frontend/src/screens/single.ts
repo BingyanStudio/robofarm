@@ -171,11 +171,19 @@ export function singleScreen(root: HTMLElement): void {
 
   function showLeaderboard(): void {
     void (async () => {
+      const user = await fetchUser();
       const { data } = await api.get('/single/leaderboard');
       const tabs = (data?.tabs ?? []) as {
         version: string;
         entries: { name: string; score: number; me?: boolean }[];
       }[];
+      // 已登录则查询自己的得分与当前版本全榜名次 (用于底端固定行)
+      let self: { name: string; score: number; rank: number } | null = null;
+      if (user) {
+        const r = await api.get(`/single/leaderboard?user=${encodeURIComponent(user.name)}`);
+        self = (r.data?.user as { name: string; score: number; rank: number } | null) ?? null;
+      }
+
       const body = el('div', { class: 'leaderboard' });
       if (tabs.length === 0) {
         body.append(el('p', { class: 'hint', text: '暂无排行数据' }));
@@ -183,9 +191,9 @@ export function singleScreen(root: HTMLElement): void {
         return;
       }
       let active = tabs.length - 1; // 默认展示当前版本的实时排行榜 (最后一个 Tab)
-      const tabBar = el('div', { class: 'lb-tabs' });
-      const listHost = el('div', { class: 'list' });
       const MEDALS = ['🥇', '🥈', '🥉'];
+      const tabBar = el('div', { class: 'lb-tabs' });
+      const listHost = el('div', { class: 'list lb-scroll' });
 
       function renderTabs(): void {
         tabBar.replaceChildren();
@@ -207,6 +215,7 @@ export function singleScreen(root: HTMLElement): void {
       function renderList(): void {
         listHost.replaceChildren();
         const rows = tabs[active]?.entries ?? [];
+        const isCurrent = active === tabs.length - 1; // 当前版本 Tab (登录玩家排名仅对当前版本有意义)
         if (rows.length === 0) {
           listHost.append(el('p', { class: 'hint', text: '暂无排行数据' }));
           return;
@@ -221,6 +230,17 @@ export function singleScreen(root: HTMLElement): void {
             ])
           );
         });
+        // 已登录、有成绩、且不在前 50 名: 在列表末尾追加吸附行
+        // (滚动时贴住可视区边缘: 滚到上方贴底, 滚到下方贴顶; 可见时原位)
+        if (isCurrent && self && !rows.some((r) => r.me)) {
+          const rankDisplay = MEDALS[self.rank - 1] ?? `${self.rank}`;
+          listHost.append(
+            el('div', { class: 'list-row lb-sticky' }, [
+              el('span', { text: `${rankDisplay} ${self.name} (我)` }),
+              el('span', { class: 'muted', text: `${self.score}` }),
+            ])
+          );
+        }
       }
 
       body.append(tabBar, listHost);
