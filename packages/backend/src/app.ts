@@ -1,6 +1,6 @@
 // Express 应用与路由。
 import express, { Request, Response } from 'express';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
@@ -216,9 +216,13 @@ export function createApp(): express.Express {
     const indexFinal = extraHeader
       ? indexTemplate.replace('</head>', `${extraHeader}\n  </head>`)
       : indexTemplate;
-    app.get('*', (_req, res) => {
-      res.type('html').send(indexFinal);
-    });
+    writeFileSync(indexHtmlPath, indexFinal)
+    if (extraHeader.length > 0) {
+        console.log(`[robofarm] Extra header applied: ${extraHeader}`)
+    }
+    // app.get('*', (_req, res) => {
+    //   res.type('html').send(indexFinal);
+    // });
   }
 
   return app;
