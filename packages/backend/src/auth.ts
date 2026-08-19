@@ -137,7 +137,9 @@ export function createAuthRouter(): Router {
     const { code, state } = req.query;
     const stored = typeof state === 'string' ? pendingStates.get(state) : undefined;
     if (typeof code !== 'string' || !stored || Date.now() - stored.createdAt > STATE_TTL_MS) {
-      res.status(400).send('OAuth 状态无效或已过期, 请重新登录');
+      // 状态已消费 (刷新页面)、已过期或服务器重启: 跳转前端而非报错,
+      // 让前端检查 /auth/me 决定是否已登录。
+      res.redirect(`${frontendOrigin(req)}/#/menu`);
       return;
     }
     pendingStates.delete(state as string);
@@ -150,7 +152,8 @@ export function createAuthRouter(): Router {
       pendingLoginTokens.set(state as string, { token, createdAt: Date.now() });
       res.redirect(`${frontendOrigin(req)}/#/menu`);
     } catch (err) {
-      res.status(500).send(`GitHub 登录失败: ${err instanceof Error ? err.message : String(err)}`);
+      // 登录失败 (如 code 已过期/重复使用): 跳转前端, 不展示原始错误
+      res.redirect(`${frontendOrigin(req)}/#/menu`);
     }
   });
 
