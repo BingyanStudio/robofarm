@@ -1,6 +1,6 @@
 // Express 应用与路由。
 import express, { Request, Response } from 'express';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
@@ -210,8 +210,15 @@ export function createApp(): express.Express {
 
   // SPA 回退 (仅在生产模式挂载前端时)
   if (hasFrontend) {
-    const indexHtml = join(frontendDist as string, 'index.html');
-    app.get('*', (_req, res) => res.sendFile(indexHtml));
+    const indexHtmlPath = join(frontendDist as string, 'index.html');
+    const indexTemplate = readFileSync(indexHtmlPath, 'utf-8');
+    const extraHeader = process.env.WEBSITE_EXTRA_HEADER ?? '';
+    const indexFinal = extraHeader
+      ? indexTemplate.replace('</head>', `${extraHeader}\n  </head>`)
+      : indexTemplate;
+    app.get('*', (_req, res) => {
+      res.type('html').send(indexFinal);
+    });
   }
 
   return app;
