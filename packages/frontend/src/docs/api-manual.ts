@@ -175,19 +175,12 @@ function buildSections(): HTMLElement[] {
     ]),
 
     // ---- 5. Rules ----
-<<<<<<< HEAD
     el('div', { class: 'api-panel', id: 'tab-rules' }, [
       el('div', { class: 'rule-card rule-card-lead' }, [
         el('h3', { class: 'rule-card-title', text: DOC_OVERVIEW.title }),
         ...DOC_OVERVIEW.paragraphs.map(ruleParagraph),
       ]),
       el('div', { class: 'rule-cards' }, DOC_RULES.map(ruleSection)),
-=======
-    el('div', { class: 'api-panel rules-panel', id: 'tab-rules' }, [
-      section('游戏概览', ...DOC_OVERVIEW.paragraphs.map((p) => el('p', {}, [fmt(p)]))),
-      el('hr'),
-      ...DOC_RULES.flatMap((rs, i) => i > 0 ? [el('hr'), ruleSection(rs)] : [ruleSection(rs)]),
->>>>>>> main
     ]),
   ];
 }
