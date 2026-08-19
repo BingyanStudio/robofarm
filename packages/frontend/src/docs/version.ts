@@ -6,7 +6,7 @@
 //   3. Write current version number (for next comparison)
 import { el, modal } from '../ui/ui';
 
-export const VERSION = '1.0.4';
+export const VERSION = '1.0.5';
 export const VERSION_KEY = 'robofarm.version';
 
 export interface UpdateEntry {
@@ -17,6 +17,17 @@ export interface UpdateEntry {
 
 /** Update log (from newest to oldest) */
 export const UPDATE_LOG: UpdateEntry[] = [
+    {
+        version: '1.0.5',
+        title: 'v1.0.5',
+        items: [
+            '## 界面',
+            '主菜单 MCP 卡片改为可折叠 (初始默认折叠), 标题更名为 "Agent 接入"',
+            '主菜单 Logo 背后新增与界面主色系相符的模糊亮光 (呼吸动画)',
+            '## 登录',
+            '修复: MCP 登录工具生成的 OAuth 回调地址未遵循 GITHUB_REDIRECT_URI / BACKEND_ORIGIN 环境变量配置, 反向代理部署下授权可能失败 (redirect_uri_mismatch)',
+        ],
+    },
     {
         version: '1.0.4',
         title: 'v1.0.4',
