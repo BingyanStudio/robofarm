@@ -1,8 +1,9 @@
-// 无人机 API 手册: 右侧大边栏, 默认收起, 点击右侧图标弹出/收起。
-// 内容按 Tab 分组: 操作 / 函数 / 数据 / 作物 / 规则。
-// 文档内容来自 shared/src/docs.ts (单一事实来源, 与后端 MCP 服务器共用)。
-// 主菜单的"API 手册"弹窗复用同一份内容 (apiManualContent, 全部展开)。
-import { el, button } from './ui';
+// Drone API manual: right-hand large sidebar, collapsed by default, toggled via right-edge icon.
+// Content grouped into tabs: Operations / Functions / Data / Crops / Rules.
+// Docs come from shared/src/docs.ts (single source of truth, shared with the backend MCP server).
+// The main menu "API manual" modal reuses the same content (apiManualContent, fully expanded).
+import { el, button } from '../ui/ui';
+import { icon } from '../ui/icon';
 import {
   CROPS,
   DOC_OPERATIONS,
@@ -13,7 +14,7 @@ import {
   cropDocEntries,
   DocEntry,
 } from '@robofarm/shared';
-import { loadSprites } from './sprites';
+import { loadSprites } from '../core/sprites';
 
 function codeBlock(code: string): HTMLElement {
   return el('pre', { class: 'manual-code', text: code });
@@ -23,7 +24,7 @@ function section(title: string, ...children: (Node | string)[]): HTMLElement {
   return el('div', {}, [el('h3', { text: title }), ...children]);
 }
 
-/** 渲染文本: 反引号片段 → 行内代码, [text](#ref) → 文档内超链接 */
+/** Render text: backtick spans -> inline code, [text](#ref) -> in-doc hyperlink */
 function fmt(text: string): HTMLElement {
   const tokens = text.split(/(`[^`]*`|\[[^\]]*\]\(#[^)]*\))/g).filter(Boolean);
   const out: (Node | string)[] = [];
@@ -41,14 +42,14 @@ function fmt(text: string): HTMLElement {
   return el('span', {}, out);
 }
 
-/** 无序列表 */
+/** Unordered list */
 function list(items: string[]): HTMLElement {
   const ul = el('ul', { class: 'doc-list' });
   for (const item of items) ul.append(el('li', {}, [fmt(item)]));
   return ul;
 }
 
-/** 文档内超链接: 点击跳转到 data-ref 指向的条目/面板 */
+/** In-doc hyperlink: click to jump to the entry/panel referenced by data-ref */
 function refLink(text: string, ref: string): HTMLAnchorElement {
   const a = document.createElement('a');
   a.className = 'doc-link';
@@ -58,35 +59,57 @@ function refLink(text: string, ref: string): HTMLAnchorElement {
   return a;
 }
 
-/** MCP 接入说明 (开始界面 / 主菜单 / API 手册顶部复用) */
-export function mcpGuide(): HTMLElement {
-  // 同源基址: 优先 VITE_MCP_BASE (env), 否则默认当前 origin (开发环境经 vite 代理转发)
+/** Copy a URL to the clipboard and flash the button label with a check icon. */
+function copyButton(url: string, btn: HTMLElement): HTMLElement {
+  // Prepend a copy icon to the button label.
+  btn.replaceChildren(icon('copy', 14), document.createTextNode(' ' + (btn.textContent ?? '')));
+  btn.addEventListener('click', () => {
+    void navigator.clipboard?.writeText(url).then(() => {
+      const label = btn.lastChild;
+      btn.replaceChildren(icon('check', 14), document.createTextNode(' 已复制'));
+      setTimeout(() => {
+        btn.replaceChildren(icon('copy', 14), label ?? document.createTextNode(''));
+      }, 1400);
+    });
+  });
+  return btn;
+}
+
+/** MCP onboarding note (reused at start screen / main menu / top of API manual).
+ *  `onCollapse` adds an explicit close action when mounted inside a details panel. */
+export function mcpGuide(onCollapse?: () => void): HTMLElement {
+  // Same-origin priority: prefer VITE_MCP_BASE (env), otherwise default to current origin (dev via vite proxy)
   const envBase = (import.meta.env.VITE_MCP_BASE as string | undefined)?.trim();
   const origin = envBase ? new URL(envBase).origin : location.origin;
   const llmUrl = new URL('/llm.txt', origin).href;
   const httpUrl = new URL('/mcp', origin).href;
-  const llmBlock = codeBlock(llmUrl);
-  llmBlock.title = '点击复制';
-  llmBlock.style.cursor = 'pointer';
-  llmBlock.addEventListener('click', () => {
-    void navigator.clipboard?.writeText(llmUrl);
-  });
-  const urlBlock = codeBlock(httpUrl);
-  urlBlock.title = '点击复制';
-  urlBlock.style.cursor = 'pointer';
-  urlBlock.addEventListener('click', () => {
-    void navigator.clipboard?.writeText(httpUrl);
-  });
-  return el('div', { class: 'manual mcp-guide' }, [
-    el('p', { text: '让 AI 直接读取本游戏的文档与规则, 帮你编写无人机代码。支持两种方式接入:' }),
-    el('p', {}, [el('b', { text: '方式一 · llm.txt (最简单):' }), el('span', { text: ' 把下面的链接交给 AI, 它可以直接抓取全部游戏文档' })]),
-    llmBlock,
-    el('p', {}, [el('b', { text: '方式二 · MCP:' }), el('span', { text: ' 在支持 MCP 的客户端中添加 HTTP 服务器' })]),
-    urlBlock,
-  ]);
+
+  const item = (title: string, desc: string, url: string, copyLabel: string): HTMLElement =>
+    el('div', { class: 'mcp-method' }, [
+      el('div', { class: 'mcp-method-head' }, [
+        el('span', { class: 'mcp-method-title', text: title }),
+        copyButton(url, button(copyLabel, () => {}, { class: 'btn btn-small' })),
+      ]),
+      el('p', { class: 'mcp-method-desc', text: desc }),
+      codeBlock(url),
+    ]);
+
+  const nodes: HTMLElement[] = [
+    el('p', { class: 'mcp-guide-lead', text: '让 AI 直接读取本游戏的文档与规则, 帮你编写无人机代码。两种方式任选:' }),
+    item('llm.txt · 最简单', '把链接交给 AI, 它可直接抓取全部游戏文档', llmUrl, '复制链接'),
+    item('MCP · HTTP', '在支持 MCP 的客户端中添加 HTTP 服务器地址', httpUrl, '复制地址'),
+  ];
+  if (onCollapse) {
+    nodes.push(
+      el('div', { class: 'mcp-guide-actions' }, [
+        button('收起', onCollapse, { class: 'btn btn-small' }),
+      ])
+    );
+  }
+  return el('div', { class: 'manual mcp-guide' }, nodes);
 }
 
-/** 渲染一个文档条目 (内容来自 shared docs) */
+/** Render a doc entry (content from shared docs) */
 function docEntry(e: DocEntry): HTMLElement {
   const rows: HTMLElement[] = [
     el('h4', { text: e.name }),
@@ -103,15 +126,15 @@ function docEntry(e: DocEntry): HTMLElement {
   return el('div', { class: 'doc-entry', id: e.id }, rows);
 }
 
-/** 规则段落 */
+/** Rule section */
 function ruleSection(rs: { title: string; paragraphs: string[] }): HTMLElement {
   return section(rs.title, ...rs.paragraphs.map((p) => el('p', {}, [fmt(p)])));
 }
 
-/** 各 Tab 的内容 (顺序与 Tab 一致; 面板 id 供超链接跳转) */
+/** Content per tab (order matches tabs; panel ids used for hyperlink jumps) */
 function buildSections(): HTMLElement[] {
   return [
-    // ---- 1. 操作 ----
+    // ---- 1. Operations ----
     el('div', { class: 'api-panel', id: 'tab-ops' }, [
       section(
         '无人机操作',
@@ -120,7 +143,7 @@ function buildSections(): HTMLElement[] {
       ),
     ]),
 
-    // ---- 2. 函数 ----
+    // ---- 2. Functions ----
     el('div', { class: 'api-panel', id: 'tab-fns' }, [
       section(
         'API 函数',
@@ -129,17 +152,17 @@ function buildSections(): HTMLElement[] {
       ),
     ]),
 
-    // ---- 3. 数据 ----
+    // ---- 3. Data ----
     el('div', { class: 'api-panel', id: 'tab-data' }, [
       section('数据类型', ...DOC_TYPES.map(docEntry)),
     ]),
 
-    // ---- 4. 作物 ----
+    // ---- 4. Crops ----
     el('div', { class: 'api-panel', id: 'tab-crops' }, [
       section('作物一览', cropsSection()),
     ]),
 
-    // ---- 5. 规则 ----
+    // ---- 5. Rules ----
     el('div', { class: 'api-panel', id: 'tab-rules' }, [
       section('游戏概览', ...DOC_OVERVIEW.paragraphs.map((p) => el('p', {}, [fmt(p)]))),
       ...DOC_RULES.map(ruleSection),
@@ -147,7 +170,7 @@ function buildSections(): HTMLElement[] {
   ];
 }
 
-/** 作物一览: 图标 (成熟贴图) + 代码名 + 名称 + 参数 (无序列表) + 描述 */
+/** Crop list: icon (mature sprite) + code name + name + params (unordered list) + description */
 function cropsSection(): HTMLElement {
   const cropList = el('div', { class: 'crop-list' });
   for (const entry of cropDocEntries()) {
@@ -156,7 +179,7 @@ function cropsSection(): HTMLElement {
     if (cfg) {
       void loadSprites().then((s) => {
         const stages = s.crops[cfg.type];
-        if (stages && stages.length > 0) icon.src = stages[stages.length - 1].src; // 成熟贴图
+        if (stages && stages.length > 0) icon.src = stages[stages.length - 1].src; // mature sprite
       });
     }
     const codeName = entry.def.replace(/^代码名: `|`$/g, '');
@@ -175,7 +198,7 @@ function cropsSection(): HTMLElement {
   return cropList;
 }
 
-/** 让文档内超链接可跳转: 目标所在面板被隐藏时先激活对应 Tab */
+/** Enable in-doc hyperlinks: activate the target tab first if its panel is hidden */
 function wireDocLinks(root: HTMLElement, tabBar: HTMLElement | null, panels: HTMLElement[]): void {
   root.querySelectorAll<HTMLAnchorElement>('a.doc-link[data-ref]').forEach((a) => {
     a.addEventListener('click', (e) => {
@@ -197,14 +220,14 @@ function wireDocLinks(root: HTMLElement, tabBar: HTMLElement | null, panels: HTM
   });
 }
 
-/** 完整手册正文 (主菜单弹窗使用, 全部展开) */
+/** Full manual body (used by main menu modal, fully expanded) */
 export function apiManualContent(): HTMLElement {
   const root = el('div', { class: 'manual' }, [mcpGuide(), ...buildSections()]);
   wireDocLinks(root, null, []);
   return root;
 }
 
-/** 右侧边栏使用: Tab 分组的 API 手册 (顶部为 MCP 接入说明, 可展开) */
+/** For the right sidebar: tab-grouped API manual (top MCP onboarding note, expandable) */
 function apiManualTabs(): HTMLElement {
   const names = ['操作', '函数', '数据', '作物', '规则'];
   const panels = buildSections();
@@ -225,22 +248,55 @@ function apiManualTabs(): HTMLElement {
     if (i !== 0) p.style.display = 'none';
   });
   const mcpStrip = el('details', { class: 'mcp-strip' }, [
-    el('summary', { text: '🎉 MCP 接入' }),
-    mcpGuide(),
+    el('summary', {}, [icon('bolt', 14), document.createTextNode(' MCP 接入')]),
   ]);
+  const mcpBody = el('div', { class: 'mcp-collapse-body' }, [
+    mcpGuide(() => closeMcp()),
+  ]);
+  mcpStrip.append(mcpBody);
+
+  // Native <details> removes its content as soon as `open` becomes false, which
+  // prevents a closing animation. Keep it open until the CSS grid collapse ends.
+  let closing = false;
+  function closeMcp(): void {
+    if (!mcpStrip.open || closing) return;
+    closing = true;
+    mcpStrip.classList.add('is-closing');
+  }
+  mcpBody.addEventListener('transitionend', (event) => {
+    if (event.propertyName !== 'grid-template-rows' || !closing) return;
+    closing = false;
+    mcpStrip.classList.remove('is-closing');
+    mcpStrip.open = false;
+  });
+  mcpStrip.addEventListener('toggle', () => {
+    if (mcpStrip.open) {
+      closing = false;
+      mcpStrip.classList.remove('is-closing');
+    }
+  });
+  // Intercept native summary-close: native <details> would remove its body
+  // immediately, skipping the reverse grid transition.
+  const mcpSummary = mcpStrip.querySelector('summary')!;
+  mcpSummary.addEventListener('click', (event) => {
+    if (!mcpStrip.open) return;
+    event.preventDefault();
+    closeMcp();
+  });
+
   const root = el('div', { class: 'api-tabs-root' }, [mcpStrip, tabBar, ...panels]);
   wireDocLinks(root, tabBar, panels);
   return root;
 }
 
-/** 挂载右侧 API 手册边栏 (默认收起, 点击图标切换) */
+/** Mount right-hand API manual sidebar (collapsed by default, click icon to toggle) */
 export function mountApiManual(): () => void {
   const sidebar = el('div', { class: 'api-sidebar' });
-  const closeBtn = button('✕', () => setOpen(false), { class: 'btn btn-small' });
+  const closeBtn = el('button', { class: 'btn btn-small', title: '关闭', onClick: () => setOpen(false) }, [icon('close', 14)]);
   const head = el('div', { class: 'api-sidebar-head' }, [el('h3', { text: '无人机 API 手册' }), closeBtn]);
   const body = el('div', { class: 'api-sidebar-body' }, [apiManualTabs()]);
-  // 切换图标作为边栏的一部分 (位于其左缘), 收起时贴靠屏幕右缘, 弹出时随面板移动
-  const toggle = el('button', { class: 'api-toggle', text: '📖', title: 'API 手册' });
+  // Toggle icon is part of the sidebar (on its left edge): sticks to right screen edge when collapsed, moves with panel when open
+  const toggle = el('button', { class: 'api-toggle', title: 'API 手册' }, [icon('book', 18)]);
   sidebar.append(toggle, head, body);
   document.body.append(sidebar);
 
@@ -254,6 +310,6 @@ export function mountApiManual(): () => void {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && open) setOpen(false);
   });
-  // 返回控制句柄 (首次进入时自动展开用)
+  // Return control handle (for auto-expand on first visit)
   return () => setOpen(true);
 }

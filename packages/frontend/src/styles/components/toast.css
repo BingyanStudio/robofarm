@@ -1,0 +1,14 @@
+/* Lightweight toast notification. */
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-chip);
+  border: 1px solid var(--border-strong);
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  z-index: var(--z-toast);
+  animation: px-pop-in var(--dur-med) var(--ease-out) both;
+}

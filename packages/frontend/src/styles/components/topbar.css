@@ -1,0 +1,132 @@
+/* Top bar: back icon, logo, version badge, login user chip.
+   Fixed height keeps it stable across route changes (tag action buttons come and go). */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 56px;
+  flex: none;
+  padding: 0 14px;
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border);
+  gap: 8px;
+}
+
+.topbar-left,
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Logo image. */
+.logo-img {
+  height: 30px;
+  width: auto;
+  display: block;
+}
+
+/* Icon-only button (back-to-menu). */
+.btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+}
+
+.icon-img {
+  height: 20px;
+  width: 20px;
+  display: block;
+}
+
+.logo {
+  font-weight: bold;
+  margin-right: 6px;
+}
+
+/* Version badge next to the title. */
+.version-badge {
+  color: var(--text-faint);
+  font-size: 13px;
+  margin-left: 6px;
+  flex: none;
+}
+
+/* Login user card: avatar tile + name (+ dev badge). No card background —
+   the avatar tile and name sit directly on the top bar to avoid a boxed look. */
+.user-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 10px 3px 4px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.user-card:hover {
+  opacity: 0.85;
+}
+
+.user-card.user-on {
+  cursor: default;
+}
+
+.user-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff7e6;
+}
+
+.user-avatar-off {
+  background: var(--border-strong);
+  color: var(--text-muted);
+}
+
+.user-card-meta {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.15;
+}
+
+.user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.user-dev {
+  font-size: 10px;
+  padding: 0 5px;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--accent-fg);
+  margin-top: 1px;
+}
+
+.user-card-pending {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Legacy chip (kept for any lingering references). */
+.user-chip {
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-chip);
+  border: 1px solid var(--border-strong);
+  cursor: default;
+  font-size: 13px;
+}
+
+.user-chip.user-on {
+  background: var(--success-bg);
+  border-color: var(--success-border);
+}

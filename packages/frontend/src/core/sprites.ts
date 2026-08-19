@@ -1,16 +1,16 @@
-// 贴图加载与渲染辅助。贴图位于 public/sprites/ (见 agent/SPRITE.md):
-// - 无人机: drone.svg / drone_enemy.svg (机身+螺旋桨) + drone_eyes.svg (眼睛)
-// - 地块: 按 TILES 注册表的 sprite/spriteWithCrop 名加载 (grass/field/water/sand/sand_field)
-// - 作物: crop/<type>_<n>.avif, 正方形, 铺满一格, 下标从小到大为生长阶段
+// Sprite loading and rendering helpers. Sprites live in public/sprites/ (see agent/SPRITE.md):
+// - Drones: drone.svg / drone_enemy.svg (body + propeller) + drone_eyes.svg (eyes)
+// - Tiles: loaded via the TILES registry's sprite/spriteWithCrop names (grass/field/water/sand/sand_field)
+// - Crops: crop/<type>_<n>.avif, square, fill one cell, index 0..n = growth stages
 import { CropState, CropType, cropConfig, TILES } from '@robofarm/shared';
 
 export interface Sprites {
   drone: HTMLImageElement | null;
   droneEnemy: HTMLImageElement | null;
   droneEyes: HTMLImageElement | null;
-  /** 地块贴图: 键为 TILES 注册表中的 sprite / spriteWithCrop 名 */
+  /** Tile sprites: keys are the sprite / spriteWithCrop names in the TILES registry */
   tiles: Record<string, HTMLImageElement | null>;
-  /** 各作物的生长阶段贴图 (下标 0 基, 对应 <type>_1.._n) */
+  /** Per-crop growth stage sprites (0-based index, mapping to <type>_1.._n) */
   crops: Partial<Record<CropType, HTMLImageElement[]>>;
 }
 
@@ -18,7 +18,7 @@ function loadImage(src: string): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => resolve(img);
-    img.onerror = () => resolve(null); // 缺图不阻塞, 渲染器回退到程序化绘制
+    img.onerror = () => resolve(null); // missing image does not block; renderer falls back to procedural draw
     img.src = src;
   });
 }
@@ -35,7 +35,7 @@ async function loadCropStages(type: CropType): Promise<HTMLImageElement[]> {
 
 let cache: Promise<Sprites> | null = null;
 
-/** 加载全部贴图 (模块级缓存, 各界面复用) */
+/** Load all sprites (module-level cache, shared across screens) */
 export function loadSprites(): Promise<Sprites> {
   if (!cache) {
     cache = (async () => {
@@ -44,7 +44,7 @@ export function loadSprites(): Promise<Sprites> {
         loadImage('/sprites/drone_enemy.svg'),
         loadImage('/sprites/drone_eyes.svg'),
       ]);
-      // 从注册表驱动地块贴图: 新增地块类型后自动加载其贴图 (缺图自动回退程序化绘制)
+      // Drive tile sprites from the registry: adding a tile type auto-loads its sprite (missing sprite falls back to procedural draw).
       const names = new Set<string>();
       for (const cfg of Object.values(TILES)) {
         names.add(cfg.sprite);
@@ -55,7 +55,7 @@ export function loadSprites(): Promise<Sprites> {
       );
       const tiles: Sprites['tiles'] = {};
       for (const [name, img] of entries) tiles[name] = img;
-      // 从注册表驱动: 新增作物 (CropType) 后自动加载其贴图 (缺图自动回退程序化绘制)
+      // Drive from the registry: adding a crop (CropType) auto-loads its sprite (missing sprite falls back to procedural draw).
       const crops: Sprites['crops'] = {};
       await Promise.all(
         Object.values(CropType).map(async (type) => {
@@ -69,11 +69,12 @@ export function loadSprites(): Promise<Sprites> {
 }
 
 /**
- * 计算作物应使用的生长阶段贴图下标 (0 基)。
- * 生长进度 = (growCycles - 剩余) / (growCycles - 1), 仅映射到除最后一张外的
- * 阶段贴图 —— 最后一张 (成熟态) 只在 state == Grown 时使用。
- * Thirsty 与 Growing 共用同一进度公式 (快照携带暂停时的剩余回合数),
- * 因此浇水恢复生长后贴图连续, 不再跳回中间占位阶段。
+ * Compute the growth-stage sprite index a crop should use (0-based).
+ * Growth progress = (growCycles - remaining) / (growCycles - 1), mapped only onto
+ * stage sprites except the last one —— the last (mature) is used only when state == Grown.
+ * Thirsty and Growing share the same progress formula (the snapshot carries the remaining
+ * cycles at pause time), so after watering restores growth the sprite stays continuous and
+ * never jumps back to a mid placeholder stage.
  */
 export function cropStageIndex(
   state: CropState,
@@ -83,22 +84,22 @@ export function cropStageIndex(
 ): number {
   const n = Math.max(1, stages);
   if (state === CropState.Grown) return n - 1;
-  // 旧回放数据中 Thirsty 的 cyclesToGrown 为 0, 退化为中间阶段占位
+  // In old replay data the Thirsty cyclesToGrown is 0, degrading to a mid-stage placeholder.
   if (state === CropState.Thirsty && cyclesToGrown <= 0) {
     return Math.min(n - 1, Math.max(0, Math.floor(n / 2)));
   }
   const total = Math.max(1, growCycles);
   const remaining = Math.max(1, Math.min(total, cyclesToGrown));
-  const progress = (total - remaining) / Math.max(1, total - 1); // 0 刚种下 → 1 即将成熟
+  const progress = (total - remaining) / Math.max(1, total - 1); // 0 just planted → 1 about to mature
   return Math.max(0, Math.min(n - 2, Math.floor(progress * Math.max(1, n - 1))));
 }
 
-/** 某作物是否已加载生长阶段贴图 */
+/** Whether a crop's growth-stage sprites have been loaded */
 export function hasCropSprites(sprites: Sprites | null, type: CropType): boolean {
   return !!sprites && !!sprites.crops[type] && sprites.crops[type]!.length > 0;
 }
 
-/** 作物生长周期数 (渲染阶段贴图用) */
+/** Number of grow cycles a crop has (used for stage sprite rendering). */
 export function growCyclesOf(type: CropType): number {
   return cropConfig(type).growCycles;
 }

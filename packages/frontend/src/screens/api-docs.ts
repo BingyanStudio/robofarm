@@ -1,15 +1,9 @@
-// API 文档网页版: 后端全部接口, 按功能分类 Tab 展示, 人类友好。
-// 数据来自 shared/src/api-docs.ts (与 /api-docs Markdown / llm.txt 同一来源)。
-import { el, topBar } from '../ui';
+// Web version of API docs: all backend endpoints, shown in function-category tabs, human friendly.
+// Data comes from shared/src/api-docs.ts (same source as /api-docs Markdown / llm.txt).
+import { el } from '../ui/ui';
+import { icon } from '../ui/icon';
 import { API_DOC_GROUPS, API_DOC_CONVENTIONS } from '@robofarm/shared';
-
-const METHOD_COLOR: Record<string, string> = {
-  GET: '#22c55e',
-  POST: '#3b82f6',
-  WS: '#a855f7',
-  DELETE: '#ef4444',
-  PUT: '#f59e0b',
-};
+import { methodColor } from '../core/theme';
 
 function codeBlock(code: string): HTMLElement {
   return el('pre', { class: 'manual-code', text: code });
@@ -18,12 +12,9 @@ function codeBlock(code: string): HTMLElement {
 export function apiDocsScreen(root: HTMLElement): void {
   root.replaceChildren();
   const host = el('div', { class: 'api-docs-page' });
-  root.append(
-    topBar(),
-    host
-  );
+  root.append(host);
 
-  // 标题 + 通用约定
+  // Title + general conventions
   const head = el('div', { class: 'api-docs-head' }, [
     el('h2', { text: 'RoboFarm 后端 API 文档' }),
     el('p', { class: 'hint', text: '此处为游戏服务器后端 API (HTTP / WebSocket / MCP); 无人机 API (getSelf / getTile 等) 请参考右侧 API 手册边栏。' }),
@@ -35,7 +26,7 @@ export function apiDocsScreen(root: HTMLElement): void {
   ]);
   host.append(head);
 
-  // Tab 分类
+  // Tab categories
   const tabBar = el('div', { class: 'tabs' });
   const panels: HTMLElement[] = [];
   for (let i = 0; i < API_DOC_GROUPS.length; i++) {
@@ -58,7 +49,7 @@ export function apiDocsScreen(root: HTMLElement): void {
   }
   host.append(tabBar, ...panels);
 
-  // 初始显示第一个分类
+  // Initially show the first category
   panels.forEach((p, i) => {
     p.style.display = i === 0 ? '' : 'none';
   });
@@ -68,15 +59,18 @@ function endpointCard(e: { method: string; path: string; auth?: boolean; title: 
   const methodBadge = el('span', {
     class: 'api-method',
     text: e.method,
-    style: `background: ${METHOD_COLOR[e.method] ?? '#64748b'}`,
+    style: `background: ${methodColor(e.method)}`,
   });
   const pathEl = el('code', { class: 'api-path', text: e.path });
-  const titleRow = el('div', { class: 'api-card-title' }, [
-    methodBadge,
-    pathEl,
-    e.auth ? el('span', { class: 'api-auth', text: '🔒 需登录' }) : el('span'),
+  const head = el('div', { class: 'api-card-head' }, [
+    el('div', { class: 'api-card-title' }, [
+      methodBadge,
+      el('span', { class: 'api-endpoint-name', text: e.title }),
+      e.auth ? el('span', { class: 'api-auth' }, [icon('lock', 12), document.createTextNode(' 需登录')]) : el('span'),
+    ]),
+    el('div', { class: 'api-path-row' }, [pathEl]),
   ]);
-  const rows: HTMLElement[] = [titleRow, el('p', { text: e.description })];
+  const rows: HTMLElement[] = [head, el('p', { text: e.description })];
   if (e.headers?.length) {
     rows.push(el('p', {}, [el('b', { text: 'Headers: ' })]));
     rows.push(el('ul', { class: 'doc-list' }, e.headers.map((h) => el('li', { text: h }))));

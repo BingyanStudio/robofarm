@@ -1,70 +1,73 @@
-// 应用入口 + 极简 hash 路由。
+// App entry + minimal hash router with lazy-loaded screens.
+// Each screen is a dynamic import, so its code becomes a separate chunk that is
+// only fetched when that route is first visited — keeping the initial bundle lean.
+//
+// Layout: a persistent top bar (logo + back button + user card + per-screen
+// action slot) lives in #app permanently; only the #content area swaps per
+// route, so the top bar never rebuilds on navigation (Astro-style shell).
 import { setWasmUrl } from '@robofarm/shared';
+import { el, topBar } from './ui/ui';
+import { userCard } from './ui/user-card';
+import { topActionsEl, setTopActions } from './ui/topbar-state';
 import { menuScreen } from './screens/menu';
-import { singleScreen } from './screens/single';
-import { simulateScreen } from './screens/simulate';
-import { matchScreen } from './screens/match';
-import { battleScreen } from './screens/battle';
-import { replayScreen } from './screens/replay';
-import { spectateScreen } from './screens/spectate';
-import { apiDocsScreen } from './screens/api-docs';
-import { mountApiManual } from './api-manual';
-import { checkVersionOnLoad } from './version';
+import { mountApiManual } from './docs/api-manual';
+import { checkVersionOnLoad } from './docs/version';
 
 const app = document.getElementById('app')!;
 
-// 全局右侧 API 手册边栏 (所有界面可用, 默认收起)
+// Persistent top bar — rendered once, never rebuilt on route change.
+// User card is global (always on the right); per-screen actions sit before it.
+const bar = topBar([topActionsEl(), userCard()]);
+app.append(bar);
+const backBtn = bar.querySelector('.topbar-back') as HTMLElement;
+
+// Content area — swapped per route.
+const content = el('div', { class: 'content' });
+app.append(content);
+
+// Global right-hand API manual sidebar (available on all screens, collapsed by default)
 const openManual = mountApiManual();
 
-// 版本检查: 首次进入自动展开 API 手册, 版本升级/无法识别时展示更新日志
+// Version check: auto-expand API manual on first visit, show update log on upgrade/unrecognized version
 checkVersionOnLoad(openManual);
 
-// 运行时配置: esbuild.wasm 可能单独部署在其他服务器 (后端 .env 的 ESBUILD_WASM_URL),
-// 有值则浏览器编译时改从该地址加载; 未配置保持同源 /esbuild.wasm
+// Runtime config: esbuild.wasm may be deployed elsewhere (ESBUILD_WASM_URL from backend .env).
+// When set, browser compilation loads from that URL; otherwise keep same-origin /esbuild.wasm
 void (async () => {
   try {
     const res = await fetch('/config');
     const cfg = (await res.json()) as { esbuildWasmUrl?: string | null };
     if (cfg?.esbuildWasmUrl) setWasmUrl(cfg.esbuildWasmUrl);
   } catch {
-    // 保持默认同源加载
+    // Keep default same-origin loading
   }
 })();
+
+/** Lazy screen loaders — keyed by route name. `menu` is eager (landing screen). */
+type ScreenLoader = (params: URLSearchParams) => void | Promise<void>;
+const NAVIGATE: Record<string, ScreenLoader> = {
+  menu: () => menuScreen(content),
+  single: async () => (await import('./screens/single')).singleScreen(content),
+  simulate: async () => (await import('./screens/simulate')).simulateScreen(content),
+  match: async () => (await import('./screens/match')).matchScreen(content),
+  battle: async (p) => (await import('./screens/battle')).battleScreen(content, p),
+  replay: async (p) => (await import('./screens/replay')).replayScreen(content, p),
+  spectate: async () => (await import('./screens/spectate')).spectateScreen(content),
+  'api-docs': async () => (await import('./screens/api-docs')).apiDocsScreen(content),
+};
 
 function route(): void {
   const hash = location.hash.replace(/^#\/?/, '');
   const [path, queryStr] = hash.split('?');
   const params = new URLSearchParams(queryStr ?? '');
-  switch (path) {
-    // 根路由 (原开始界面): 直接进入主菜单
-    case '':
-    case 'menu':
-      menuScreen(app);
-      break;
-    case 'single':
-      singleScreen(app);
-      break;
-    case 'simulate':
-      simulateScreen(app);
-      break;
-    case 'match':
-      matchScreen(app);
-      break;
-    case 'battle':
-      battleScreen(app, params);
-      break;
-    case 'replay':
-      replayScreen(app, params);
-      break;
-    case 'spectate':
-      spectateScreen(app);
-      break;
-    case 'api-docs':
-      apiDocsScreen(app);
-      break;
-    default:
-      menuScreen(app);
-  }
+  const key = path === '' ? 'menu' : path;
+  // Hide the back button on the menu itself (nowhere to go back to).
+  backBtn.style.display = key === 'menu' ? 'none' : '';
+  // Clear the previous screen's top-bar actions before loading the next screen.
+  setTopActions([]);
+  content.replaceChildren();
+  const loader = NAVIGATE[key] ?? NAVIGATE.menu;
+  void loader(params);
 }
 
 window.addEventListener('hashchange', route);

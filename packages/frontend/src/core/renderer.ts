@@ -1,33 +1,36 @@
-// Canvas 游戏渲染器: 地块/作物/无人机绘制, 支持缩放 (滚轮) 与拖拽平移。
-// 渲染使用绝对坐标; mirror 选项用于以对方视角观察 (竞技模式 P2)。
+// Canvas game renderer: draws tiles/crops/drones, supports zoom (wheel) and drag-to-pan.
+// Rendering uses absolute coordinates; the mirror option renders from the opponent's view (combat mode P2).
 import type { SnapshotState, CropInfo, Position } from '@robofarm/shared';
 import { CropState, TileType, TILES, cropConfig } from '@robofarm/shared';
 import { loadSprites, cropStageIndex, growCyclesOf } from './sprites';
 import type { Sprites } from './sprites';
-import { el } from './ui';
+import { el } from '../ui/ui';
+import { icon } from '../ui/icon';
+import { theme } from './theme';
 
 const TILE = 48;
+/** Canvas render colors: shares the tokens.css single source of truth with the DOM (read via theme.ts). */
 const COLORS = {
-  soilGrid: 'rgba(0,0,0,0.12)',
-  waterBorder: '#4a9cc9',
-  cropGrowing: '#4caf50',
-  cropThirsty: '#ff9800',
-  cropGrown: '#e53935',
-  p1: '#22c55e',
-  p2: '#ef4444',
-  bounty: '#fbbf24',
-  waterPip: '#38bdf8',
-  intercept: '#fde047',
+  soilGrid: theme.grid,
+  waterBorder: theme.waterBorder,
+  cropGrowing: theme.cropGrowing,
+  cropThirsty: theme.cropThirsty,
+  cropGrown: theme.cropGrown,
+  p1: theme.p1,
+  p2: theme.p2,
+  bounty: theme.bounty,
+  waterPip: theme.waterPip,
+  intercept: theme.interceptMark,
 };
 
-/** 地块特效 (颜色 + 初始不透明度, 随时间线性淡出) */
+/** Tile effect (color + initial opacity, fades out linearly over time). */
 const FX = {
-  water: { color: '#7dd3fc', alpha: 0.45 }, // 浅蓝: 浇水
-  harvest: { color: '#f59e0b', alpha: 0.7 }, // 深金: 收获 (初始更不透明)
-  intercept: { color: '#fca5a5', alpha: 0.45 }, // 浅红: 拦截
+  water: { color: theme.fxWater, alpha: 0.45 }, // light blue: water
+  harvest: { color: theme.fxHarvest, alpha: 0.7 }, // deep gold: harvest (starts more opaque)
+  intercept: { color: theme.fxIntercept, alpha: 0.45 }, // light red: intercept
 } as const;
 
-/** 特效持续时间 (毫秒) */
+/** Effect duration (milliseconds). */
 const FX_DURATION = 200;
 
 interface TileFx {
@@ -38,7 +41,7 @@ interface TileFx {
 }
 
 export interface RenderOptions {
-  /** 以镜像视角渲染 (竞技模式 P2 的本地视角) */
+  /** Render from a mirrored view (combat mode P2's local perspective). */
   mirror?: boolean;
 }
 
@@ -56,31 +59,31 @@ export class Renderer {
   private state: SnapshotState | null = null;
   private hoverPos: { x: number; y: number } | null = null;
   private didFit = false;
-  /** resize() 是否已用真实布局尺寸设置过位图 (fit 只在该状态下计算) */
+  /** Whether resize() has sized the bitmap with real layout dimensions (fit only computes in this state). */
   private sized = false;
   private resizeObserver: ResizeObserver | null = null;
-  /** 无人机移动动画 (绝对坐标 from → to) */
+  /** Drone movement animation (absolute coordinates from → to). */
   private animations = new Map<number, { from: Position; to: Position; start: number; duration: number }>();
-  /** 地块特效 (浇水/收获/拦截, 0.2s 淡出), 按地块 key 去重 */
+  /** Tile effects (water/harvest/intercept, 0.2s fade), deduplicated by tile key. */
   private fx = new Map<string, TileFx>();
-  /** 充能特效: 无人机 id → 开始时间 (0.2s 绿色调) */
+  /** Charge effect: drone id → start time (0.2s green tint). */
   private chargeFx = new Map<number, number>();
   private rafId: number | null = null;
-  /** 已加载的贴图 (加载完成前为 null, 使用程序化绘制兜底) */
+  /** Loaded sprites (null before loading finishes, with procedural draw as fallback). */
   private sprites: Sprites | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d')!;
-    // 画布尺寸跟随布局: 构造时可能尚未挂载到 DOM (尺寸为 0),
-    // 用 ResizeObserver 在布局确定后自动补齐, 无需等 window resize
+    // Canvas size follows layout: it may not be mounted on the DOM yet at construction (size 0),
+    // so ResizeObserver fills it in once layout is resolved, without waiting for window resize.
     if (typeof ResizeObserver !== 'undefined') {
       this.resizeObserver = new ResizeObserver(() => this.resize());
       this.resizeObserver.observe(canvas);
     }
     this.resize();
     window.addEventListener('resize', () => this.resize());
-    // 异步加载贴图, 加载完成前用程序化绘制兜底
+    // Load sprites asynchronously, falling back to procedural drawing until ready.
     void loadSprites().then((s) => {
       this.sprites = s;
       this.draw();
@@ -92,7 +95,7 @@ export class Renderer {
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
       this.scale = Math.min(6, Math.max(0.2, this.scale * factor));
-      // 以光标为锚点缩放
+      // Zoom anchored at the cursor.
       const wx = (mx - this.ox) / this.scale;
       const wy = (my - this.oy) / this.scale;
       this.ox = mx - wx * this.scale;
@@ -140,7 +143,7 @@ export class Renderer {
       this.canvas.width = w;
       this.canvas.height = h;
       this.sized = true;
-      // 布局确定后若还没自动 fit 过, 在这里用真实尺寸补齐
+      // If layout was resolved and we have not auto-fit yet, do so here with real dimensions.
       if (!this.didFit) this.fit();
       this.draw();
     }
@@ -151,18 +154,18 @@ export class Renderer {
     this.draw();
   }
 
-  /** 缩放/平移使整个地图适配画布 */
+  /** Zoom/pan to fit the whole map into the canvas. */
   fit(): void {
     if (!this.state) return;
-    // 布局未就绪 (resize 尚未用真实尺寸设置位图) 时不计算, 等 resize 再 fit
+    // Skip when layout is not ready (resize has not sized the bitmap yet); fit again on resize.
     if (!this.sized) return;
     const w = this.state.map[0].length * TILE;
     const h = this.state.map.length * TILE;
-    // 首次渲染时尽量充满画布 (留 ~3% 边距), 不再被 1.6x 上限限制
+    // On first render fill the canvas as much as possible (leave ~3% margin), no longer capped at 1.6x.
     this.scale = Math.min(this.canvas.width / w, this.canvas.height / h, 8) * 0.97;
     this.ox = (this.canvas.width - w * this.scale) / 2;
     this.oy = (this.canvas.height - h * this.scale) / 2;
-    this.didFit = true; // 只自动 fit 一次, 之后保留用户的缩放/平移
+    this.didFit = true; // Auto-fit only once, then preserve the user's zoom/pan.
     this.draw();
   }
 
@@ -170,11 +173,11 @@ export class Renderer {
     this.state = state;
     if (!this.didFit) this.fit();
     this.draw();
-    // 快照更新后悬停内容可能变化 (无人机储水/作物生长等), 同步刷新右上角面板
+    // Hover content may change after a snapshot update (drone water/crop growth, etc.); refresh the top-right panel.
     this.updateTooltip();
   }
 
-  /** 清空画布 */
+  /** Clear the canvas. */
   clear(): void {
     this.state = null;
     this.didFit = false;
@@ -186,26 +189,26 @@ export class Renderer {
     this.draw();
   }
 
-  /** 为某架无人机添加移动过渡动画 (from → to, 绝对坐标) */
+  /** Add a move transition animation for a drone (from → to, absolute coordinates). */
   animateDrone(id: number, from: Position, to: Position, duration = 250): void {
     if (from[0] === to[0] && from[1] === to[1]) return;
     this.animations.set(id, { from, to, start: performance.now(), duration });
     this.ensureLoop();
   }
 
-  /** 地块特效: 浇水 (浅蓝) / 收获 (浅金) / 拦截 (浅红), 覆盖整个 Tile 并在 0.2s 内淡出 */
+  /** Tile effect: water (light blue) / harvest (light gold) / intercept (light red), covers the whole tile and fades over 0.2s. */
   tileFx(type: 'water' | 'harvest' | 'intercept', x: number, y: number): void {
     this.fx.set(`${x},${y}`, { type, x, y, start: performance.now() });
     this.ensureLoop();
   }
 
-  /** 充能特效: 无人机色调偏绿, 0.2s 内恢复 */
+  /** Charge effect: tints the drone green, recovering within 0.2s. */
   chargeFxOn(id: number): void {
     this.chargeFx.set(id, performance.now());
     this.ensureLoop();
   }
 
-  /** 确保 rAF 循环在跑 (任何动画/特效存续期间保持) */
+  /** Ensure the rAF loop is running (kept alive while any animation/effect persists). */
   private ensureLoop(): void {
     if (this.rafId !== null) return;
     const step = (now: number) => {
@@ -228,7 +231,7 @@ export class Renderer {
     this.rafId = requestAnimationFrame(step);
   }
 
-  /** 无人机当前渲染位置 (动画插值优先, 否则快照位置) */
+  /** Drone current render position (animation interpolation first, otherwise snapshot position). */
   private animatedPosition(id: number, fallback: Position): Position {
     const a = this.animations.get(id);
     if (!a) return fallback;
@@ -255,7 +258,7 @@ export class Renderer {
     return { x: tx, y: ty };
   }
 
-  /** 更新右上角信息面板: Tile / 无人机 / 作物 三个分区 */
+  /** Update the top-right info panel: Tile / drone / crop three sections. */
   private updateTooltip(): void {
     const tip = this.tooltip;
     if (!this.state || !this.hoverPos) {
@@ -275,7 +278,7 @@ export class Renderer {
       ])
     );
 
-    // 2. 无人机 (如有): 编号/归属 + 水/能量 无序列表
+    // 2. Drone (if any): number/owner + water/energy unordered list.
     const drone = this.state.drones.find((d) => d.position[0] === dx && d.position[1] === y);
     if (drone) {
       const owner = drone.player === 0 ? '我方' : '对方';
@@ -286,13 +289,13 @@ export class Renderer {
       );
       rows.push(
         el('ul', { class: 'doc-list' }, [
-          el('li', { text: `💧: ${drone.water}` }),
-          el('li', { text: `⚡: ${drone.energy}` }),
+          el('li', {}, [icon('drop', 12), document.createTextNode(` ${drone.water}`)]),
+          el('li', {}, [icon('bolt', 12), document.createTextNode(` ${drone.energy}`)]),
         ])
       );
     }
 
-    // 3. 作物 (如有)
+    // 3. Crop (if any).
     if (tile.crop) {
       const c = tile.crop;
       const cfg = cropConfig(c.type);
@@ -324,12 +327,12 @@ export class Renderer {
   private draw(): void {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    ctx.fillStyle = '#17201c';
+    ctx.fillStyle = theme.bgCanvas;
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     if (!this.state) return;
     const { map, drones } = this.state;
 
-    // 地块
+    // Tiles
     for (let y = 0; y < map.length; y++) {
       for (let x = 0; x < map[y].length; x++) {
         const dx = this.rx(x);
@@ -342,11 +345,11 @@ export class Renderer {
       }
     }
 
-    // 半场分界线 (竞技模式)
+    // Half-field divider (combat mode).
     if (this.state.mode === 'combat') {
       const half = map[0].length / 2;
       const px = this.ox + half * TILE * this.scale;
-      ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+      ctx.strokeStyle = theme.halfLine;
       ctx.setLineDash([6, 6]);
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -356,7 +359,7 @@ export class Renderer {
       ctx.setLineDash([]);
     }
 
-    // 拦截标记
+    // Intercept markers.
     for (const d of drones) {
       if (d.interceptTarget) {
         const tx = d.interceptTarget[0];
@@ -371,7 +374,7 @@ export class Renderer {
       }
     }
 
-    // 地块特效 (浇水/收获/拦截): 覆盖当前 Tile, 0.2s 内淡出 (绘制在无人机下方)
+    // Tile effects (water/harvest/intercept): cover the current tile, fading within 0.2s (drawn below drones).
     const fxNow = performance.now();
     for (const f of this.fx.values()) {
       const t = (fxNow - f.start) / FX_DURATION;
@@ -384,24 +387,24 @@ export class Renderer {
       ctx.fillRect(px, py, TILE * this.scale, TILE * this.scale);
     }
 
-    // 无人机 (后绘制, 位于上层)
+    // Drones (drawn last, on the top layer).
     for (const d of drones) {
       const pos = this.animatedPosition(d.id, d.position);
       this.drawDrone(d, this.rx(pos[0]), pos[1]);
     }
 
-    // 悬停高亮
+    // Hover highlight.
     if (this.hoverPos) {
       const { x, y } = this.hoverPos;
       const px = this.ox + x * TILE * this.scale;
       const py = this.oy + y * TILE * this.scale;
-      ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+      ctx.strokeStyle = theme.hoverStroke;
       ctx.lineWidth = 2;
       ctx.strokeRect(px + 1, py + 1, TILE * this.scale - 2, TILE * this.scale - 2);
     }
   }
 
-  /** 绘制单个地块: 优先贴图 (按 TILES 注册表取图), 否则程序化绘制 */
+  /** Draw a single tile: prefer the sprite (from the TILES registry), otherwise draw procedurally. */
   private drawTile(
     tile: { type: TileType; crop: CropInfo | null },
     px: number,
@@ -410,7 +413,7 @@ export class Renderer {
   ): void {
     const ctx = this.ctx;
     const cfg = TILES[tile.type];
-    // 有作物时使用 <type>_field 变体贴图 (如 sand_field.svg)
+    // Use the <type>_field variant sprite when a crop is present (e.g. sand_field.svg).
     const sprite = this.sprites?.tiles[tile.crop ? cfg.spriteWithCrop : cfg.sprite];
     if (sprite) {
       ctx.drawImage(sprite, px, py, s, s);
@@ -431,24 +434,24 @@ export class Renderer {
 
   private drawCrop(crop: CropInfo, px: number, py: number, s: number): void {
     const ctx = this.ctx;
-    // 贴图: 正方形铺满一格, 按生长阶段取图
+    // Sprite: square covering one cell, selected by growth stage.
     const stages = this.sprites?.crops[crop.type];
     if (stages && stages.length > 0) {
       const idx = cropStageIndex(crop.state, crop.cyclesToGrown, growCyclesOf(crop.type), stages.length);
       const img = stages[Math.min(idx, stages.length - 1)];
       if (img) {
         ctx.drawImage(img, px, py, s, s);
-        // 缺水标记
+        // Thirsty marker: a small water drop pip in the top-right corner.
         if (crop.state === CropState.Thirsty) {
           ctx.fillStyle = COLORS.waterPip;
-          ctx.font = `${Math.max(10, s * 0.3)}px sans-serif`;
-          ctx.textAlign = 'center';
-          ctx.fillText('💧', px + s * 0.78, py + s * 0.22);
+          ctx.beginPath();
+          ctx.arc(px + s * 0.78, py + s * 0.22, s * 0.09, 0, Math.PI * 2);
+          ctx.fill();
         }
         return;
       }
     }
-    // 程序化绘制兜底
+    // Procedural draw fallback.
     const cx = px + s / 2;
     const cy = py + s / 2;
     if (crop.state === CropState.Growing) {
@@ -461,12 +464,13 @@ export class Renderer {
       ctx.beginPath();
       ctx.arc(cx, cy, s * 0.16, 0, Math.PI * 2);
       ctx.fill();
+      // Thirsty marker: a small water drop pip offset above the crop.
       ctx.fillStyle = COLORS.waterPip;
-      ctx.font = `${Math.max(10, s * 0.32)}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText('💧', cx + s * 0.25, cy - s * 0.2);
+      ctx.beginPath();
+      ctx.arc(cx + s * 0.25, cy - s * 0.2, s * 0.08, 0, Math.PI * 2);
+      ctx.fill();
     } else if (crop.state === CropState.Grown) {
-      // 草莓: 红色圆 + 绿色果蒂
+      // Strawberry: red circle + green calyx.
       ctx.fillStyle = COLORS.cropGrown;
       ctx.beginPath();
       ctx.arc(cx, cy + s * 0.05, s * 0.26, 0, Math.PI * 2);
@@ -498,44 +502,44 @@ export class Renderer {
     if (bodySprite) {
       this.drawDroneSprite(d, bodySprite, cx, cy, s);
     } else {
-      // 程序化兜底: 机体 + 编号
+      // Procedural fallback: body + number.
       ctx.fillStyle = d.player === 0 ? COLORS.p1 : COLORS.p2;
       roundRect(ctx, cx - r, cy - r, r * 2, r * 2, s * 0.12);
       ctx.fill();
-      ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+      ctx.strokeStyle = theme.droneOutline;
       ctx.lineWidth = 2;
       roundRect(ctx, cx - r, cy - r, r * 2, r * 2, s * 0.12);
       ctx.stroke();
-      ctx.fillStyle = '#fff';
+      ctx.fillStyle = theme.textOnDark;
       ctx.font = `bold ${Math.max(10, s * 0.3)}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(String(d.id), cx, cy);
     }
-    // 充能特效: 整体色调偏绿, 0.2s 内恢复
+    // Charge effect: tints the whole body green, recovering within 0.2s.
     const chargeStart = this.chargeFx.get(d.id);
     if (chargeStart !== undefined) {
       const t = (performance.now() - chargeStart) / FX_DURATION;
       if (t < 1) {
-        ctx.fillStyle = `rgba(74, 222, 128, ${(0.45 * (1 - t)).toFixed(2)})`;
+        ctx.fillStyle = `rgba(${theme.chargeTintRgb}, ${(0.45 * (1 - t)).toFixed(2)})`;
         roundRect(ctx, px, py, s, s, s * 0.08);
         ctx.fill();
       }
     }
-    // 储水 (画在缩小后机身的下缘)
+    // Water storage (drawn along the lower edge of the scaled body).
     for (let i = 0; i < d.water; i++) {
       ctx.fillStyle = COLORS.waterPip;
       ctx.beginPath();
       ctx.arc(cx - s * 0.18 + i * s * 0.09, cy + s * 0.21, s * 0.035, 0, Math.PI * 2);
       ctx.fill();
     }
-    // 偷菜资金池 (机身右上角)
+    // Crop-stealing bounty pool (top-right of the body).
     if (d.bounty > 0) {
       ctx.fillStyle = COLORS.bounty;
       ctx.beginPath();
       ctx.arc(cx + s * 0.21, cy - s * 0.2, s * 0.09, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = '#000';
+      ctx.fillStyle = theme.textOnBright;
       ctx.font = `bold ${Math.max(8, s * 0.12)}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -544,9 +548,9 @@ export class Renderer {
   }
 
   /**
-   * 贴图模式绘制无人机: 机身贴图 + 额头编号 + 移动方向偏移的眼睛。
-   * drone.svg 的机身区域为图片坐标 (149,143)-(383,324), 中心 (266,233.5),
-   * 眼睛贴图 (89x68) 铺在机身中心。
+   * Draw a drone in sprite mode: body sprite + forehead number + eyes offset toward movement.
+   * The body region of drone.svg is image coordinates (149,143)-(383,324), center (266,233.5);
+   * the eyes sprite (89x68) is placed at the body center.
    */
   private drawDroneSprite(
     d: { id: number; player: number; water: number; bounty: number },
@@ -556,29 +560,29 @@ export class Renderer {
     s: number
   ): void {
     const ctx = this.ctx;
-    const BODY_H = 181; // 机身高度 (图片坐标)
-    const BODY_CX = 266; // 机身中心 x (图片坐标)
-    const BODY_CY = 233.5; // 机身中心 y
+    const BODY_H = 181; // body height (image coordinates)
+    const BODY_CX = 266; // body center x (image coordinates)
+    const BODY_CY = 233.5; // body center y
     const IMG_W = 532;
     const IMG_H = 370;
-    // 机身高度约占格子的 30%, 且机身中心位于格子中线上方 (无人机偏上)
+    // Body height is ~30% of the cell, and body center sits above the cell midline (drone leans upward).
     const k = (0.3 * s) / BODY_H;
     const bodyCy = cy - s * 0.15;
     ctx.drawImage(body, cx - BODY_CX * k, bodyCy - BODY_CY * k, IMG_W * k, IMG_H * k);
 
-    // 编号: 机身上半部 (额头)
+    // Number: upper half of the body (forehead).
     const foreheadY = bodyCy - BODY_CY * k + 143 * k + BODY_H * 0.26 * k;
     ctx.font = `bold ${Math.max(8, s * 0.1)}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const idText = String(d.id);
     ctx.lineWidth = Math.max(1.5, s * 0.025);
-    ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+    ctx.strokeStyle = theme.droneIdStroke;
     ctx.strokeText(idText, cx, foreheadY);
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = theme.textOnDark;
     ctx.fillText(idText, cx, foreheadY);
 
-    // 眼睛: 机身中心, 移动时向移动方向偏移
+    // Eyes: at the body center, offset toward movement while moving.
     const eyes = this.sprites?.droneEyes;
     if (eyes) {
       const anim = this.animations.get(d.id);
@@ -589,11 +593,11 @@ export class Renderer {
         const dx = anim.to[0] - anim.from[0];
         const dy = anim.to[1] - anim.from[1];
         const len = Math.hypot(dx, dy) || 1;
-        const amp = Math.sin(t * Math.PI); // 动画期间先增大后回中
+        const amp = Math.sin(t * Math.PI); // grows then returns to center during the animation
         ex = (dx / len) * s * 0.12 * amp;
         ey = (dy / len) * s * 0.1 * amp;
       }
-      const kE = (s * 0.12) / 68; // 眼睛高度约占格子 12%, 位置略低于机身中心
+      const kE = (s * 0.12) / 68; // eye height ~12% of the cell, slightly below the body center
       ctx.drawImage(eyes, cx + ex - (89 * kE) / 2, bodyCy + s * 0.03 + ey - (68 * kE) / 2, 89 * kE, 68 * kE);
     }
   }

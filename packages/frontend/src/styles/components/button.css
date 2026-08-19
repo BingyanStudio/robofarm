@@ -1,0 +1,120 @@
+/* Buttons (.btn family). Colors resolve from tokens. */
+
+.btn {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.15s;
+  /* Vertical centering for mixed Chinese/Emoji text baseline. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn:hover {
+  background: var(--btn-hover-bg);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Start/stop toggle: start is green, stop is red. */
+.btn-start {
+  background: var(--success-bg);
+  border-color: var(--success-border);
+}
+
+.btn-start:hover {
+  background: var(--success-hover);
+}
+
+.btn-stop {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+}
+
+.btn-stop:hover {
+  background: var(--danger-hover);
+}
+
+.btn-small {
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+.btn-big {
+  font-size: 18px;
+  padding: 14px 28px;
+}
+
+/* Gold accent button (leaderboard etc.). */
+.btn-gold {
+  background: var(--accent);
+  border-color: var(--accent-border);
+  color: var(--accent-fg);
+  font-weight: 600;
+}
+
+.btn-gold:hover {
+  background: var(--accent-hover);
+}
+
+/* Submit button: gold accent, right-aligned and elongated in the control bar. */
+.btn-submit {
+  margin-left: auto;
+  min-width: 150px;
+  background: var(--accent);
+  border-color: var(--accent-border);
+  color: var(--accent-fg);
+  font-weight: 600;
+}
+
+.btn-submit:hover {
+  background: var(--accent-hover);
+}
+
+/* Menu hero buttons (two large centered actions) — flat, hard-edged, no gradient. */
+.btn-hero {
+  width: 220px;
+  height: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--bg-surface);
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 700;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn-hero:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-border);
+}
+
+/* Hero illustrations use existing public game assets (no emoji). */
+.hero-icon {
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.hero-icon-match {
+  width: 62px;
+}
+
+.hero-label {
+  font-size: 20px;
+}

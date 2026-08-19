@@ -1,6 +1,6 @@
-// 浏览器端 PlayerProgram: 每个玩家程序一个 Web Worker。
-// 执行超时用宿主侧看门狗处理: 超过 TIMEOUT_MS + 宽限后终止 worker 并报错
-// (与后端行为一致: 超时立即 kill)。
+// Browser-side PlayerProgram: one Web Worker per player program.
+// Execution timeouts are handled by a host-side watchdog: exceeding TIMEOUT_MS + grace
+// terminates the worker and reports an error (consistent with backend behavior: kill on timeout).
 import { PlayerProgram, PlayerTurnResult, PlayerView, TIMEOUT_MS } from '@robofarm/shared';
 
 interface Pending {
@@ -88,7 +88,7 @@ export class BrowserProgram implements PlayerProgram {
     const seq = ++this.seq;
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
-        // 看门狗: 执行超时, 终止 worker (玩家程序状态丢失, 游戏判负)
+        // Watchdog: execution timed out, terminate the worker (player program state lost, game counts as loss).
         this.worker.terminate();
         this.pending.delete(seq);
         reject(new Error(`程序执行超时 (超过 ${TIMEOUT_MS}ms), 已终止`));

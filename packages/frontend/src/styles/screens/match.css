@@ -1,0 +1,75 @@
+/* Multiplayer matchmaking page. */
+
+.match-layout {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.match-left {
+  width: 40%;
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: var(--bg-panel);
+  padding: 10px 14px;
+  gap: 10px;
+}
+
+.match-left .editor-host {
+  flex: 1;
+  min-height: 200px;
+}
+
+.match-right {
+  flex: 1;
+  padding: 10px 16px;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+/* Left header: "challenge code" title + right-aligned state line. */
+.match-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-raised);
+}
+
+.match-head .state-line {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.match-head-sub {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 8px 14px 0;
+}
+
+.match-head-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.match-head-sub .hint {
+  margin: 0;
+  text-align: right;
+}
+
+.state-line {
+  font-size: 14px;
+}

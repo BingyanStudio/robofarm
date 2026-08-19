@@ -1,8 +1,8 @@
-// CodeMirror 6 编辑器封装: 行号、语法高亮 (TS)、API 补全、Maple Mono 字体、
-// Tokyo Night 主题。
+// CodeMirror 6 editor wrapper: line numbers, syntax highlighting (TS), API completion, Maple Mono font,
+// Tokyo Night theme.
 //
-// 注意: 不使用 basicSetup, 而是手动组合扩展 —— basicSetup 内置的
-// highlightSelectionMatches 会把"选中的空白"高亮到全篇所有空白处。
+// Note: we do not use basicSetup; instead we compose extensions manually — basicSetup's built-in
+// highlightSelectionMatches highlights "selected whitespace" across every whitespace in the document.
 import { EditorState, StateEffect, StateField } from '@codemirror/state';
 import {
   EditorView,
@@ -29,7 +29,7 @@ const API_KEYWORDS = [
   'run', 'getSelf', 'getGame', 'getMap', 'getTile', 'getCrop', 'getDrone',
   'CropType', 'CropState', 'TileType', 'DroneOperation',
   'DroneOperation', 'Move', 'Plant', 'CollectWater', 'Water', 'Harvest', 'Clear', 'Intercept',
-  ...Object.keys(CROPS), // 作物代码名 (注册表驱动, 新增作物自动补全)
+  ...Object.keys(CROPS), // Crop code names (registry-driven, new crops auto-complete).
   'soil', 'water',
 ];
 
@@ -42,7 +42,7 @@ function roboFarmCompletions(context: CompletionContext): CompletionResult | nul
   };
 }
 
-/** 与 basicSetup 等价但去掉 highlightSelectionMatches (见文件头注释) */
+/** Equivalent to basicSetup but without highlightSelectionMatches (see file header comment). */
 const editorSetup = [
   lineNumbers(),
   highlightActiveLineGutter(),
@@ -71,15 +71,15 @@ const editorSetup = [
   ]),
 ];
 
-/** 动态只读开关: 通过 dispatch({ effects: readOnlyEffect.of(true) }) 切换 */
+/** Dynamic read-only toggle: switch via dispatch({ effects: readOnlyEffect.of(true) }). */
 const readOnlyEffect = StateEffect.define<boolean>();
 
 export interface EditorHandle {
   getValue(): string;
   setValue(v: string): void;
-  /** 切换只读 (游戏进行中锁定代码) */
+  /** Toggle read-only (lock code while game is running). */
   setReadOnly(readonly: boolean): void;
-  /** CodeMirror 的根 DOM 节点 (切换 tab 时可重新挂载) */
+  /** CodeMirror root DOM node (can be remounted when switching tabs). */
   dom: HTMLElement;
 }
 
@@ -87,7 +87,7 @@ export function createEditor(
   parent: HTMLElement,
   opts: { initial: string; readonly?: boolean; onChange?: (v: string) => void }
 ): EditorHandle {
-  // 只读状态字段: 初始化取 opts.readonly, 之后由 setReadOnly 动态切换
+  // Read-only state field: initialized from opts.readonly, then switched dynamically via setReadOnly.
   const readOnlyField = StateField.define<boolean>({
     create: () => !!opts.readonly,
     update(value, tr) {

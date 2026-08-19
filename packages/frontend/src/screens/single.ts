@@ -1,7 +1,7 @@
-// 单人种植: 本地执行玩家代码, 支持开始/步进/重启/调速, 可提交到服务器验证。
-// 回合循环 (编译/开始/暂停/步进/调速/结束) 由 GameRunner 提供, 这里只保留
-// 单人专属逻辑: 编辑器、提交成绩、排行榜、回放录制。
-import { BrowserProgram } from '../browser-program';
+// Single-player planting: run the player's code locally, with start/step/restart/speed controls, and submit to the server for validation.
+// The turn loop (compile/start/pause/step/speed/end) is provided by GameRunner; here we keep only
+// single-player logic: editor, score submission, leaderboard, replay recording.
+import { BrowserProgram } from '../core/browser-program';
 import {
   GameController,
   compilePlayerCode,
@@ -11,11 +11,13 @@ import {
   ReplayRecorder,
   ReplayFile,
 } from '@robofarm/shared';
-import { DEFAULT_CODE } from '../game-layout';
-import { createEditor } from '../editor';
-import { el, button, modal, toast, topBar, sleep, downloadJson } from '../ui';
-import { api, fetchUser } from '../net';
-import { GameRunner } from '../game-runner';
+import { DEFAULT_CODE } from '../core/game-layout';
+import { createEditor } from '../ui/editor';
+import { el, button, modal, toast, sleep, downloadJson } from '../ui/ui';
+import { icon } from '../ui/icon';
+import { setTopActions } from '../ui/topbar-state';
+import { api, fetchUser } from '../core/net';
+import { GameRunner } from '../core/game-runner';
 
 const CODE_KEY = 'robofarm.single';
 
@@ -23,11 +25,11 @@ export function singleScreen(root: HTMLElement): void {
   root.replaceChildren();
 
   const lockBar = el('div', { class: 'editor-lock-bar', style: 'display:none' }, [
-    el('span', { text: '🔒 游戏进行中, 代码已锁定' }),
+    el('span', {}, [icon('lock', 14), document.createTextNode(' 游戏进行中, 代码已锁定')]),
     button('停止游戏', () => runner.stopForEdit(), { class: 'btn btn-small' }),
   ]);
 
-  /** 回放录制器: 记录每回合操作与输出 (每次新对局重建) */
+  /** Replay recorder: records each turn's actions and outputs (recreated per new match) */
   let recorder: ReplayRecorder | null = null;
   let replayFile: ReplayFile | null = null;
 
@@ -50,7 +52,7 @@ export function singleScreen(root: HTMLElement): void {
         log(`[错误] ${err instanceof Error ? err.message : String(err)}`);
         return null;
       }
-      // 录制回放: 包装程序捕获每回合操作
+      // Record replay: wrap the program to capture each turn's actions
       recorder = new ReplayRecorder();
       replayFile = null;
       const controller = new GameController({
@@ -68,37 +70,25 @@ export function singleScreen(root: HTMLElement): void {
     onEnd: (result) => handleEnd(result),
   });
 
-  // 编辑器挂载到运行器布局的编辑区 (锁定条在上, 编辑器在下)
+  // Mount the editor to the runner layout's editor area (lock bar on top, editor below)
   runner.layout.editorHost.append(lockBar);
   const editor = createEditor(runner.layout.editorHost, {
     initial: localStorage.getItem(CODE_KEY) ?? DEFAULT_CODE,
     onChange: (v) => localStorage.setItem(CODE_KEY, v),
   });
 
-  let userBox = el('span', { class: 'user-chip', text: '…' });
-  root.append(
-    topBar([
-      userBox,
-      button('排行榜', () => showLeaderboard(), { class: 'btn btn-gold' }),
-      button('我的成绩', () => showHistory()),
-    ]),
-    runner.layout.root
-  );
-
-  // 右上角登录状态 (与主菜单一致): 已登录显示用户名, 未登录可点击跳转 GitHub
-  void (async () => {
-    const user = await fetchUser();
-    userBox.textContent = user ? `👤 ${user.name}${user.dev ? ' (本地)' : ''}` : '未登录 (点击登录)';
-    userBox.className = 'user-chip' + (user ? ' user-on' : '');
-    if (!user) userBox.onclick = () => (location.href = '/auth/github');
-  })();
+  setTopActions([
+    button('排行榜', () => showLeaderboard(), { class: 'btn btn-gold' }),
+    button('我的成绩', () => showHistory()),
+  ]);
+  root.append(runner.layout.root);
 
   function handleEnd(result: GameResult): void {
     if (result.type === 'finished') {
       const money = result.scores[0]?.money ?? 0;
       runner.statusText.textContent = `对局结束 · 金钱 ${money}`;
       runner.log(`[系统] 对局结束, 最终金钱: ${money}`);
-      // 生成回放文件
+      // Generate replay file
       if (recorder) {
         replayFile = recorder.buildFile({
           mode: 'single',
@@ -150,7 +140,7 @@ export function singleScreen(root: HTMLElement): void {
     void pollThenToast();
   }
 
-  /** 轮询 /single/validate 直到 busy=false, 返回验证结果 (最多 120 秒) */
+  /** Poll /single/validate until busy=false, returning the validation result (up to 120 seconds) */
   async function pollValidationOnce(): Promise<{ score: number | null; error: string | null; timeout: boolean }> {
     for (let i = 0; i < 120; i++) {
       await sleep(1000);
@@ -161,7 +151,7 @@ export function singleScreen(root: HTMLElement): void {
     return { score: null, error: null, timeout: true };
   }
 
-  /** 轮询并把结果以 toast 展示 (无弹窗上下文时用) */
+  /** Poll and show the result via toast (used when there is no modal context) */
   async function pollThenToast(): Promise<void> {
     const r = await pollValidationOnce();
     if (r.timeout) toast('验证超时, 请稍后查询');
@@ -171,29 +161,20 @@ export function singleScreen(root: HTMLElement): void {
 
   function showLeaderboard(): void {
     void (async () => {
-      const user = await fetchUser();
       const { data } = await api.get('/single/leaderboard');
       const tabs = (data?.tabs ?? []) as {
         version: string;
         entries: { name: string; score: number; me?: boolean }[];
       }[];
-      // 已登录则查询自己的得分与当前版本全榜名次 (用于底端固定行)
-      let self: { name: string; score: number; rank: number } | null = null;
-      if (user) {
-        const r = await api.get(`/single/leaderboard?user=${encodeURIComponent(user.name)}`);
-        self = (r.data?.user as { name: string; score: number; rank: number } | null) ?? null;
-      }
-
       const body = el('div', { class: 'leaderboard' });
       if (tabs.length === 0) {
         body.append(el('p', { class: 'hint', text: '暂无排行数据' }));
         modal('排行榜', body);
         return;
       }
-      let active = tabs.length - 1; // 默认展示当前版本的实时排行榜 (最后一个 Tab)
-      const MEDALS = ['🥇', '🥈', '🥉'];
+      let active = tabs.length - 1; // Default to the current version's live leaderboard (last tab)
       const tabBar = el('div', { class: 'lb-tabs' });
-      const listHost = el('div', { class: 'list lb-scroll' });
+      const listHost = el('div', { class: 'list' });
 
       function renderTabs(): void {
         tabBar.replaceChildren();
@@ -215,32 +196,20 @@ export function singleScreen(root: HTMLElement): void {
       function renderList(): void {
         listHost.replaceChildren();
         const rows = tabs[active]?.entries ?? [];
-        const isCurrent = active === tabs.length - 1; // 当前版本 Tab (登录玩家排名仅对当前版本有意义)
         if (rows.length === 0) {
           listHost.append(el('p', { class: 'hint', text: '暂无排行数据' }));
           return;
         }
         rows.forEach((r, i) => {
-          // 前三名使用奖牌 Emoji 标注
-          const rank = MEDALS[i] ?? `${i + 1}.`;
+          // Top three use a trophy icon; the rest use a numeric rank.
+          const rankNode = i < 3 ? icon('trophy', 14) : document.createTextNode(`${i + 1}.`);
           listHost.append(
             el('div', { class: 'list-row' + (r.me ? ' mine' : '') }, [
-              el('span', { text: `${rank} ${r.name}${r.me ? ' (我)' : ''}` }),
+              el('span', {}, [rankNode, document.createTextNode(` ${r.name}${r.me ? ' (我)' : ''}`)]),
               el('span', { class: 'muted', text: `${r.score}` }),
             ])
           );
         });
-        // 已登录、有成绩、且不在前 50 名: 在列表末尾追加吸附行
-        // (滚动时贴住可视区边缘: 滚到上方贴底, 滚到下方贴顶; 可见时原位)
-        if (isCurrent && self && !rows.some((r) => r.me)) {
-          const rankDisplay = MEDALS[self.rank - 1] ?? `${self.rank}`;
-          listHost.append(
-            el('div', { class: 'list-row lb-sticky' }, [
-              el('span', { text: `${rankDisplay} ${self.name} (我)` }),
-              el('span', { class: 'muted', text: `${self.score}` }),
-            ])
-          );
-        }
       }
 
       body.append(tabBar, listHost);
@@ -262,7 +231,9 @@ export function singleScreen(root: HTMLElement): void {
       if (rows.length === 0) list.append(el('p', { class: 'hint', text: '暂无成绩记录' }));
       rows.forEach((r) => {
         const row = el('div', { class: 'list-row' }, [
-          el('span', { text: r.error ? `✗ ${r.error}` : `得分 ${r.score}` }),
+          el('span', {}, r.error
+            ? [icon('x', 14), document.createTextNode(` ${r.error}`)]
+            : [document.createTextNode(`得分 ${r.score}`)]),
           el('span', { class: 'muted', text: new Date(r.created_at).toLocaleString() }),
         ]);
         if (r.replay) {
@@ -285,7 +256,7 @@ export function singleScreen(root: HTMLElement): void {
   const btnSubmit = button('提交', () => void submitFromButton(), { class: 'btn btn-submit' });
   runner.addControl(btnSubmit);
 
-  // 主动查询验证状态: 后端有程序在运行时禁用提交按钮 (避免 409)
+  // Poll validation state: disable the submit button while the backend has a program running (avoid 409)
   const validatePoll = setInterval(async () => {
     if (!document.body.contains(btnSubmit)) {
       clearInterval(validatePoll);
@@ -297,7 +268,7 @@ export function singleScreen(root: HTMLElement): void {
       btnSubmit.disabled = busy;
       btnSubmit.textContent = busy ? '验证中…' : '提交';
     } catch {
-      // 网络异常时保持现状
+      // Keep current state on network errors
     }
   }, 2000);
 
@@ -307,7 +278,7 @@ export function singleScreen(root: HTMLElement): void {
       toast('请先登录 (右上角)');
       return;
     }
-    // 提交前先确认 (弹窗无右上角关闭按钮, 只能确认/取消)
+    // Confirm before submit (modal has no top-right close button, only confirm/cancel)
     const confirmed = await new Promise<boolean>((resolve) => {
       const body = el('div', {}, [
         el('p', { text: '确认将代码提交到服务器验证?' }),

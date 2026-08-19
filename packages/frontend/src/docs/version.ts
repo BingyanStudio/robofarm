@@ -1,10 +1,10 @@
-// 版本号与更新日志管理。
-// - 版本号在页面顶部标题栏总是展示 (灰色小字)
-// - 进入网页时检查 localStorage:
-//   1. 无版本号 (首次进入) → 自动展开右侧 API 手册
-//   2. 版本号更老或无法识别 → 展示更新日志
-//   3. 写入当前版本号 (供下次对比)
-import { el, button, modal } from './ui';
+// Version number and update log management.
+// - Version number is always shown in the top title bar (small gray text)
+// - On page load, check localStorage:
+//   1. No version (first visit) -> auto-expand right-hand API manual
+//   2. Older or unrecognized version -> show update log
+//   3. Write current version number (for next comparison)
+import { el, modal } from '../ui/ui';
 
 export const VERSION = '1.0.2';
 export const VERSION_KEY = 'robofarm.version';
@@ -15,7 +15,7 @@ export interface UpdateEntry {
   items: string[];
 }
 
-/** 更新日志 (按版本从新到旧) */
+/** Update log (from newest to oldest) */
 export const UPDATE_LOG: UpdateEntry[] = [
   {
     version: '1.0.2',
@@ -68,7 +68,7 @@ export const UPDATE_LOG: UpdateEntry[] = [
       '"模拟竞技"入口移入多人竞技页面 ("上传出战代码"左侧)',
       '回放页面: 未选择回放时 "选择回放" 按钮居中醒目展示',
       '页面整体不再滚动: 长代码不再把整个页面撑出滚动条 (各面板内部自行滚动)',
-      '"单人模式" 更名为 "单人种植" (代码与文档同步); 排行榜按钮移除 👑 王冠 Emoji',
+      '"单人模式" 更名为 "单人种植" (代码与文档同步); 排行榜按钮移除王冠图标',
       '主菜单背景新增浅色动态发光',
       '主菜单 Logo 下方显示当前版本号 (灰色小字)',
       '修复: 返回菜单图标显示为裂图 (back.svg 此前为空文件, 已补充)',
@@ -145,44 +145,63 @@ function isKnownVersion(stored: string): boolean {
   return s !== '' && s === cur;
 }
 
-/** 展示更新日志弹窗 */
+/** Show update log modal */
 export function showUpdateLog(): void {
   const body = el('div', { class: 'update-log' });
   for (const entry of UPDATE_LOG) {
-    const list = el('ul', { class: 'doc-list' });
-    for (const item of entry.items) {
-      // 以 "## " 开头的条目渲染为加粗小标题 (分组)
-      if (item.startsWith('## ')) {
-        list.append(el('li', { class: 'update-group', text: item.slice(3) }));
-      } else {
-        list.append(el('li', { text: item }));
-      }
-    }
-    body.append(el('h4', { text: entry.title }), list);
+    // One card per release, with a version header and grouped change items.
+    const card = el('section', { class: 'update-card' }, [
+      el('header', { class: 'update-card-head' }, [
+        el('span', { class: 'update-version', text: entry.title }),
+        ...(entry.version === VERSION ? [el('span', { class: 'update-badge', text: '当前版本' })] : []),
+      ]),
+      el('div', { class: 'update-card-body' }, buildGroups(entry.items)),
+    ]);
+    body.append(card);
   }
-  const m = modal('更新日志', body);
-  body.append(el('div', { class: 'row' }, [button('知道了', () => m.close())]));
+  modal('更新日志', body);
 }
 
-/** 进入网页时检查版本号 (首次自动展开 API 手册, 版本变更展示更新日志)。 */
+/** Build group headings + item lists from a release's flat item array. */
+function buildGroups(items: string[]): HTMLElement[] {
+  const nodes: HTMLElement[] = [];
+  let list: HTMLElement | null = null;
+  for (const item of items) {
+    // Items starting with "## " act as group subheadings; a new list starts after each.
+    if (item.startsWith('## ')) {
+      nodes.push(el('div', { class: 'update-group', text: item.slice(3) }));
+      list = el('ul', { class: 'update-items' });
+      nodes.push(list);
+    } else {
+      if (!list) {
+        list = el('ul', { class: 'update-items' });
+        nodes.push(list);
+      }
+      list.append(el('li', { class: 'update-item', text: item }));
+    }
+  }
+  return nodes;
+}
+
+/** Check version on page load (first visit auto-expands API manual, version change shows update log). */
 export function checkVersionOnLoad(autoExpandManual: () => void): void {
   let stored: string | null = null;
   try {
     stored = localStorage.getItem(VERSION_KEY);
   } catch {
-    // localStorage 不可用 (隐私模式等) 时静默跳过
+    // Silently skip when localStorage is unavailable (private mode, etc.)
   }
   if (stored === null) {
-    // 首次进入: 自动展开右侧 API 手册, 同时弹出更新日志
+    // First visit: auto-expand right-hand API manual, also show update log
     autoExpandManual();
     showUpdateLog();
   } else if (!isKnownVersion(stored)) {
-    // 版本更老或无法识别: 展示更新日志
+    // Older or unrecognized version: show update log
     showUpdateLog();
   }
   try {
     localStorage.setItem(VERSION_KEY, VERSION);
   } catch {
-    // 忽略写入失败
+    // Ignore write failure
   }
 }

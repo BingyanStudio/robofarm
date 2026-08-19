@@ -1,4 +1,4 @@
-// 后端 API 客户端 (开发环境经 Vite 代理访问后端)。
+// Backend API client (dev traffic is proxied to the backend via Vite).
 export interface UserInfo {
   id: number;
   name: string;
@@ -35,7 +35,7 @@ export async function fetchUser(): Promise<UserInfo | null> {
   }
 }
 
-/** 打开战斗房间的 WebSocket */
+/** Open the WebSocket for a combat room. */
 export function openRoomWs(roomId: string): WebSocket {
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
   return new WebSocket(`${proto}://${location.host}/ws/combat/room/${roomId}`);

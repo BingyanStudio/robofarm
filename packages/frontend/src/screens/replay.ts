@@ -1,14 +1,16 @@
-// 回放: 播放对局回放, 支持播放/暂停/步进/步退/变速, 与游戏内一致地
-// 渲染移动动画与浇水/收获/拦截特效 (通过 GameView.apply 逐回合应用事件流)。
-// 数据来源:
-//  - 服务器历史对局 (GET /combat/replay/:id), 新旧两种格式兼容:
-//      * 新格式 (ReplayFile): { mode, maxTurns, players, result, rounds } — 重新推演生成事件流
-//      * 旧格式: { config, events } — 直接使用
-//  - 本地导入回放文件 ("导入回放记录"): 读取 JSON 回放文件后播放。
-import { Renderer } from '../renderer';
-import { el, button, topBar, toast } from '../ui';
-import { api } from '../net';
-import { GameView } from '../game-layout';
+// Replay: play back a match, with play/pause/step-forward/step-back/speed controls, rendering
+// move animations and watering/harvest/intercept effects consistently with the game
+// (via GameView.apply applying event streams turn by turn).
+// Data sources:
+//  - server history matches (GET /combat/replay/:id), compatible with both old and new formats:
+//      * new format (ReplayFile): { mode, maxTurns, players, result, rounds } — re-simulated to generate the event stream
+//      * old format: { config, events } — used directly
+//  - locally imported replay files ("import replay"): read the JSON replay file and play it.
+import { Renderer } from '../core/renderer';
+import { el, button, toast } from '../ui/ui';
+import { setTopActions } from '../ui/topbar-state';
+import { api } from '../core/net';
+import { GameView } from '../core/game-layout';
 import { replayEvents, createSingleWorld, createCombatWorld, snapshotOf } from '@robofarm/shared';
 import type { GameEvent, ReplayFile } from '@robofarm/shared';
 
@@ -17,7 +19,7 @@ interface ReplayData {
   events: GameEvent[];
 }
 
-/** 把任意来源的数据规范化为 { config, events } (新旧格式 + 导入文件统一处理) */
+/** Normalize data from any source into { config, events } (old/new formats + imported files handled uniformly) */
 async function normalizeReplay(data: unknown): Promise<ReplayData | null> {
   const d = data as Partial<ReplayFile> & Partial<ReplayData>;
   if (Array.isArray(d?.events) && d.config) {
@@ -34,7 +36,7 @@ async function normalizeReplay(data: unknown): Promise<ReplayData | null> {
   return null;
 }
 
-/** 按回合分组事件: 每组以 turn 开头, 含该回合操作与 snapshot */
+/** Group events by turn: each group starts with `turn` and contains that turn's actions and snapshot */
 function groupByTurn(events: GameEvent[]): GameEvent[][] {
   const groups: GameEvent[][] = [];
   let cur: GameEvent[] = [];
@@ -54,12 +56,10 @@ export function replayScreen(root: HTMLElement, params: URLSearchParams): void {
   root.replaceChildren();
   const id = params.get('id');
   const host = el('div', { class: 'replay-page' }, [el('p', { class: 'hint', text: '加载回放中…' })]);
-  root.append(
-    topBar([button('导入回放记录', () => pickAndImport(), { class: 'btn btn-small' })]),
-    host
-  );
+  setTopActions([button('导入回放记录', () => pickAndImport(), { class: 'btn btn-small' })]);
+  root.append(host);
 
-  // 本地文件导入
+  // Local file import
   const fileInput = el('input', { type: 'file', accept: '.json,application/json', style: 'display:none' }) as HTMLInputElement;
   fileInput.addEventListener('change', () => {
     const f = fileInput.files?.[0];
@@ -86,7 +86,7 @@ export function replayScreen(root: HTMLElement, params: URLSearchParams): void {
   }
 
   if (!id) {
-    // 未选择回放: "选择回放"按钮醒目居中, 右上角的"导入回放记录"保持不变
+    // No replay selected: center the prominent "select replay" button; keep the top-right "import replay" unchanged
     host.replaceChildren(
       el('div', { class: 'replay-empty' }, [
         el('p', { text: '尚未选择回放' }),
@@ -132,7 +132,7 @@ function buildPlayer(
   const status = el('div', { class: 'status-text', text: '回合 0 / ' + maxTurns });
   const playersLine = el('div', { class: 'players-line', text: data.config.players.map((p) => p.name).join(' vs ') });
 
-  // 复用游戏内的事件应用器: 渲染快照 + 移动动画 + 浇水/收获/拦截特效
+  // Reuse the in-game event applier: render snapshot + move animations + watering/harvest/intercept effects
   const view = new GameView({
     renderer,
     onStatus: () => undefined,
@@ -140,12 +140,12 @@ function buildPlayer(
     onEnd: () => undefined,
   });
 
-  // 回合 0 的初始状态: 与游戏界面一致, 展示刚创建的世界 (出生点/地形)
+  // Turn 0 initial state: consistent with the game UI, showing the freshly created world (spawn points / terrain)
   const initialSnapshot = snapshotOf(
     data.config.mode === 'combat' ? createCombatWorld(maxTurns) : createSingleWorld(maxTurns)
   );
 
-  let idx = 0; // 当前显示到第几回合 (0 表示还没开始)
+  let idx = 0; // Current turn being displayed (0 means not started)
   let playing = false;
   let timer: ReturnType<typeof setTimeout> | null = null;
   let speed = 1;
@@ -165,12 +165,12 @@ function buildPlayer(
 
   function render(): void {
     if (idx === 0) {
-      // 回合 0: 显示游戏初始状态 (出生点 / 地形)
+      // Turn 0: show the initial game state (spawn points / terrain)
       renderer.render(initialSnapshot);
       status.textContent = `回合 0 / ${maxTurns}`;
       return;
     }
-    // 逐回合应用事件: 移动动画 / 特效 / 快照渲染
+    // Apply events turn by turn: move animations / effects / snapshot render
     view.apply(groups[idx - 1]);
     const snap = groups[idx - 1].find((e): e is Extract<GameEvent, { type: 'snapshot' }> => e.type === 'snapshot')?.state;
     if (!snap) return;
@@ -196,7 +196,7 @@ function buildPlayer(
   function togglePlay(): void {
     playing = !playing;
     btnPlay.textContent = playing ? '暂停' : '播放';
-    // 播放(绿色 accent) / 暂停(红色 accent)
+    // play (green accent) / pause (red accent)
     btnPlay.classList.toggle('btn-stop', playing);
     btnPlay.classList.toggle('btn-start', !playing);
     if (playing) schedule();

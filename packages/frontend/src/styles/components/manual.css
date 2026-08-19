@@ -1,0 +1,172 @@
+/* API manual prose + changelog + MCP guide card (menu / modal reuse). */
+
+.manual h3 {
+  margin: 14px 0 6px;
+}
+
+.manual p {
+  margin: 4px 0;
+  font-size: 14px;
+}
+
+.manual-code {
+  background: var(--bg-log);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+  font-size: 12px;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+
+.mcp-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mcp-guide-lead {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* One connection method per card: title + copy button + described URL. */
+.mcp-method {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+}
+
+.mcp-method-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mcp-method-title {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.mcp-method-desc {
+  margin: 6px 0 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.mcp-method .manual-code {
+  margin: 0;
+  cursor: text;
+  user-select: text;
+}
+
+.mcp-guide-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 2px;
+}
+
+/* MCP access card (menu). */
+.mcp-card {
+  margin-top: 10px;
+  max-width: 520px;
+  text-align: left;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  overflow: hidden;
+}
+
+.mcp-card summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--link);
+}
+
+/* Animate the expand/collapse of the details body. */
+.mcp-card[open] > *:not(summary) {
+  animation: px-reveal-down var(--dur-med) var(--ease-out) both;
+}
+
+/* Changelog — one card per release, with clear version/group/item hierarchy. */
+.update-log {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0;
+}
+
+.update-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.update-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border);
+}
+
+.update-version {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--accent-border);
+}
+
+.update-badge {
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  color: var(--success);
+}
+
+.update-card-body {
+  padding: 10px 16px 12px;
+}
+
+.update-group {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text-primary);
+  margin: 12px 0 4px;
+}
+
+.update-group:first-child {
+  margin-top: 0;
+}
+
+.update-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.update-item {
+  position: relative;
+  padding: 2px 0 2px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* Pixel-style bullet marker for each change item. */
+.update-item::before {
+  content: '▸';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+}

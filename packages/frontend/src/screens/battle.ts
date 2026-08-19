@@ -1,10 +1,10 @@
-// 多人对战: 挑战者点击"开始"后, 服务器推演并向房间推送每回合事件。
-// 观战模式 (spectate=1) 直接连接指定房间。
-import { createGameLayout, GameView } from '../game-layout';
-import { Renderer } from '../renderer';
-import { createEditor } from '../editor';
-import { el, button, modal, topBar } from '../ui';
-import { api, openRoomWs } from '../net';
+// Multiplayer battle: after a challenger clicks "start", the server simulates and pushes per-turn events to the room.
+// Spectate mode (spectate=1) connects directly to the given room.
+import { createGameLayout, GameView } from '../core/game-layout';
+import { Renderer } from '../core/renderer';
+import { createEditor } from '../ui/editor';
+import { el, button, modal } from '../ui/ui';
+import { api, openRoomWs } from '../core/net';
 import { createCombatWorld, snapshotOf, DEFAULT_MAX_TURNS } from '@robofarm/shared';
 import type { GameEvent, GameResult } from '@robofarm/shared';
 
@@ -18,7 +18,7 @@ export function battleScreen(root: HTMLElement, params: URLSearchParams): void {
   const renderer = new Renderer(layout.canvas);
   const logBox = el('div', { class: 'log-box' });
   layout.logHost.append(logBox);
-  root.append(topBar(), layout.root);
+  root.append(layout.root);
 
   const statusText = el('span', { class: 'status-text', text: '等待开始…' });
   layout.statusHost.append(statusText);
@@ -30,8 +30,8 @@ export function battleScreen(root: HTMLElement, params: URLSearchParams): void {
   let started = false;
   let btnStart: HTMLButtonElement | null = null;
 
-  // 路由跳转 (屏幕卸载) 时立即关闭 WebSocket:
-  // 否则残留连接仍订阅着房间, 之后观战再连一条, 同一房间会收到多份广播 (重复弹窗)。
+  // Close the WebSocket immediately on route change (screen unmount):
+  // otherwise the stale connection still subscribes to the room, and a later spectate would add another, so one room receives duplicate broadcasts (duplicate modals).
   const onHashChange = () => {
     ws?.close();
     window.removeEventListener('hashchange', onHashChange);
@@ -46,21 +46,21 @@ export function battleScreen(root: HTMLElement, params: URLSearchParams): void {
       while (logBox.children.length > 300) logBox.firstElementChild?.remove();
       logBox.scrollTop = logBox.scrollHeight;
     },
-    onEnd: () => undefined, // 结束由 match-end 消息处理
+    onEnd: () => undefined, // End is handled by the match-end message
     moneyEl: layout.moneyHost,
   });
 
-  // 等待开始时先展示竞技地图
+  // Show the combat map while waiting for start
   view.apply([{ type: 'snapshot', state: snapshotOf(createCombatWorld(DEFAULT_MAX_TURNS)) }]);
   statusText.textContent = '等待开始…';
 
-  // 观战 / 已指定房间: 直接连接
+  // Spectating / already given a room: connect directly
   if (spectate && roomId) {
     connect(roomId);
   }
 
   if (!spectate) {
-    // 只读显示自己的出战代码
+    // Read-only view of own combat code
     const codeHost = el('div', { class: 'editor-host' });
     layout.editorHost.append(
       el('div', { class: 'game-title', text: '我的出战代码 (只读)' }),
@@ -85,7 +85,7 @@ export function battleScreen(root: HTMLElement, params: URLSearchParams): void {
       modal('错误', el('p', { text: '缺少对手信息' }));
       return;
     }
-    // 防止重复点击连开多个房间: 请求期间禁用按钮
+    // Prevent duplicate clicks from opening multiple rooms: disable button during request
     if (btnStart) {
       btnStart.disabled = true;
       btnStart.textContent = '开始中…';
@@ -104,7 +104,7 @@ export function battleScreen(root: HTMLElement, params: URLSearchParams): void {
   }
 
   function connect(rid: string): void {
-    // 关闭旧连接, 防止同一屏幕内重复连同一房间 (双保险)
+    // Close the old connection to avoid connecting twice to the same room within one screen (double insurance)
     ws?.close();
     ws = openRoomWs(rid);
     ws.onmessage = (e) => {

@@ -1,0 +1,155 @@
+/* API documentation web page. */
+
+.api-docs-page {
+  flex: 1;
+  padding: 20px 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Header: title + conventions summary. */
+.api-docs-head h2 {
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--accent-border);
+}
+
+.api-docs-head .hint {
+  margin: 0 0 8px;
+  color: var(--text-muted);
+}
+
+.api-docs-head .doc-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.api-docs-head .doc-list li {
+  margin: 0;
+}
+
+/* Tab panel (per category). */
+.api-docs-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 12px;
+  animation: px-fade-in var(--dur-fast) var(--ease-out) both;
+}
+
+.api-docs-panel > .hint {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+/* Endpoint card. */
+.api-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Card head: title row (badge + name + auth) above the path row. */
+.api-card-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.api-card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* HTTP method badge. */
+.api-method {
+  color: #241a05;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.4px;
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+}
+
+/* Endpoint human-readable name (primary line). */
+.api-endpoint-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.api-auth {
+  color: var(--accent-border);
+  font-size: 12px;
+}
+
+/* Path on its own line (mono, muted). */
+.api-path-row {
+  display: flex;
+}
+
+.api-path {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+/* Endpoint description. */
+.api-card > p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+/* Section labels (Headers / Request Schema / Responses). */
+.api-card > p b {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Nested lists (headers / response items). */
+.api-card .doc-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.api-card .doc-list li {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  margin: 2px 0;
+}
+
+/* Response code token. */
+.api-card li code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--bg-log);
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+  color: var(--accent-border);
+}
+
+.api-card .manual-code {
+  margin: 4px 0 0;
+  background: var(--bg-log);
+}

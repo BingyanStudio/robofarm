@@ -1,6 +1,6 @@
-// 游戏回合运行器: 封装单人种植 / 模拟竞技共用的
-// "编译 → 开始 → 步进/暂停/调速 → 结束" 完整循环。
-// 屏幕差异 (代码来源/编辑器锁定/结束展示) 通过选项回调注入, 避免两处重复实现。
+// Game turn runner: wraps the full "compile -> start -> step/pause/speed -> end" loop
+// shared by single-player farming and sim-combat.
+// Screen-specific differences (code source / editor lock / end display) are injected via option callbacks to avoid duplicate implementation.
 import {
   GameController,
   isCompilerInitialized,
@@ -13,32 +13,32 @@ import {
 import { BrowserProgram } from './browser-program';
 import { createGameLayout, GameLayout, GameView } from './game-layout';
 import { Renderer } from './renderer';
-import { el, button } from './ui';
+import { el, button } from '../ui/ui';
 
 export interface BuiltGame {
   controller: GameController;
-  /** 需随对局释放的程序实例 (由运行器统一 dispose) */
+  /** Program instances to dispose with the match (disposed uniformly by the runner). */
   programs: BrowserProgram[];
 }
 
 export interface GameRunnerOptions {
   title: string;
-  /** 未开始时的地图预览 (单人 / 竞技初始世界) */
+  /** Map preview before start (single-player / combat initial world). */
   previewWorld: () => WorldState;
-  /** 编译编辑器代码并构建对局; 返回 null 表示编译/加载失败 (需自行用 log 输出原因) */
+  /** Compile editor code and build the match; returning null means compile/load failed (log the reason yourself). */
   buildGame: (log: (line: string) => void) => Promise<BuiltGame | null>;
-  /** 锁定/解锁代码编辑器 */
+  /** Lock/unlock the code editor. */
   setEditorLocked: (locked: boolean) => void;
-  /** 新对局开始时的日志文案 */
+  /** Log message shown when a new match starts. */
   gameStartLog: string;
-  /** 对局结束展示 (finished / error)。运行器已解锁编辑器并刷新按钮状态 */
+  /** Match-end display (finished / error). The runner already unlocked the editor and refreshed button state. */
   onEnd: (result: GameResult) => void;
 }
 
 export class GameRunner {
-  /** 完整游戏布局 (屏幕据此挂载编辑器 / 锁定条等) */
+  /** Full game layout (screen mounts editor / lock bar etc. onto it). */
   readonly layout: GameLayout;
-  /** 回合状态文本 (结束弹窗等屏幕逻辑可读取/改写) */
+  /** Turn status text (screen logic such as end popups can read/rewrite it). */
   readonly statusText: HTMLElement;
   private readonly view: GameView;
   private readonly logBox: HTMLElement;
@@ -53,7 +53,7 @@ export class GameRunner {
   private playing = false;
   private speedIdx = 0;
   private timer: ReturnType<typeof setTimeout> | null = null;
-  /** 首次点击开始时会远程拉取 esbuild, 编译完成前禁用开始/步进按钮 */
+  /** On first Start click esbuild is fetched remotely; disable start/step buttons until compile finishes. */
   private compiling = false;
 
   constructor(private opts: GameRunnerOptions) {
@@ -74,7 +74,7 @@ export class GameRunner {
       moneyEl: this.layout.moneyHost,
     });
 
-    // 未开始前先展示地图预览
+    // Show map preview before starting.
     this.view.apply([{ type: 'snapshot', state: snapshotOf(opts.previewWorld()) }]);
     this.statusText.textContent = `回合 0 / ${DEFAULT_MAX_TURNS}`;
 
@@ -89,7 +89,7 @@ export class GameRunner {
     this.updatePauseButton();
   }
 
-  /** 在控制条追加额外按钮 (如单人模式的"提交") */
+  /** Append an extra button to the controls bar (e.g. the "提交" button in single-player mode). */
   addControl(btn: HTMLElement): void {
     this.layout.controlsHost.append(btn);
   }
@@ -117,7 +117,7 @@ export class GameRunner {
     this.updatePauseButton();
   }
 
-  /** 停止游戏并允许修改代码 (回到初始地图预览) */
+  /** Stop the game and allow editing code (back to initial map preview). */
   stopForEdit(): void {
     this.stopGame();
     this.opts.setEditorLocked(false);
@@ -126,7 +126,7 @@ export class GameRunner {
     this.log('[系统] 游戏已停止, 可以修改代码');
   }
 
-  /** 开始/停止合并按钮: 有进行中的对局显示红色"停止", 否则显示绿色"开始"; 编译中禁用 */
+  /** Combined start/stop button: red "停止" while a match is running, otherwise green "开始"; disabled while compiling. */
   private updateStartStop(): void {
     const running = this.controller !== null && !this.controller.over;
     this.btnStartStop.disabled = this.compiling;
@@ -135,14 +135,14 @@ export class GameRunner {
     this.btnStartStop.classList.toggle('btn-start', !running && !this.compiling);
   }
 
-  /** 暂停/继续按钮: 播放中显示"暂停", 暂停/步进模式显示"继续"; 无对局时禁用 */
+  /** Pause/resume button: shows "暂停" while playing, "继续" when paused/stepping; disabled when no match. */
   private updatePauseButton(): void {
     const active = this.controller !== null && !this.controller.over;
     this.btnPause.textContent = active ? (this.playing ? '暂停' : '继续') : '暂停';
     this.btnPause.disabled = !active;
   }
 
-  /** 切换播放/暂停模式 (仅对进行中的对局有效) */
+  /** Toggle play/pause mode (only for a running match). */
   private togglePause(): void {
     if (!this.controller || this.controller.over) return;
     this.playing = !this.playing;
@@ -155,9 +155,9 @@ export class GameRunner {
     this.updatePauseButton();
   }
 
-  /** 合并按钮: 未开始时编译并开始新对局, 进行中则停止并允许修改代码 */
+  /** Combined button: compile and start a new match when idle, otherwise stop and allow editing. */
   private async onStartStop(): Promise<void> {
-    if (this.compiling) return; // 编译中禁止再次点击
+    if (this.compiling) return; // Disallow re-click while compiling.
     if (this.controller && !this.controller.over) {
       this.stopForEdit();
       return;
@@ -174,7 +174,7 @@ export class GameRunner {
 
   private async newGame(autoPlay: boolean): Promise<void> {
     this.stopGame();
-    // 首次编译会下载编译器 (esbuild.wasm), 在日志中明确打出该事件
+    // First compile downloads the compiler (esbuild.wasm); log this event explicitly.
     this.log(
       isCompilerInitialized() ? '[系统] 正在编译代码…' : '[系统] 首次编译, 正在下载编译器…'
     );
@@ -185,7 +185,7 @@ export class GameRunner {
     }
     this.programs = built.programs;
     this.controller = built.controller;
-    // 立即渲染初始地图 (重启/步进未播放时也能看到场景)
+    // Immediately render the initial map (scene visible even without restart/step playback).
     this.view.apply([{ type: 'snapshot', state: snapshotOf(this.controller.world) }]);
     this.statusText.textContent = `回合 0 / ${DEFAULT_MAX_TURNS}`;
     this.log(this.opts.gameStartLog);
@@ -209,14 +209,14 @@ export class GameRunner {
   private scheduleNext(delay: number = TURN_INTERVALS_MS[this.speedIdx]): void {
     if (!this.playing) return;
     if (this.timer) clearTimeout(this.timer);
-    // 先等当前回合 (含玩家代码执行) 彻底结束后再进入下一回合, 防止回合重叠
+    // Wait until the current turn (including player code execution) fully finishes before the next turn, preventing overlap.
     this.timer = setTimeout(async () => {
       const t0 = performance.now();
       await this.stepOnce();
       const dur = performance.now() - t0;
       if (this.playing && this.controller && !this.controller.over) {
         const interval = TURN_INTERVALS_MS[this.speedIdx];
-        // ×8: 回合间延迟取 0.1s 与程序实际执行时间的最大值 (自本回合开始计时)
+        // ×8: inter-turn delay is the max of 0.1s and actual program execution time (timed from this turn's start).
         const next = this.speedIdx >= 3 ? Math.max(interval - dur, 0) : interval;
         this.scheduleNext(next);
       }
@@ -225,16 +225,16 @@ export class GameRunner {
 
   private handleEnd(result: GameResult): void {
     this.playing = false;
-    // 游戏结束, 解锁代码编辑
+    // Game over, unlock code editing.
     this.opts.setEditorLocked(false);
     this.updateStartStop();
     this.updatePauseButton();
     this.opts.onEnd(result);
   }
 
-  /** 步进: 没有对局时先编译并创建, 再运行 1 回合 (创建后为暂停模式) */
+  /** Step: compile and create a match first if none exists, then run 1 turn (paused after creation). */
   private async onStep(): Promise<void> {
-    if (this.compiling) return; // 编译中禁止
+    if (this.compiling) return; // Disallow while compiling.
     this.playing = false;
     if (!this.controller) {
       await this.newGame(false);

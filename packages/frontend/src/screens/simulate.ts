@@ -1,13 +1,14 @@
-// 模拟竞技: 本机同时运行敌我双方代码 (双方各自坐标系), 模拟对战。
-// 回合循环 (编译/开始/暂停/步进/调速/结束) 由 GameRunner 提供, 这里只保留
-// 双 Tab 编辑器与胜负展示等模拟竞技专属逻辑。
-import { BrowserProgram } from '../browser-program';
+// Simulate: run both sides' code locally (each with its own coordinate system) as a mock battle.
+// The turn loop (compile/start/pause/step/speed/end) is provided by GameRunner; here we keep only
+// the dual-tab editor and win/lose display, the simulate-specific logic.
+import { BrowserProgram } from '../core/browser-program';
 import { GameController, compilePlayerCode, createCombatWorld, DEFAULT_MAX_TURNS, GameResult } from '@robofarm/shared';
-import { DEFAULT_CODE } from '../game-layout';
-import { createEditor } from '../editor';
-import type { EditorHandle } from '../editor';
-import { el, button, modal, topBar } from '../ui';
-import { GameRunner } from '../game-runner';
+import { DEFAULT_CODE } from '../core/game-layout';
+import { createEditor } from '../ui/editor';
+import type { EditorHandle } from '../ui/editor';
+import { el, button, modal } from '../ui/ui';
+import { icon } from '../ui/icon';
+import { GameRunner } from '../core/game-runner';
 
 const KEY_ME = 'robofarm.simulate.me';
 const KEY_ENEMY = 'robofarm.simulate.enemy';
@@ -16,7 +17,7 @@ export function simulateScreen(root: HTMLElement): void {
   root.replaceChildren();
 
   const lockBar = el('div', { class: 'editor-lock-bar', style: 'display:none' }, [
-    el('span', { text: '🔒 游戏进行中, 代码已锁定' }),
+    el('span', {}, [icon('lock', 14), document.createTextNode(' 游戏进行中, 代码已锁定')]),
     button('停止游戏', () => runner.stopForEdit(), { class: 'btn btn-small' }),
   ]);
 
@@ -24,7 +25,7 @@ export function simulateScreen(root: HTMLElement): void {
     title: '模拟竞技 · 敌我双方代码在本机对战',
     previewWorld: () => createCombatWorld(DEFAULT_MAX_TURNS),
     buildGame: async (log) => {
-      // 先确保两个编辑器都已创建 (用户可能从没切到"对方无人机" Tab)
+      // Ensure both editors exist first (user may never have switched to the "opponent" tab)
       ensureEditor('me');
       ensureEditor('enemy');
       const codeA = editors.me!.getValue();
@@ -91,7 +92,7 @@ export function simulateScreen(root: HTMLElement): void {
     }
   }
 
-  // 双 Tab 编辑器 (挂到运行器布局的编辑区: Tab 条 + 锁定条在上, 编辑器在下)
+  // Dual-tab editor (mounted to the runner layout's editor area: tab bar + lock bar on top, editor below)
   const tabs = el('div', { class: 'tabs' });
   const tabMe = el('button', { class: 'tab active', text: '我方无人机' });
   const tabEnemy = el('button', { class: 'tab', text: '对方无人机' });
@@ -121,5 +122,5 @@ export function simulateScreen(root: HTMLElement): void {
   tabEnemy.onclick = () => showTab('enemy');
   showTab('me');
 
-  root.append(topBar(), runner.layout.root);
+  root.append(runner.layout.root);
 }

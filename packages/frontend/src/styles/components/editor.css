@@ -1,0 +1,24 @@
+/* Editor container + code lock bar shown during a running game. */
+
+.editor-host {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.editor-host .cm-editor {
+  height: 100%;
+}
+
+.editor-lock-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--lock-bg);
+  border-bottom: 1px solid var(--lock-border);
+  color: var(--lock-text);
+  font-size: 13px;
+  animation: px-reveal-down var(--dur-fast) var(--ease-out) both;
+}

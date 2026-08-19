@@ -1,17 +1,17 @@
-// 多人竞技匹配: 上传出战代码, 查看其他玩家, 发起挑战, 查看历史对局。
-import { createEditor } from '../editor';
-import { el, button, modal, toast, topBar, fmtTime, downloadJson } from '../ui';
-import { api, fetchUser } from '../net';
-import { DEFAULT_CODE } from '../game-layout';
+// Multiplayer match: upload combat code, view other players, challenge, view match history.
+import { createEditor } from '../ui/editor';
+import { el, button, modal, toast, fmtTime, downloadJson } from '../ui/ui';
+import { setTopActions } from '../ui/topbar-state';
+import { api, fetchUser } from '../core/net';
+import { DEFAULT_CODE } from '../core/game-layout';
 
-const KEY = 'robofarm.simulate.me'; // 与模拟竞技的"我方无人机"同步
+const KEY = 'robofarm.simulate.me'; // Synced with simulate's "my drone"
 
 export function matchScreen(root: HTMLElement): void {
   root.replaceChildren();
 
-  let userBox = el('span', { class: 'user-chip', text: '…' });
+  setTopActions([button('历史记录', () => showHistory())]);
   root.append(
-    topBar([userBox, button('历史记录', () => showHistory())]),
     el('div', { class: 'match-layout' }, [])
   );
   const layout = root.querySelector('.match-layout') as HTMLElement;
@@ -20,7 +20,7 @@ export function matchScreen(root: HTMLElement): void {
   const right = el('div', { class: 'match-right' });
   layout.append(left, right);
 
-  // 左侧头部栏: "出战代码" + 出战状态 (右对齐); 模拟竞技/上传代码按钮也在此右对齐
+  // Left header bar: "combat code" + upload status (right-aligned); simulate/upload buttons also right-aligned here
   const stateLine = el('span', { class: 'state-line', text: '出战状态: 查询中…' });
   const headBar = el('div', { class: 'match-head' }, [
     el('span', { class: 'match-title-text', text: '出战代码' }),
@@ -65,10 +65,7 @@ export function matchScreen(root: HTMLElement): void {
 
   async function refresh(): Promise<void> {
     const user = await fetchUser();
-    userBox.textContent = user ? `👤 ${user.name}${user.dev ? ' (本地)' : ''}` : '未登录';
-    userBox.className = 'user-chip' + (user ? ' user-on' : '');
     if (!user) {
-      userBox.onclick = () => (location.href = '/auth/github');
       stateLine.textContent = '请先登录后上传代码与挑战';
       listHost.replaceChildren(el('p', { class: 'hint', text: '登录后查看可挑战的玩家' }));
       return;
@@ -133,7 +130,7 @@ export function matchScreen(root: HTMLElement): void {
             else toast(res.data?.error ?? '回放下载失败');
           })();
         }, { class: 'btn btn-small btn-gold' });
-        // 阻止冒泡到行点击 (跳转回放页)
+        // Stop bubbling to the row click (jump to the replay page)
         dlBtn.addEventListener('click', (e) => e.stopPropagation());
         row.append(dlBtn);
         row.addEventListener('click', () => (location.hash = `#/replay?id=${r.id}`));

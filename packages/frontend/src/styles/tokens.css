@@ -1,0 +1,136 @@
+/*
+ * Design tokens — the single source of truth for all visual values.
+ * Every color / radius / z-index / font stack lives here and is referenced
+ * via var(--…) throughout components and screens. Hard-coded colors are
+ * forbidden outside this file. Canvas (renderer.ts) and the API docs
+ * (api-docs.ts) read the same tokens through theme.ts, so DOM and canvas
+ * stay in sync.
+ *
+ * Palette: a Stardew-Valley inspired warm, dark, wood-tone theme.
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* ---------- Background layers (warm dark wood) ---------- */
+  --bg-main: #1a1512;           /* page base */
+  --bg-raised: #241d16;         /* top bars / title bars / controls */
+  --bg-panel: #1f1913;          /* editors / list rows / cards */
+  --bg-canvas: #231c15;         /* game canvas */
+  --bg-surface: #2a2318;        /* modals / cards / sidebars */
+  --bg-surface-hover: #362c1e;  /* sidebar toggle hover */
+  --bg-hover: #2e261a;          /* list-row hover / splitters */
+  --bg-chip: #33291b;           /* user chip */
+  --bg-log: #15100b;            /* log panel / code blocks */
+
+  /* ---------- Borders (deep wood) ---------- */
+  --border: #3a2f1f;            /* primary border */
+  --border-strong: #4a3a26;     /* strong border (buttons / dialogs) */
+  --border-subtle: #2e2518;     /* fine divider */
+
+  /* ---------- Text (cream) ---------- */
+  --text-primary: #e8dcc0;      /* main text */
+  --text-muted: #a89b7c;        /* secondary / hints */
+  --text-faint: #7d7158;        /* faint (version badges) */
+  --text-strong: #fff7e6;       /* inverted / highlight text */
+
+  /* ---------- Accent (harvest gold) ---------- */
+  --accent: #d8a82a;            /* gold CTA / leaderboard / medals */
+  --accent-hover: #e8bb3f;
+  --accent-border: #f0c94a;
+  --accent-fg: #2a1f08;        /* text on the accent bg */
+
+  /* ---------- Semantic: success (meadow green) ---------- */
+  --success: #7ac04c;
+  --success-bg: #2a3a1e;
+  --success-border: #4d6b3a;
+  --success-hover: #3a4d29;
+
+  /* ---------- Semantic: danger (barn red) ---------- */
+  --danger-border: #8a4d3a;
+  --danger-bg: #4a241e;
+  --danger-hover: #5a2e26;
+  --danger-text: #f0a08a;      /* enemy money etc. */
+
+  /* ---------- Link / doc blue ---------- */
+  --link: #87b7f7;
+  --link-hover: #a5c9f8;
+
+  /* ---------- Generic button hover ---------- */
+  --btn-hover-bg: #4a3d29;
+
+  /* ---------- Money / showcase ---------- */
+  --money: #f5d76e;
+
+  /* ---------- Editor lock bar ---------- */
+  --lock-bg: #4a3820;
+  --lock-border: #8a6a2e;
+  --lock-text: #f5dfb0;
+
+  /* ---------- Splitter active ---------- */
+  --splitter-active: #5a4a30;
+
+  /* ---------- Spinner ---------- */
+  --spinner-track: #3a2f1f;
+  --spinner-accent: #f0c94a;
+
+  /* ---------- Canvas render colors (renderer.ts) ---------- */
+  --color-grid: rgba(0, 0, 0, 0.16);
+  --color-water-border: #4a9cc9;
+  --color-crop-growing: #86c94a;
+  --color-crop-thirsty: #f0a030;
+  --color-crop-grown: #e06838;
+  --color-p1: #7ac04c;
+  --color-p2: #e05848;
+  --color-bounty: #f5c042;
+  --color-water-pip: #4aace0;
+  --color-intercept-mark: #f5d148;
+  --color-fx-water: #7dd3fc;
+  --color-fx-harvest: #f5a03b;
+  --color-fx-intercept: #f8a5a5;
+
+  /* Canvas neutral strokes / text (renderer.ts) */
+  --color-half-line: rgba(255, 255, 255, 0.5);   /* combat half-field line */
+  --color-hover-stroke: rgba(255, 255, 255, 0.9); /* hover highlight */
+  --color-drone-outline: rgba(0, 0, 0, 0.4);     /* drone fallback outline */
+  --color-drone-id-stroke: rgba(0, 0, 0, 0.85); /* sprite id stroke */
+  --color-text-on-dark: #ffffff;                /* inverted text */
+  --color-text-on-bright: #000000;             /* text on bright fills */
+  --color-charge-tint: 74, 222, 128;           /* charge effect (RGB) */
+
+  /* ---------- API method badges (api-docs.ts) ---------- */
+  --method-get: #7ac04c;
+  --method-post: #4a8be0;
+  --method-ws: #b070e0;
+  --method-delete: #e05848;
+  --method-put: #f5a03b;
+  --method-default: #7d7158;
+
+  /* ---------- Radius ---------- */
+  --radius-sm: 4px;
+  --radius: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-pill: 20px;
+
+  /* ---------- Motion ---------- */
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 0.16s;
+  --dur-med: 0.24s;
+  --dur-slow: 0.32s;
+
+  /* ---------- Z-index ---------- */
+  --z-tooltip: 90;
+  --z-toast: 100;
+  --z-sidebar: 140;
+  --z-modal: 200;
+
+  /* ---------- Fonts ---------- */
+  /* Readable body font (default). Pixel font is reserved for display headings only. */
+  --font-sans: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  /* Pixel display font for brand / large headings. */
+  --font-display: 'Fusion Pixel', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'Maple Mono', ui-monospace, Consolas, monospace;
+}

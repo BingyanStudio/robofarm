@@ -1,13 +1,14 @@
-// 浏览器端玩家代码执行沙箱 (Web Worker)。
-// 玩家代码 (esbuild 编译产物) 通过 new Function 执行:
-// - 函数参数表同时列出注入的 API 与需要屏蔽的危险全局, 从而在词法层面
-//   遮蔽 fetch / setTimeout / XMLHttpRequest / WebSocket 等 (取值为 undefined,
-//   调用时抛 TypeError), 玩家代码无法发起网络/异步逃逸。
-// - 超时由宿主 (BrowserProgram) 侧看门狗终止整个 worker, 程序因此被判死。
+// Browser-side player code sandbox (Web Worker).
+// Player code (esbuild bundler output) runs via new Function:
+// - The function parameter list declares both the injected API and the dangerous globals to
+//   shadow, lexically shadowing fetch / setTimeout / XMLHttpRequest / WebSocket etc. (set to
+//   undefined, throwing TypeError on call), so player code cannot escape via network/async.
+// - Timeouts are handled by a host-side (BrowserProgram) watchdog that terminates the whole
+//   worker, hence the program is judged dead.
 import { playerApiFactory, normalizeOp } from '@robofarm/shared/player';
 import type { PlayerView } from '@robofarm/shared/player';
 
-// 需要屏蔽的全局 (置为 undefined)。globalThis / self 不屏蔽 (esbuild 产物可能引用)。
+// Globals to shadow (set to undefined). globalThis / self are not shadowed (esbuild output may reference them).
 const SHADOWED_GLOBALS = [
   'fetch', 'XMLHttpRequest', 'WebSocket', 'EventSource', 'importScripts',
   'indexedDB', 'caches', 'navigator', 'location', 'document', 'window',

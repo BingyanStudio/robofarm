@@ -1,5 +1,6 @@
-// 游戏页面的通用布局与事件应用器 (单人 / 模拟竞技 / 多人对战共用)。
-import { el, button } from './ui';
+// Shared layout and event applier for game screens (single-player / sim-combat / multiplayer).
+import { el, button } from '../ui/ui';
+import { icon } from '../ui/icon';
 import type { GameEvent, GameResult, SnapshotState } from '@robofarm/shared';
 import { Renderer } from './renderer';
 
@@ -48,11 +49,11 @@ export interface GameLayout {
   controlsHost: HTMLElement;
   logHost: HTMLElement;
   statusHost: HTMLElement;
-  /** 左上角的金钱显示 (由 GameView 随快照更新) */
+  /** Top-left money display (updated by GameView on each snapshot). */
   moneyHost: HTMLElement;
 }
 
-/** 构建标准游戏布局: 左侧编辑区 (35%) / 右侧画布 / 底部日志 (高度可拖拽调节) */
+/** Build standard game layout: left editor (35%) / right canvas / bottom log (height drag-resizable). */
 export function createGameLayout(title: string): GameLayout {
   const root = el('div', { class: 'game-layout' });
   const editorHost = el('div', { class: 'game-editor' }, [
@@ -68,7 +69,7 @@ export function createGameLayout(title: string): GameLayout {
   const logHost = el('div', { class: 'game-log' });
   logHost.append(el('div', { class: 'game-log-title', text: '日志' }));
   const splitter = el('div', { class: 'game-splitter', title: '拖拽调整日志高度' });
-  // 代码区 / 游戏区之间的竖向拖拽手柄
+  // Vertical drag handle between the editor and game area.
   const vSplitter = el('div', { class: 'game-splitter-v', title: '拖拽调整代码区宽度' });
   root.append(
     editorHost,
@@ -76,7 +77,7 @@ export function createGameLayout(title: string): GameLayout {
     el('div', { class: 'game-main' }, [canvasHost, controlsHost, splitter, logHost])
   );
 
-  // 代码区宽度可拖拽调节, 并记住上次的值 (持久化为 px, 加载时也按 px 应用)
+  // Editor width is drag-resizable and persisted (stored as px, applied as px on load).
   const EDITOR_WIDTH_KEY = 'robofarm.editor-width';
   const savedW = Number(localStorage.getItem(EDITOR_WIDTH_KEY));
   editorHost.style.flexBasis = Number.isFinite(savedW) && savedW > 0 ? savedW + 'px' : '35%';
@@ -103,7 +104,7 @@ export function createGameLayout(title: string): GameLayout {
   vSplitter.addEventListener('pointerup', endVDrag);
   vSplitter.addEventListener('pointercancel', endVDrag);
 
-  // 日志高度可拖拽调节, 并记住上次的值
+  // Log height is drag-resizable and persisted.
   const LOG_HEIGHT_KEY = 'robofarm.log-height';
   const saved = Number(localStorage.getItem(LOG_HEIGHT_KEY));
   logHost.style.height = (Number.isFinite(saved) && saved > 0 ? saved : 130) + 'px';
@@ -138,11 +139,11 @@ export interface GameViewCallbacks {
   onStatus: (text: string) => void;
   onLog: (lines: string[]) => void;
   onEnd: (result: GameResult) => void;
-  /** 左上角金钱显示元素 (随快照更新; 竞技模式同时显示双方金钱) */
+  /** Top-left money display element (updated per snapshot; combat mode shows both players' money). */
   moneyEl?: HTMLElement;
 }
 
-/** 将事件流应用到 UI (渲染快照 / 回合计数 / 日志 / 结束) */
+/** Apply the event stream to the UI (render snapshots / turn count / log / end). */
 export class GameView {
   private snapshot: SnapshotState | null = null;
 
@@ -170,15 +171,16 @@ export class GameView {
           if (this.cb.moneyEl) {
             const ps = e.state.players;
             if (e.state.mode === 'combat' && ps.length >= 2) {
-              // 竞技模式: 我方金钱为默认金色, 对方金钱整段淡红色 ("对方: xxx")
+              // Combat mode: own money in default gold, opponent's money in light red ("对方: xxx").
               this.cb.moneyEl.replaceChildren(
-                el('span', { text: '💰 我方 ' }),
+                icon('coin', 14),
+                el('span', { class: 'money-own', text: ' 我方 ' }),
                 el('span', { text: String(ps[0].money) }),
                 el('span', { text: ' · ' }),
                 el('span', { class: 'money-enemy', text: `对方: ${ps[1].money}` })
               );
             } else {
-              this.cb.moneyEl.replaceChildren(el('span', { text: `💰 ${ps[0]?.money ?? 0}` }));
+              this.cb.moneyEl.replaceChildren(icon('coin', 14), el('span', { text: ` ${ps[0]?.money ?? 0}` }));
             }
           }
           break;
@@ -186,7 +188,7 @@ export class GameView {
           this.cb.onLog(e.lines);
           break;
         case 'move':
-          // 无人机移动过渡动画
+          // Drone move transition animation.
           this.cb.renderer.animateDrone(e.drone, e.from, e.to);
           break;
         case 'water':

@@ -1,0 +1,168 @@
+/* Fonts, global reset, typography baseline and shared utility classes. */
+
+/* Fusion Pixel — the pixel font used for all game UI text (>zh_hans> includes Simplified Chinese). */
+@font-face {
+  font-family: 'Fusion Pixel';
+  src: url('/fonts/fusion-pixel-12px-proportional-zh_hans.ttf.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Maple Mono editor font (bundled locally, no network). */
+@font-face {
+  font-family: 'Maple Mono';
+  src: url('/fonts/MapleMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Maple Mono';
+  src: url('/fonts/MapleMono-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+* {
+  box-sizing: border-box;
+  /* UI text is not selectable anywhere on the site. */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Preserve normal editing and code-copy behavior where it is required. */
+input,
+textarea,
+[contenteditable='true'],
+.manual-code {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* Hide all scrollbars globally — chunky pixel aesthetics — while keeping scrollable areas functional. */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-main);
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+/* Pixel display font — apply to brand / large headings only (keeps body text readable). */
+.font-display {
+  font-family: var(--font-display);
+}
+
+#app {
+  height: 100vh;
+  /* No vertical scroll for the app shell — the whole page is fixed; panels scroll internally (hidden bars). */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Content area — swaps per route, fills the remaining height under the persistent top bar. */
+.content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* New screen content fades in on each route change (no translate to avoid layout jumps). */
+.content > * {
+  animation: px-fade-in var(--dur-med) var(--ease-out) both;
+}
+
+/* Top-bar action slot (per-screen buttons injected by each screen).
+   Fixed min-height keeps the top-bar height stable across route changes. */
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+}
+
+/* Action-slot buttons fade in (no scale, to avoid size/height jumps). */
+.topbar-actions > * {
+  animation: px-fade-in var(--dur-fast) var(--ease-out) both;
+}
+
+/* ---------- Shared utility classes ---------- */
+.hint {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ---------- Shared motion (expand / collapse / reveal) ---------- */
+@keyframes px-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes px-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Collapse reveal: height auto is not directly animatable, so the shared
+   approach is opacity + a shallow translate for a chunky, snappy feel. */
+@keyframes px-reveal-down {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Respect the user's reduce-motion preference. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

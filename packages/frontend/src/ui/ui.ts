@@ -1,5 +1,4 @@
-// 通用 UI 辅助。
-import { VERSION } from './version';
+// Generic UI helpers.
 
 export function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -51,27 +50,27 @@ export function page(children: (Node | string)[]): HTMLElement {
 }
 
 export function topBar(right: Node[] = []): HTMLElement {
+  // Back-to-menu icon button (rendered to the left of the logo).
+  // Always present; the menu route hides it via the .topbar.hide-back class.
+  const backBtn = el('button', {
+    class: 'btn btn-small btn-icon topbar-back',
+    title: '返回菜单',
+    onClick: () => (location.hash = '#/menu'),
+  }, [
+    el('img', { class: 'icon-img', src: '/sprites/back.svg', alt: '返回菜单' }),
+  ]);
   return el('div', { class: 'topbar' }, [
     el('div', { class: 'topbar-left' }, [
-      // 返回菜单: Icon 按钮 (放在 logo 左侧)
-      el('button', {
-        class: 'btn btn-small btn-icon',
-        title: '返回菜单',
-        onClick: () => (location.hash = '#/menu'),
-      }, [
-        el('img', { class: 'icon-img', src: '/sprites/back.svg', alt: '返回菜单' }),
-      ]),
+      backBtn,
       el('img', { class: 'logo-img', src: '/sprites/logo.svg', alt: 'RoboFarm' }),
-      // 版本号显示在标题旁边 (灰色小字)
-      el('span', { class: 'version-badge', text: `v${VERSION}` }),
     ]),
-    // 登录状态 / 排行榜 / 我的成绩等始终位于右侧
+    // Login state / leaderboard / history always sit on the right side.
     el('div', { class: 'topbar-right' }, right),
   ]);
 }
 export const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
-/** 把 JSON 数据下载为本地文件 */
+/** Download JSON data as a local file. */
 export function downloadJson(data: unknown, filename: string): void {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);

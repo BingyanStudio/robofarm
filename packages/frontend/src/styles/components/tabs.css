@@ -1,0 +1,42 @@
+/* Tab components (generic / leaderboard / API sidebar). */
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab,
+.api-tab {
+  flex: 1;
+  padding: 9px 0;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.tab.active,
+.api-tab.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--success);
+}
+
+/* Leaderboard major-version tab. */
+.lb-tab {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px 12px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.lb-tab.active {
+  background: var(--bg-hover);
+  border-color: var(--link);
+  color: var(--text-primary);
+  font-weight: 600;
+}
