@@ -136,10 +136,88 @@
   animation: px-fade-in var(--dur-fast) var(--ease-out) both;
 }
 
+/* Rules tab: section cards instead of a flat paragraph wall. */
+.rule-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rule-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent-border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+}
+
+.rule-card-title {
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.rule-card-p {
+  margin: 4px 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+}
+
+/* Tier label: splits "term: description" rows into a scannable badge + body. */
+.rule-label {
+  flex: none;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--accent-border);
+  background: rgba(216, 168, 42, 0.14);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 1px 7px;
+  font-family: var(--font-mono);
+  text-transform: none;
+}
+
+/* Inline code chips inside rule cards: distinguish function/code refs from prose. */
+.rule-card-p code,
+.rule-card-lead .rule-card-p code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent-border);
+  background: var(--bg-log);
+  border: 1px solid var(--border);
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+/* Lead overview card: stronger accent so it reads as the page intro. */
+.rule-card-lead {
+  border-left-width: 4px;
+  border-left-color: var(--accent);
+  background: var(--bg-raised);
+  margin-bottom: 12px;
+}
+
+.rule-card-lead .rule-card-title {
+  font-size: 17px;
+  color: var(--accent-border);
+}
+
+.rule-card-lead .rule-card-p {
+  color: var(--text-primary);
+}
+
 /* Doc entries. */
 .doc-entry {
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border-subtle);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
 }
 
 .doc-entry:last-child {
@@ -204,11 +282,16 @@
 .crop-card {
   display: flex;
   gap: 12px;
-  align-items: flex-start;
+  align-items: center;
   background: var(--bg-panel);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 10px;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+
+.crop-card:hover {
+  border-color: var(--accent-border);
 }
 
 .crop-icon {
@@ -221,14 +304,65 @@
 
 .crop-card-body {
   flex: 1;
+  min-width: 0;
+}
+
+/* Head: crop name + code identifier on one row. */
+.crop-card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
 }
 
 .crop-name {
   font-weight: 600;
-  margin-bottom: 4px;
+  font-size: 15px;
+  color: var(--text-primary);
 }
 
-.crop-card p {
-  margin: 3px 0;
+.crop-code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent-border);
+  background: var(--bg-log);
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+}
+
+/* Compact stat tags instead of a verbose bullet list. */
+.crop-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.crop-tag {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 11px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 2px 7px;
+}
+
+.crop-tag-key {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.crop-tag-val {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.crop-desc {
+  margin: 4px 0 0;
   font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
 }

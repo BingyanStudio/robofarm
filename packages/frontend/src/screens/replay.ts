@@ -86,12 +86,17 @@ export function replayScreen(root: HTMLElement, params: URLSearchParams): void {
   }
 
   if (!id) {
-    // No replay selected: center the prominent "select replay" button; keep the top-right "import replay" unchanged
+    // No replay selected: a polished centered empty state; keep the top-right "import replay" unchanged
     host.replaceChildren(
       el('div', { class: 'replay-empty' }, [
-        el('p', { text: '尚未选择回放' }),
-        el('button', { class: 'btn btn-big', text: '选择回放', onClick: () => fileInput.click() }),
-        el('p', { class: 'hint', text: '从本地导入回放文件 (JSON); 或从"多人竞技 → 历史记录"中点击某场对局播放。' }),
+        el('img', { class: 'replay-empty-icon', src: '/sprites/crop/pumpkin_5.avif', alt: '' }),
+        el('h2', { class: 'replay-empty-title', text: '回放播放器' }),
+        el('p', { class: 'replay-empty-sub', text: '尚未选择回放' }),
+        el('button', { class: 'btn btn-big btn-gold', text: '选择回放', onClick: () => fileInput.click() }),
+        el('div', { class: 'replay-empty-hint' }, [
+          el('p', { class: 'replay-empty-hint-item', text: '从本地导入回放文件 (JSON)' }),
+          el('p', { class: 'replay-empty-hint-item', text: '或从"多人竞技 → 历史记录"中点击某场对局播放' }),
+        ]),
       ])
     );
     return;
@@ -160,10 +165,46 @@ function buildPlayer(
     if (playing) schedule();
   });
 
-  const controls = el('div', { class: 'replay-controls' }, [btnBack, btnStepBack, btnPlay, btnStep, btnSpeed]);
-  host.append(playersLine, status, canvas, controls);
+  // Scrubber: click/drag the track to jump to a turn; fill + label track the current position.
+  const progressFill = el('div', { class: 'replay-progress-fill' });
+  const progressTrack = el('div', { class: 'replay-progress-track' }, [progressFill]);
+  const progressLabel = el('span', { class: 'replay-progress-label', text: `0 / ${groups.length}` });
+  const seekFromEvent = (clientX: number): void => {
+    const rect = progressTrack.getBoundingClientRect();
+    const ratio = rect.width ? Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)) : 0;
+    seek(Math.round(ratio * groups.length));
+  };
+  progressTrack.addEventListener('click', (ev) => seekFromEvent(ev.clientX));
+  // Drag-to-scrub: hold the pointer down on the track and move to scrub.
+  progressTrack.addEventListener('pointerdown', (ev) => {
+    ev.preventDefault();
+    seekFromEvent(ev.clientX);
+    const move = (e: PointerEvent) => seekFromEvent(e.clientX);
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  });
+  const progress = el('div', { class: 'replay-progress' }, [progressTrack, progressLabel]);
+
+  const controls = el('div', { class: 'replay-controls' }, [btnBack, btnStepBack, btnPlay, btnStep, progress, btnSpeed]);
+
+  // Stack players + status into a single overlay top-left (consistent with the game page overlay).
+  const overlay = el('div', { class: 'replay-overlay' }, [playersLine, status]);
+  // Wrap the canvas so the overlay can float above it; controls sit in their own bar below.
+  const canvasHost = el('div', { class: 'replay-canvas-host' }, [canvas, overlay]);
+  host.append(canvasHost, controls);
+
+  function syncProgress(): void {
+    const ratio = groups.length ? idx / groups.length : 0;
+    progressFill.style.width = `${ratio * 100}%`;
+    progressLabel.textContent = `${idx} / ${groups.length}`;
+  }
 
   function render(): void {
+    syncProgress();
     if (idx === 0) {
       // Turn 0: show the initial game state (spawn points / terrain)
       renderer.render(initialSnapshot);

@@ -118,9 +118,25 @@ function docEntry(e: DocEntry): HTMLElement {
   return el('div', { class: 'doc-entry', id: e.id }, rows);
 }
 
-/** Rule section */
+/** Render one rule paragraph. A leading short "label:" is split off into a badge so the dense rules tier into scannable term + description rows; backticked code keeps its chip styling. */
+function ruleParagraph(text: string): HTMLElement {
+  const m = text.match(/^([^:：]{1,12}?)\s*[:：]\s*(.+)$/s);
+  const p = el('p', { class: 'rule-card-p' });
+  if (m) {
+    p.append(el('span', { class: 'rule-label', text: m[1].trim() }));
+    p.append(fmt(m[2]));
+  } else {
+    p.append(fmt(text));
+  }
+  return p;
+}
+
+/** Rule section: each rendered as a card with an accent left border + heading, so the dense rules break into scannable blocks instead of a flat wall of text. */
 function ruleSection(rs: { title: string; paragraphs: string[] }): HTMLElement {
-  return section(rs.title, ...rs.paragraphs.map((p) => el('p', {}, [fmt(p)])));
+  return el('div', { class: 'rule-card' }, [
+    el('h3', { class: 'rule-card-title', text: rs.title }),
+    ...rs.paragraphs.map(ruleParagraph),
+  ]);
 }
 
 /** Content per tab (order matches tabs; panel ids used for hyperlink jumps) */
@@ -156,13 +172,16 @@ function buildSections(): HTMLElement[] {
 
     // ---- 5. Rules ----
     el('div', { class: 'api-panel', id: 'tab-rules' }, [
-      section('游戏概览', ...DOC_OVERVIEW.paragraphs.map((p) => el('p', {}, [fmt(p)]))),
-      ...DOC_RULES.map(ruleSection),
+      el('div', { class: 'rule-card rule-card-lead' }, [
+        el('h3', { class: 'rule-card-title', text: DOC_OVERVIEW.title }),
+        ...DOC_OVERVIEW.paragraphs.map(ruleParagraph),
+      ]),
+      el('div', { class: 'rule-cards' }, DOC_RULES.map(ruleSection)),
     ]),
   ];
 }
 
-/** Crop list: icon (mature sprite) + code name + name + params (unordered list) + description */
+/** Crop list: icon (mature sprite) + name/code header + compact stat tags + description. */
 function cropsSection(): HTMLElement {
   const cropList = el('div', { class: 'crop-list' });
   for (const entry of cropDocEntries()) {
@@ -175,14 +194,23 @@ function cropsSection(): HTMLElement {
       });
     }
     const codeName = entry.def.replace(/^代码名: `|`$/g, '');
+    // Render each param ("label: value") as a compact stat tag instead of a bullet list.
+    const tags = (entry.params ?? []).map((p) => {
+      const m = p.match(/^([^:：]+?)\s*[:：]\s*(.+)$/);
+      return el('span', { class: 'crop-tag' }, [
+        el('span', { class: 'crop-tag-key', text: m ? m[1].trim() : p }),
+        m ? el('span', { class: 'crop-tag-val', text: m[2].trim() }) : el('span'),
+      ]);
+    });
     const card = el('div', { class: 'crop-card' }, [
       icon,
       el('div', { class: 'crop-card-body' }, [
-        el('div', { class: 'crop-name', text: entry.name }),
-        el('p', {}, [el('b', { text: '代码名: ' }), el('code', { text: codeName })]),
-        el('p', {}, [el('b', { text: '参数: ' })]),
-        list(entry.params ?? []),
-        el('p', {}, [el('b', { text: '描述: ' }), fmt(entry.desc)]),
+        el('div', { class: 'crop-card-head' }, [
+          el('span', { class: 'crop-name', text: entry.name }),
+          el('code', { class: 'crop-code', text: codeName }),
+        ]),
+        el('div', { class: 'crop-tags' }, tags),
+        el('p', { class: 'crop-desc' }, [fmt(entry.desc)]),
       ]),
     ]);
     cropList.append(card);

@@ -13,8 +13,8 @@
   flex-direction: column;
   border-right: 1px solid var(--border);
   background: var(--bg-panel);
-  padding: 10px 14px;
-  gap: 10px;
+  padding: 12px;
+  gap: 12px;
 }
 
 .match-left .editor-host {
@@ -24,21 +24,34 @@
 
 .match-right {
   flex: 1;
-  padding: 10px 16px;
+  padding: 12px 16px;
   overflow-y: auto;
   min-width: 0;
 }
 
-/* Left header: "challenge code" title + right-aligned state line. */
+/* Unified left header: two rows (title+state / hint+actions) in one card. */
 .match-head {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-raised);
+}
+
+.match-head-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 10px 14px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.match-head .match-title-text {
   font-weight: 600;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-raised);
+  font-size: 15px;
+  color: var(--text-primary);
 }
 
 .match-head .state-line {
@@ -50,26 +63,87 @@
   white-space: nowrap;
 }
 
-.match-head-sub {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-  padding: 8px 14px 0;
+.match-head-hint {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .match-head-actions {
   display: flex;
-  justify-content: flex-end;
   gap: 8px;
   flex-wrap: wrap;
+  flex: none;
 }
 
-.match-head-sub .hint {
-  margin: 0;
-  text-align: right;
+/* Right column: section header mirrors the left header card; opponent cards use compact stat tags. */
+.match-right-head {
+  margin-bottom: 4px;
 }
 
-.state-line {
-  font-size: 14px;
+.match-right-count {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.match-right-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 0;
+}
+
+.match-right-empty {
+  margin: 16px 0;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.match-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.match-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.match-card .card-name {
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.match-card-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.match-stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 11px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 2px 7px;
+}
+
+.match-stat-k {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.match-stat-v {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
 }

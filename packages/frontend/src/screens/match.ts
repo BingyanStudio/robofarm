@@ -20,23 +20,23 @@ export function matchScreen(root: HTMLElement): void {
   const right = el('div', { class: 'match-right' });
   layout.append(left, right);
 
-  // Left header bar: "combat code" + upload status (right-aligned); simulate/upload buttons also right-aligned here
+  // Left column: a single unified header (title + state + actions + hint) sitting above the editor,
+  // so the panel reads as one cohesive surface instead of three stacked disconnected bars.
   const stateLine = el('span', { class: 'state-line', text: '出战状态: 查询中…' });
-  const headBar = el('div', { class: 'match-head' }, [
-    el('span', { class: 'match-title-text', text: '出战代码' }),
-    stateLine,
+  const head = el('div', { class: 'match-head' }, [
+    el('div', { class: 'match-head-row' }, [
+      el('span', { class: 'match-title-text', text: '出战代码' }),
+      stateLine,
+    ]),
+    el('div', { class: 'match-head-row' }, [
+      el('p', { class: 'hint match-head-hint', text: '与模拟竞技的"我方无人机"代码同步; 上传后胜败记录清零' }),
+      el('div', { class: 'match-head-actions' }, [
+        button('模拟竞技', () => (location.hash = '#/simulate')),
+        button('上传代码', () => void upload(), { class: 'btn btn-start' }),
+      ]),
+    ]),
   ]);
-  const actionsRow = el('div', { class: 'match-head-actions' }, [
-    button('模拟竞技', () => (location.hash = '#/simulate')),
-    button('上传代码', () => void upload(), { class: 'btn btn-start' }),
-  ]);
-  left.append(
-    headBar,
-    el('div', { class: 'match-head-sub' }, [
-      actionsRow,
-      el('p', { class: 'hint', text: '与模拟竞技的"我方无人机"代码同步; 上传后胜败记录清零' }),
-    ])
-  );
+  left.append(head);
   const editorHost = el('div', { class: 'editor-host' });
   left.append(editorHost);
   const editor = createEditor(editorHost, {
@@ -44,9 +44,18 @@ export function matchScreen(root: HTMLElement): void {
     onChange: (v) => localStorage.setItem(KEY, v),
   });
 
-  right.append(el('div', { class: 'game-title', text: '选择对手' }));
-  const listHost = el('div', { class: 'card-list' });
-  right.append(listHost);
+  // Right column: a styled section header above the opponent list, mirroring the left header card.
+  right.append(
+    el('div', { class: 'match-head match-right-head' }, [
+      el('div', { class: 'match-head-row' }, [
+        el('span', { class: 'match-title-text', text: '选择对手' }),
+        el('span', { class: 'match-right-count hint', text: '加载中…' }),
+      ]),
+    ]),
+    el('div', { class: 'card-list match-right-list' }, [el('p', { class: 'hint', text: '登录后查看可挑战的玩家' })])
+  );
+  const listHost = right.querySelector('.match-right-list') as HTMLElement;
+  const countLabel = right.querySelector('.match-right-count') as HTMLElement;
 
   async function upload(): Promise<void> {
     const user = await fetchUser();
@@ -67,7 +76,8 @@ export function matchScreen(root: HTMLElement): void {
     const user = await fetchUser();
     if (!user) {
       stateLine.textContent = '请先登录后上传代码与挑战';
-      listHost.replaceChildren(el('p', { class: 'hint', text: '登录后查看可挑战的玩家' }));
+      countLabel.textContent = '';
+      listHost.replaceChildren(el('p', { class: 'hint match-right-empty', text: '登录后查看可挑战的玩家' }));
       return;
     }
     try {
@@ -80,25 +90,33 @@ export function matchScreen(root: HTMLElement): void {
       }
       const list = await api.get('/combat/list');
       const entries = (list.data?.entries ?? []) as { id: number; name: string; wins: number; losses: number }[];
+      countLabel.textContent = entries.length > 0 ? `共 ${entries.length} 名玩家` : '';
       listHost.replaceChildren();
       if (entries.length === 0) {
-        listHost.append(el('p', { class: 'hint', text: '暂无其他玩家上传出战代码' }));
+        listHost.append(el('p', { class: 'hint match-right-empty', text: '暂无其他玩家上传出战代码' }));
         return;
       }
       for (const e of entries) {
         const total = e.wins + e.losses;
         const rate = total > 0 ? Math.round((e.wins / total) * 100) : 0;
-        const card = el('div', { class: 'card' }, [
-          el('div', { class: 'card-name', text: e.name }),
-          el('div', { class: 'card-meta', text: `胜 ${e.wins} / 负 ${e.losses} · 胜率 ${rate}%` }),
-          button('挑战', () => (location.hash = `#/battle?opponentId=${e.id}`), { class: 'btn btn-small' }),
+        const card = el('div', { class: 'card match-card' }, [
+          el('div', { class: 'match-card-main' }, [
+            el('div', { class: 'card-name', text: e.name }),
+            el('div', { class: 'match-card-stats' }, [
+              el('span', { class: 'match-stat' }, [el('span', { class: 'match-stat-k', text: '胜' }), el('span', { class: 'match-stat-v', text: `${e.wins}` })]),
+              el('span', { class: 'match-stat' }, [el('span', { class: 'match-stat-k', text: '负' }), el('span', { class: 'match-stat-v', text: `${e.losses}` })]),
+              el('span', { class: 'match-stat' }, [el('span', { class: 'match-stat-k', text: '胜率' }), el('span', { class: 'match-stat-v', text: `${rate}%` })]),
+            ]),
+          ]),
+          button('挑战', () => (location.hash = `#/battle?opponentId=${e.id}`), { class: 'btn btn-small btn-gold' }),
         ]);
         listHost.append(card);
       }
     } catch {
       // 网络异常: 避免占位符永久停留
       stateLine.textContent = '出战状态: 加载失败, 请刷新重试';
-      listHost.replaceChildren(el('p', { class: 'hint', text: '网络异常, 无法加载玩家列表' }));
+      countLabel.textContent = '';
+      listHost.replaceChildren(el('p', { class: 'hint match-right-empty', text: '网络异常, 无法加载玩家列表' }));
     }
   }
 
