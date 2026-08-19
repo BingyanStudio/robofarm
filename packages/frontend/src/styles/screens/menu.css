@@ -14,10 +14,41 @@
   position: relative;
 }
 
+.menu-logo-wrap {
+  position: relative;
+}
+
 .menu-logo {
   height: 90px;
   width: auto;
   display: block;
+}
+
+/* A Minecraft-style, gently breathing pixel tagline pinned over the logo. */
+.menu-slogan {
+  position: absolute;
+  top: 2px;
+  left: -80px;
+  color: var(--money);
+  font-family: var(--font-display);
+  font-size: 16px;
+  line-height: 1;
+  text-shadow: 1px 1px 0 var(--bg-log);
+  transform: rotate(-12deg);
+  transform-origin: left center;
+  white-space: nowrap;
+  animation: menu-slogan-breathe 1.6s var(--ease-in-out) infinite alternate;
+}
+
+@keyframes menu-slogan-breathe {
+  from {
+    opacity: 0.78;
+    transform: rotate(-12deg) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-12deg) scale(1.04);
+  }
 }
 
 .menu-version {

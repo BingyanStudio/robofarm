@@ -66,7 +66,7 @@ function endpointCard(e: { method: string; path: string; auth?: boolean; title: 
     el('div', { class: 'api-card-title' }, [
       methodBadge,
       el('span', { class: 'api-endpoint-name', text: e.title }),
-      el('span'),
+      e.auth ? el('span', { class: 'api-auth' }, [icon('lock', 12), document.createTextNode(' 需登录')]) : el('span'),
     ]),
     el('div', { class: 'api-path-row' }, [pathEl]),
   ]);

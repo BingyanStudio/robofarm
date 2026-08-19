@@ -31,7 +31,10 @@ export function menuScreen(root: HTMLElement): void {
   ]);
 
   const box = el('div', { class: 'menu-box' }, [
-    el('img', { class: 'menu-logo', src: '/sprites/logo.svg', alt: 'RoboFarm' }),
+    el('div', { class: 'menu-logo-wrap' }, [
+      el('img', { class: 'menu-logo', src: '/sprites/logo.svg', alt: 'RoboFarm' }),
+      el('span', { class: 'menu-slogan', text: '一句话为我烧10亿Tokens' }),
+    ]),
     hero,
     grid,
     el('a', {

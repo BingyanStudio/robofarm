@@ -62,7 +62,7 @@
   gap: 10px;
 }
 
-/* Card head: title row (badge + name + auth) above the path row. */
+/* Card head: title row (badge + name + auth icon) above the path row. */
 .api-card-head {
   display: flex;
   flex-direction: column;
