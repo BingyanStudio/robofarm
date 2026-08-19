@@ -39,6 +39,7 @@
   --accent-hover: #87cf8b;
   --accent-border: #9bdd9c;
   --accent-fg: #112617;         /* text on the accent bg */
+  --accent-glow: rgba(111, 191, 115, 0.4); /* soft halo (menu logo) */
 
   /* ---------- Semantic: success (olive green) ---------- */
   --success: #8acb5a;

@@ -18,10 +18,33 @@
   position: relative;
 }
 
+/* Soft blurred halo behind the logo, tinted with the accent green. */
+.menu-logo-wrap::before {
+  content: '';
+  position: absolute;
+  inset: -20px -44px;
+  background: radial-gradient(closest-side, var(--accent-glow), transparent 72%);
+  filter: blur(34px);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: menu-logo-glow 3.2s var(--ease-in-out) infinite alternate;
+}
+
+@keyframes menu-logo-glow {
+  from {
+    opacity: 0.72;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .menu-logo {
   height: 135px;
   width: auto;
   display: block;
+  position: relative;
+  z-index: 1;
 }
 
 /* A Minecraft-style, gently breathing pixel tagline pinned over the logo. */
