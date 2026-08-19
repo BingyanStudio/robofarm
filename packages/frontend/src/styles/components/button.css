@@ -110,6 +110,7 @@
   height: 54px;
   object-fit: contain;
   image-rendering: pixelated;
+  filter: brightness(0) invert(1);
 }
 
 .hero-icon-match {

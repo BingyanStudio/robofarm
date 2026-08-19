@@ -1,6 +1,6 @@
 /* Fonts, global reset, typography baseline and shared utility classes. */
 
-/* Fusion Pixel — the pixel font used for all game UI text (>zh_hans> includes Simplified Chinese). */
+/* Fusion Pixel — the pixel font used for all game UI text (>zh_hans> includes Simplified Chinese).
 @font-face {
   font-family: 'Fusion Pixel';
   src: url('/fonts/fusion-pixel-12px-proportional-zh_hans.ttf.woff2') format('woff2');
@@ -8,6 +8,7 @@
   font-style: normal;
   font-display: swap;
 }
+*/
 
 /* Maple Mono editor font (bundled locally, no network). */
 @font-face {

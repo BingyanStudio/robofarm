@@ -62,7 +62,7 @@ export function topBar(right: Node[] = []): HTMLElement {
   return el('div', { class: 'topbar' }, [
     el('div', { class: 'topbar-left' }, [
       backBtn,
-      el('img', { class: 'logo-img', src: '/sprites/logo.svg', alt: 'RoboFarm' }),
+      el('img', { class: 'logo-img', src: '/sprites/logo.svg', alt: 'RoboFarm', onClick: () => (location.hash = '#/menu') }),
     ]),
     // Login state / leaderboard / history always sit on the right side.
     el('div', { class: 'topbar-right' }, right),

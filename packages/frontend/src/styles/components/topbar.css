@@ -22,9 +22,10 @@
 /* Logo image. It eases into the menu-route position instead of jumping when
    the back button is hidden. */
 .logo-img {
-  height: 30px;
+  height: 36px;
   width: auto;
   display: block;
+  cursor: pointer;
   transition: transform var(--dur-med) var(--ease-out);
 }
 
