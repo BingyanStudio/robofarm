@@ -161,12 +161,12 @@ export class GameView {
           if (this.cb.moneyEl) {
             const ps = e.state.players;
             if (e.state.mode === 'combat' && ps.length >= 2) {
-              // 竞技模式: 我方金钱为默认金色, 对方金钱用淡红色区分
+              // 竞技模式: 我方金钱为默认金色, 对方金钱整段淡红色 ("对方: xxx")
               this.cb.moneyEl.replaceChildren(
                 el('span', { text: '💰 我方 ' }),
                 el('span', { text: String(ps[0].money) }),
-                el('span', { text: ' · 对方 ' }),
-                el('span', { class: 'money-enemy', text: String(ps[1].money) })
+                el('span', { text: ' · ' }),
+                el('span', { class: 'money-enemy', text: `对方: ${ps[1].money}` })
               );
             } else {
               this.cb.moneyEl.replaceChildren(el('span', { text: `💰 ${ps[0]?.money ?? 0}` }));

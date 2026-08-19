@@ -17,3 +17,9 @@
     1. 当前单人种植模式的服务器校验是否能承受较多的流量? 如果有优化空间，请进行优化
     2. 请预留限流接口, 后续可能需要单人种植模式每个用户一分钟最多提交 xx 次
     - 结果: ① services/single.ts 增加全局并发上限 (`SINGLE_MAX_CONCURRENT` 默认 4, 超限返回 409"服务器繁忙"), 防止大量提交同时占用 NodeProgram worker 拖垮服务器; esbuild 初始化本身已是进程级单次 (compile.ts ensureInit 缓存); ② 新增 `services/ratelimit.ts` (固定窗口, 进程内存, 每 key 每分钟 N 次), `POST /single/validate` 预留接入 (`SINGLE_SUBMIT_LIMIT_PER_MIN` 默认 0 不限流, 超限返回 429 + retryAfter), 冒烟验证通过 (200 → 409 → 429)
+
+- [x] Bug: Uncaught (in promise) TypeError: Cannot read properties of undefined (reading 'getValue'), 该错误在模拟多人竞技时点击 "开始" 触发
+    - 结果: 根因是 GameRunner 重构后 buildGame 直接读 `editors.enemy!.getValue()`, 但"对方无人机"编辑器是懒创建的——用户若从未切到该 Tab, editors.enemy 为 undefined (原代码 newGame 前会先 ensureEditor 两个)。修复: buildGame 开头先 `ensureEditor('me')` / `ensureEditor('enemy')` 再取值
+
+- [x] Enhancement: 多人竞技 & 多人竞技模拟中，目前 "对方金钱" 的显示是 "对方" 金色, "金钱" 红色, 希望改为 "对方: xxx" 均为红色
+    - 结果: game-layout.ts 竞技金钱行改为 "💰 我方 20 · 对方: 20", "对方: xxx" 整段套用淡红色 `.money-enemy` (对战与模拟竞技共用 GameView, 一处修改两处生效)

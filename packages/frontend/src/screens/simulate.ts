@@ -24,6 +24,9 @@ export function simulateScreen(root: HTMLElement): void {
     title: '模拟竞技 · 敌我双方代码在本机对战',
     previewWorld: () => createCombatWorld(DEFAULT_MAX_TURNS),
     buildGame: async (log) => {
+      // 先确保两个编辑器都已创建 (用户可能从没切到"对方无人机" Tab)
+      ensureEditor('me');
+      ensureEditor('enemy');
       const codeA = editors.me!.getValue();
       const codeB = editors.enemy!.getValue();
       const [a, b] = await Promise.all([compilePlayerCode(codeA), compilePlayerCode(codeB)]);
