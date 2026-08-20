@@ -45,7 +45,13 @@ export function mountMcp(app: express.Express): void {
       }
     }
     const id = randomUUID();
-    const server = createMcpServer({ baseUrl: requestBaseUrl(req) });
+    const server = createMcpServer({
+      // 对外地址: 授权回调兜底 / 文档链接 (经反向代理时由请求推导)
+      baseUrl: requestBaseUrl(req),
+      // 回环直连地址: api_call 代理目标, 绕过公网/反代/CDN (其可能剥掉
+      // 服务器自身请求的 Cookie, 导致已登录会话的 api_call 仍返回 401)
+      apiBaseUrl: `http://127.0.0.1:${process.env.PORT ?? '3001'}`,
+    });
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => id,
       // initialize 完成 (会话确立) 后注册, 此时 transport.sessionId 已可用

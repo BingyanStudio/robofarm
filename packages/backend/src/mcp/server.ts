@@ -29,8 +29,10 @@ const DOC_TITLES: Record<string, string> = {
 const ALL_SECTIONS = [...DOC_SECTIONS] as string[];
 
 export interface McpServerOptions {
-  /** 后端自身地址 (api_call 代理目标 / 登录授权回调), 由会话创建时的请求推导 */
+  /** 后端自身地址 (登录授权回调兜底 / 文档链接), 由会话创建时的请求推导 */
   baseUrl?: string;
+  /** api_call 代理目标 (回环直连, 不经公网/反代/CDN, 避免 Cookie 被中间层剥掉) */
+  apiBaseUrl?: string;
 }
 
 export function createMcpServer(opts: McpServerOptions = {}): Server {
@@ -223,13 +225,13 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
     ],
   }));
 
-  /** 携带会话令牌调用后端 HTTP API */
+  /** 携带会话令牌调用后端 HTTP API (回环直连, 不经公网/反代/CDN, 避免 Cookie 被中间层剥掉) */
   const apiRequest = async (
     method: string,
     path: string,
     body?: unknown
   ): Promise<{ status: number; data: unknown }> => {
-    const base = opts.baseUrl ?? 'http://127.0.0.1';
+    const base = opts.apiBaseUrl ?? opts.baseUrl ?? 'http://127.0.0.1:3001';
     const res = await fetch(new URL(path, base), {
       method,
       headers: {
