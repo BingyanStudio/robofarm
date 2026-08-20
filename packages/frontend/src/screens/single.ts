@@ -69,7 +69,7 @@ export function singleScreen(root: HTMLElement): void {
     },
     gameStartLog: '[系统] 新对局开始',
     playerNames: ['玩家'],
-    onStats: (stats) => showGameStats(stats, '单人种植 · 对局统计'),
+    onStats: (stats) => showGameStats(stats, '对局统计'),
     onEnd: (result) => handleEnd(result),
   });
 
@@ -242,27 +242,26 @@ export function singleScreen(root: HTMLElement): void {
           el('span', { class: 'muted', text: new Date(r.created_at).toLocaleString() }),
         ]);
         if (r.replay) {
-          row.append(
+          const actions = el('div', { class: 'row-actions' }, [
             button('统计', () => {
               void (async () => {
                 const res = await api.get(`/single/replay/${r.id}`);
                 if (res.status === 200) {
                   const stats = await statsFromReplay(res.data);
-                  if (stats) showGameStats(stats, '单人验证 · 对局统计');
+                  if (stats) showGameStats(stats, '对局统计');
                   else toast('回放数据无法识别');
                 } else toast(res.data?.error ?? '统计加载失败');
               })();
-            }, { class: 'btn btn-small' })
-          );
-          row.append(
+            }, { class: 'btn btn-small' }),
             button('下载回放', () => {
               void (async () => {
                 const res = await api.get(`/single/replay/${r.id}`);
                 if (res.status === 200) downloadJson(res.data, `robofarm-replay-single-${r.id}.json`);
                 else toast(res.data?.error ?? '回放下载失败');
               })();
-            }, { class: 'btn btn-small btn-gold' })
-          );
+            }, { class: 'btn btn-small btn-gold' }),
+          ]);
+          row.append(actions);
         }
         list.append(row);
       });

@@ -142,18 +142,19 @@ export function matchScreen(root: HTMLElement): void {
           el('span', { text: `vs ${r.opponent} · ${label[r.result]}` }),
           el('span', { class: 'muted', text: fmtTime(r.created_at) }),
         ]);
+        const actions = el('div', { class: 'row-actions' }, []);
         const statBtn = button('统计', () => {
           void (async () => {
             const res = await api.get(`/combat/replay/${r.id}`);
             if (res.status === 200) {
               const stats = await statsFromReplay(res.data);
-              if (stats) showGameStats(stats, '竞技对局 · 统计');
+              if (stats) showGameStats(stats, '对局统计');
               else toast('回放数据无法识别');
             } else toast(res.data?.error ?? '统计加载失败');
           })();
         }, { class: 'btn btn-small' });
         statBtn.addEventListener('click', (e) => e.stopPropagation());
-        row.append(statBtn);
+        actions.append(statBtn);
         const dlBtn = button('下载回放', () => {
           void (async () => {
             const res = await api.get(`/combat/replay/${r.id}`);
@@ -163,7 +164,8 @@ export function matchScreen(root: HTMLElement): void {
         }, { class: 'btn btn-small btn-gold' });
         // Stop bubbling to the row click (jump to the replay page)
         dlBtn.addEventListener('click', (e) => e.stopPropagation());
-        row.append(dlBtn);
+        actions.append(dlBtn);
+        row.append(actions);
         row.addEventListener('click', () => (location.hash = `#/replay?id=${r.id}`));
         list.append(row);
       });

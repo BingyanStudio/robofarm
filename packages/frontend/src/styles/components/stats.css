@@ -62,7 +62,7 @@
 .stats-crop-fill {
   display: block;
   height: 100%;
-  background: var(--money);
+  background: var(--accent);
   border-radius: var(--radius-sm);
 }
 

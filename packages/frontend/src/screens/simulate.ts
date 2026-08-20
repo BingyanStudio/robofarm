@@ -65,7 +65,7 @@ export function simulateScreen(root: HTMLElement): void {
     },
     gameStartLog: '[系统] 新对局开始 (我方为左侧, 对方为镜像视角)',
     playerNames: ['我方', '对方'],
-    onStats: (stats) => showGameStats(stats, '模拟竞技 · 对局统计'),
+    onStats: (stats) => showGameStats(stats, '对局统计'),
     onEnd: (result) => handleEnd(result),
   });
 

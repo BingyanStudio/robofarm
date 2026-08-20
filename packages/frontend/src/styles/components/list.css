@@ -24,6 +24,14 @@
   background: var(--bg-hover);
 }
 
+/* 行内右侧操作按钮组 (统计 / 下载回放 等), 紧挨右对齐 */
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+
 .list-row.mine {
   background: var(--gold-tint);
   border: 1px solid var(--gold-border);
