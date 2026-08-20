@@ -19,6 +19,17 @@ export interface UpdateEntry {
 /** Update log (from newest to oldest) */
 export const UPDATE_LOG: UpdateEntry[] = [
     {
+        version: '1.0.7',
+        title: 'v1.0.7',
+        items: [
+            '## 统计',
+            '新增对局统计: 对局结束后自动弹出统计弹窗 (单人种植与模拟竞技本地运行); 服务器验证对局可在历史记录中点击"统计"查看',
+            '统计内容包括: 最终得分、金钱随回合变化的折线图 (悬停可查看任意回合双方金钱, 曲线已平滑) 与种植构成进度条 (绿蓝黄色系按占比排列)',
+            '## 文档',
+            'LLM 接入链接由 /llm.txt 调整为 /llms.txt (旧链接自动跳转)',
+        ],
+    },
+    {
         version: '1.0.6',
         title: 'v1.0.6',
         items: [
