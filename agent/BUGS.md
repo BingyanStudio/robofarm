@@ -54,3 +54,11 @@
   `GITHUB_REDIRECT_URI` → `BACKEND_ORIGIN` → 请求推导 的优先级解析回调
   地址, 两处生成的 redirect_uri 始终一致, 并与 `/auth/github/callback`
   令牌交换使用的地址匹配。已重新打包 release/。
+- [x] **回放界面右上角悬浮信息面板与顶栏重合**
+  现象: 回放页鼠标悬停时, 地块/无人机信息面板出现在页面右上角 (顶栏
+  位置), 而非画布右上角。
+  修复 (packages/frontend/src/core/renderer.ts): 信息面板原在 Renderer
+  构造时即挂到 canvas.parentElement; 回放页此时 canvas 尚未挂载
+  (parentElement 为 null) → 面板落到 document.body, 按页面定位。改为
+  `ensureTooltip()` 惰性创建并在首次使用时挂载到 canvas 的当前父容器
+  (已为 position:relative 的画布宿主)。已重新打包 release/。
