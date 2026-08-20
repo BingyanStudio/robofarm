@@ -130,7 +130,7 @@ const CROP_NAMES: Record<string, string> = {
 /** 己方 (index 0) 金色, 对方 (index 1) 红色 */
 const SERIES_COLORS = ['#f2cf62', '#f3a18d'];
 
-/** 各作物在饼图/图例中的稳定配色 (按作物语义选取, 而非按占比顺位) */
+/** 各作物在饼图/进度条中的统一稳定配色 (按作物语义选取, 而非按占比顺位) */
 const CROP_COLORS: Record<string, string> = {
   strawberry: '#ef5a6f',
   grape: '#9b6dd7',
@@ -143,9 +143,17 @@ const CROP_COLORS: Record<string, string> = {
   daffodil: '#f2d24b',
 };
 
-/** 取作物配色, 未映射则回退到进度条调色板 */
-function cropColor(type: string, fallbackIdx: number): string {
-  return CROP_COLORS[type] ?? CROP_BAR_PALETTE[fallbackIdx % CROP_BAR_PALETTE.length];
+/**
+ * 取作物配色 (饼图扇区 / 图例 / 进度条共用的唯一入口)。
+ * 已知作物返回语义色; 未收录的作物按类型名哈希稳定回退到调色板 ——
+ * 与排序位置无关, 保证同一作物在饼图与进度条中永远同色。
+ */
+function cropColor(type: string): string {
+  const known = CROP_COLORS[type];
+  if (known) return known;
+  let h = 0;
+  for (let i = 0; i < type.length; i++) h = (h * 31 + type.charCodeAt(i)) >>> 0;
+  return CROP_BAR_PALETTE[h % CROP_BAR_PALETTE.length];
 }
 
 /** 弹出对局统计 */
@@ -495,13 +503,13 @@ function drawCropPie(stats: GameStats): HTMLCanvasElement {
     Object.entries(moneyByCrop)
       .filter(([, value]) => value > 0)
       .sort((a, b) => b[1] - a[1])
-      .forEach(([type, value], index) => {
+      .forEach(([type, value]) => {
         const end = angle + (value / total) * Math.PI * 2;
         slices.push({
           name: CROP_NAMES[type] ?? type,
           value,
           pct: Math.round((value / total) * 100),
-          color: cropColor(type, index),
+          color: cropColor(type),
           start: angle,
           end,
           mid: (angle + end) / 2,
@@ -697,10 +705,10 @@ function cropSection(stats: GameStats): HTMLElement {
   }));
   rows.sort((a, b) => b.money - a.money);
   const maxMoney = Math.max(1, ...rows.map((r) => r.money));
-  rows.forEach((r, i) => {
+  rows.forEach((r) => {
     const pct = total > 0 ? Math.round((r.count / total) * 100) : 0;
     const moneyPct = Math.round((r.money / maxMoney) * 100);
-    const color = cropColor(r.type, i);
+    const color = cropColor(r.type);
     const row = el('div', { class: 'stats-crop-row' }, [
       el('span', { class: 'stats-crop-name' }, [
         el('span', { class: 'stats-crop-dot', style: `background: ${color}` }),
