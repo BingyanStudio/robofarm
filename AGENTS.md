@@ -222,9 +222,11 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
   `VITE_MCP_BASE` 覆盖。
 - **内容**: 资源 `robofarm://docs/{overview|operations|functions|types|crops|rules|all}`;
   文档工具 `list_docs` / `get_doc(section)` / `get_crop(crop)` / `get_map(mode)`;
-  认证 `login_start` / `login_finish` (会话令牌绑定后自动携带); 通用代理 `api_call`;
+  认证 `login_start` / `login_finish` (**无状态**: login_finish 返回 token,
+  需要鉴权的工具每次调用以 `token` 参数携带, 不绑定会话, 服务端不存会话态);
+  通用代理 `api_call` (同样以 `token` 参数鉴权);
   后端 API 封装工具 (按路由逐个添加): 单人 `single_validate` / `single_validate_status` /
-  `single_history` / `single_leaderboard` (公开) / `single_replay(id)`,
+  `single_history` / `single_leaderboard` (公开, token 可选标记 me) / `single_replay(id)`,
   竞技 `combat_state` / `combat_upload` / `combat_list` / `combat_start(opponentId)` /
   `combat_room` (公开) / `combat_history` / `combat_replay(id)`; Prompt `write_player_code`。
 - **坑**: McpServer 的 zod 泛型在部分 zod 版本下会触发

@@ -39,8 +39,8 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
     { name: 'robofarm-docs', version: GAME_VERSION },
     { capabilities: { resources: {}, tools: {}, prompts: {} } }
   );
-  /** 该 MCP 会话的登录令牌 (经 login_start / login_finish 获得) */
-  let sessionToken: string | null = null;
+  // 无状态设计: 不保存任何会话内登录状态。需要鉴权的工具每次调用都通过
+  // token 参数携带登录凭证 (login_finish 返回), 现场解析用户。
 
   // ---- 资源列表 / 读取 ----
   server.setRequestHandler(ListResourcesRequestSchema, async () => ({
@@ -114,12 +114,12 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
       },
       {
         name: 'login_start',
-        description: 'GitHub 登录第一步: 返回授权地址与 state。开发模式下无需登录 (dev: true)。浏览器完成授权后, 用返回的 state 调用 login_finish 领取会话令牌。',
+        description: 'GitHub 登录第一步: 返回授权地址与 state。开发模式下无需登录 (dev: true)。浏览器完成授权后, 用返回的 state 调用 login_finish 领取登录凭证 token。',
         inputSchema: { type: 'object', properties: {} },
       },
       {
         name: 'login_finish',
-        description: 'GitHub 登录第二步: 用 login_start 返回的 state 领取会话令牌 (浏览器授权完成后)。之后 api_call 自动携带该令牌。',
+        description: 'GitHub 登录第二步: 用 login_start 返回的 state 领取登录凭证 token (浏览器授权完成后, 10 分钟内有效)。返回的 token 需保存, 之后调用需要鉴权的工具时作为 token 参数传入 (无状态凭证, 不绑定会话)。',
         inputSchema: {
           type: 'object',
           properties: { state: { type: 'string', description: 'login_start 返回的 state' } },
@@ -128,13 +128,14 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
       },
       {
         name: 'api_call',
-        description: '调用后端 API: 任意 method + 相对路径 + JSON body, 返回 { status, data }。登录会话自动以当前用户身份执行 (进程内直调)。',
+        description: '调用后端 API: 任意 method + 相对路径 + JSON body, 返回 { status, data }。进程内直调; 访问需鉴权接口时以 token 参数携带登录凭证。',
         inputSchema: {
           type: 'object',
           properties: {
             method: { type: 'string', enum: ['GET', 'POST', 'PUT', 'DELETE'], description: 'HTTP 方法 (默认 GET)' },
             path: { type: 'string', description: '相对路径, 如 /single/validate 或 /single/replay/1' },
             body: { type: 'object', description: 'JSON 请求体 (POST/PUT 时)' },
+            token: { type: 'string', description: '登录凭证 (login_finish 返回; 访问需鉴权接口时必填)' },
           },
           required: ['path'],
         },
@@ -145,61 +146,92 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
         description: '提交玩家代码并启动服务器端单人验证 (最多 500 回合), 同一用户同时只能运行一个。之后用 single_validate_status 查询进度与分数。',
         inputSchema: {
           type: 'object',
-          properties: { code: { type: 'string', description: '玩家 TypeScript 代码 (含入口函数 run)' } },
-          required: ['code'],
+          properties: {
+            code: { type: 'string', description: '玩家 TypeScript 代码 (含入口函数 run)' },
+            token: { type: 'string', description: '登录凭证 (login_finish 返回)' },
+          },
+          required: ['code', 'token'],
         },
       },
       {
         name: 'single_validate_status',
         description: '查询当前用户的单人验证状态: busy / progress (0-1) / score / error。',
-        inputSchema: { type: 'object', properties: {} },
+        inputSchema: {
+          type: 'object',
+          properties: { token: { type: 'string', description: '登录凭证 (login_finish 返回)' } },
+          required: ['token'],
+        },
       },
       {
         name: 'single_history',
         description: '当前用户的单人提交历史 (id / score / error / replay / created_at)。',
-        inputSchema: { type: 'object', properties: {} },
+        inputSchema: {
+          type: 'object',
+          properties: { token: { type: 'string', description: '登录凭证 (login_finish 返回)' } },
+          required: ['token'],
+        },
       },
       {
         name: 'single_leaderboard',
-        description: '单人种植公开排行榜 (name / score / me)。无需登录。',
-        inputSchema: { type: 'object', properties: {} },
+        description: '单人种植公开排行榜 (name / score / me)。无需登录; 传 token 时自己的条目标记 me。',
+        inputSchema: {
+          type: 'object',
+          properties: { token: { type: 'string', description: '登录凭证 (可选, 用于标记自己的条目)' } },
+        },
       },
       {
         name: 'single_replay',
         description: '下载某条单人提交的完整回放文件 (ReplayFile JSON, 仅本人可见)。',
         inputSchema: {
           type: 'object',
-          properties: { id: { type: 'number', description: '提交记录 id (见 single_history)' } },
-          required: ['id'],
+          properties: {
+            id: { type: 'number', description: '提交记录 id (见 single_history)' },
+            token: { type: 'string', description: '登录凭证 (login_finish 返回)' },
+          },
+          required: ['id', 'token'],
         },
       },
       // ---- 竞技模式 (需登录, 除观战房间) ----
       {
         name: 'combat_state',
         description: '当前用户的出战代码与战绩 (code / wins / losses), 未上传过返回 null。',
-        inputSchema: { type: 'object', properties: {} },
+        inputSchema: {
+          type: 'object',
+          properties: { token: { type: 'string', description: '登录凭证 (login_finish 返回)' } },
+          required: ['token'],
+        },
       },
       {
         name: 'combat_upload',
         description: '上传竞技出战代码 (上传后胜败清零)。',
         inputSchema: {
           type: 'object',
-          properties: { code: { type: 'string', description: '出战 TypeScript 代码' } },
-          required: ['code'],
+          properties: {
+            code: { type: 'string', description: '出战 TypeScript 代码' },
+            token: { type: 'string', description: '登录凭证 (login_finish 返回)' },
+          },
+          required: ['code', 'token'],
         },
       },
       {
         name: 'combat_list',
         description: '可挑战的玩家列表 (id / name / wins / losses, 排除自己)。',
-        inputSchema: { type: 'object', properties: {} },
+        inputSchema: {
+          type: 'object',
+          properties: { token: { type: 'string', description: '登录凭证 (login_finish 返回)' } },
+          required: ['token'],
+        },
       },
       {
         name: 'combat_start',
         description: '向指定玩家发起竞技对战, 返回 roomId。每个玩家同时最多主动发起 1 场。',
         inputSchema: {
           type: 'object',
-          properties: { opponentId: { type: 'number', description: '对手用户 id (见 combat_list)' } },
-          required: ['opponentId'],
+          properties: {
+            opponentId: { type: 'number', description: '对手用户 id (见 combat_list)' },
+            token: { type: 'string', description: '登录凭证 (login_finish 返回)' },
+          },
+          required: ['opponentId', 'token'],
         },
       },
       {
@@ -210,36 +242,47 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
       {
         name: 'combat_history',
         description: '当前用户的历史对局列表 (id / opponent / opponentId / result / created_at)。',
-        inputSchema: { type: 'object', properties: {} },
+        inputSchema: {
+          type: 'object',
+          properties: { token: { type: 'string', description: '登录凭证 (login_finish 返回)' } },
+          required: ['token'],
+        },
       },
       {
         name: 'combat_replay',
         description: '下载某场对战回放 ({ config, events }, 仅对局双方可见)。',
         inputSchema: {
           type: 'object',
-          properties: { id: { type: 'number', description: '对局 id (见 combat_history)' } },
-          required: ['id'],
+          properties: {
+            id: { type: 'number', description: '对局 id (见 combat_history)' },
+            token: { type: 'string', description: '登录凭证 (login_finish 返回)' },
+          },
+          required: ['id', 'token'],
         },
       },
     ],
   }));
 
-  /** 会话令牌解析出的当前用户 (开发模式自动登录; 未登录返回 null) */
-  const current = (): AuthUser | null => userFromToken(sessionToken);
+  /** 按登录凭证解析当前用户 (开发模式自动登录; 无效/缺失返回 null) */
+  const userOfToken = (token: unknown): AuthUser | null => {
+    const t = typeof token === 'string' && token.trim() ? token : null;
+    return userFromToken(t);
+  };
 
   /**
    * 进程内调用后端: 与 app.ts 的 HTTP 路由共用 services/api.ts 的同一份实现
-   * (api_xxx 函数), 不经 HTTP 往返 (本地回环/反代/CDN 可能剥掉 Cookie 导致 401)。
+   * (api_xxx 函数), 不经 HTTP 往返。用户由每次调用携带的 token 解析 (无状态)。
    */
   async function callBackend(
     method: string,
     path: string,
-    body?: unknown
+    body?: unknown,
+    token?: unknown
   ): Promise<{ status: number; data: unknown }> {
     const m = method.toUpperCase();
     const [seg, queryStr] = path.split('?');
     const q = new URLSearchParams(queryStr ?? '');
-    const user = current();
+    const user = userOfToken(token);
     const userId = user?.id ?? null;
 
     if (m === 'GET' && seg === '/auth/me') return api.apiAuthMe(user);
@@ -271,14 +314,15 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
   const apiToolResult = async (
     method: string,
     path: string,
-    body?: unknown
+    body?: unknown,
+    token?: unknown
   ): Promise<{ content: { type: 'text'; text: string }[]; isError?: boolean }> => {
-    const r = await callBackend(method, path, body);
+    const r = await callBackend(method, path, body, token);
     if (r.status === 401) {
       return {
         content: [{
           type: 'text',
-          text: 'HTTP 401: 未登录。先调用 login_start + login_finish 获取会话令牌 (开发模式下后端自动登录, 无需此步骤)。',
+          text: 'HTTP 401: 凭证缺失或无效。先调用 login_start + login_finish 获取 token, 并在本次调用中以 token 参数传入 (开发模式下后端自动登录, 无需此步骤)。',
         }],
         isError: true,
       };
@@ -387,11 +431,11 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
         if ('error' in r) {
           return { content: [{ type: 'text', text: r.error }], isError: true };
         }
-        sessionToken = r.token;
+        // 无状态凭证: 返回 token 由客户端保存, 之后每次调用以 token 参数传入
         return {
           content: [{
             type: 'text',
-            text: '登录成功, 会话令牌已绑定, 后续 api_call 将自动携带认证。',
+            text: JSON.stringify({ ok: true, token: r.token, hint: '请保存 token, 需要鉴权的工具调用时作为 token 参数传入' }, null, 2),
           }],
         };
       }
@@ -401,7 +445,7 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
         if (!path.startsWith('/')) {
           return { content: [{ type: 'text', text: 'path 必须是相对路径 (以 / 开头)' }], isError: true };
         }
-        const res = await callBackend(method, path, args?.body);
+        const res = await callBackend(method, path, args?.body, args?.token);
         return {
           content: [{
             type: 'text',
@@ -415,50 +459,50 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
         if (!code.trim()) {
           return { content: [{ type: 'text', text: '缺少 code 参数 (玩家 TypeScript 代码)' }], isError: true };
         }
-        return await apiToolResult('POST', '/single/validate', { code });
+        return await apiToolResult('POST', '/single/validate', { code }, args?.token);
       }
       case 'single_validate_status':
-        return await apiToolResult('GET', '/single/validate');
+        return await apiToolResult('GET', '/single/validate', undefined, args?.token);
       case 'single_history':
-        return await apiToolResult('GET', '/single/history');
+        return await apiToolResult('GET', '/single/history', undefined, args?.token);
       case 'single_leaderboard':
-        return await apiToolResult('GET', '/single/leaderboard');
+        return await apiToolResult('GET', '/single/leaderboard', undefined, args?.token);
       case 'single_replay': {
         const id = Number(args?.id);
         if (!Number.isInteger(id)) {
           return { content: [{ type: 'text', text: '缺少 id 参数 (提交记录 id)' }], isError: true };
         }
-        return await apiToolResult('GET', `/single/replay/${id}`);
+        return await apiToolResult('GET', `/single/replay/${id}`, undefined, args?.token);
       }
       // ---- 竞技模式 ----
       case 'combat_state':
-        return await apiToolResult('GET', '/combat/state');
+        return await apiToolResult('GET', '/combat/state', undefined, args?.token);
       case 'combat_upload': {
         const code = typeof args?.code === 'string' ? args.code : '';
         if (!code.trim()) {
           return { content: [{ type: 'text', text: '缺少 code 参数 (出战 TypeScript 代码)' }], isError: true };
         }
-        return await apiToolResult('POST', '/combat/upload', { code });
+        return await apiToolResult('POST', '/combat/upload', { code }, args?.token);
       }
       case 'combat_list':
-        return await apiToolResult('GET', '/combat/list');
+        return await apiToolResult('GET', '/combat/list', undefined, args?.token);
       case 'combat_start': {
         const opponentId = Number(args?.opponentId);
         if (!Number.isInteger(opponentId)) {
           return { content: [{ type: 'text', text: '缺少 opponentId 参数 (对手用户 id)' }], isError: true };
         }
-        return await apiToolResult('POST', '/combat/start', { id: opponentId });
+        return await apiToolResult('POST', '/combat/start', { id: opponentId }, args?.token);
       }
       case 'combat_room':
         return await apiToolResult('GET', '/combat/room');
       case 'combat_history':
-        return await apiToolResult('GET', '/combat/history');
+        return await apiToolResult('GET', '/combat/history', undefined, args?.token);
       case 'combat_replay': {
         const id = Number(args?.id);
         if (!Number.isInteger(id)) {
           return { content: [{ type: 'text', text: '缺少 id 参数 (对局 id)' }], isError: true };
         }
-        return await apiToolResult('GET', `/combat/replay/${id}`);
+        return await apiToolResult('GET', `/combat/replay/${id}`, undefined, args?.token);
       }
       default:
         throw new Error(`未知工具: ${name}`);

@@ -112,6 +112,11 @@ function migrate(d: DatabaseSync): void {
       user_id INTEGER NOT NULL REFERENCES users(id),
       created_at INTEGER NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS login_tokens (
+      state TEXT PRIMARY KEY,
+      token TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
     CREATE TABLE IF NOT EXISTS single_submissions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL REFERENCES users(id),
@@ -273,6 +278,27 @@ export function getUserBySession(token: string | null): UserRow | null {
 
 export function deleteSession(token: string): void {
   getDb().prepare('DELETE FROM sessions WHERE token = ?').run(token);
+}
+
+/** 暂存 MCP 登录凭证 (按 OAuth state), 供无状态 MCP 客户端在 login_finish 领取 */
+export function setLoginToken(state: string, token: string): void {
+  getDb()
+    .prepare('INSERT INTO login_tokens (state, token, created_at) VALUES (?, ?, ?) ON CONFLICT(state) DO UPDATE SET token = excluded.token, created_at = excluded.created_at')
+    .run(state, token, Date.now());
+}
+
+/** 领取 (并删除) 登录凭证; 过期或不存在返回 null */
+export function takeLoginToken(state: string, ttlMs: number): string | null {
+  const d = getDb();
+  const row = d.prepare('SELECT token, created_at FROM login_tokens WHERE state = ?').get(state) as
+    | { token: string; created_at: number }
+    | undefined;
+  if (!row || Date.now() - row.created_at > ttlMs) {
+    d.prepare('DELETE FROM login_tokens WHERE state = ?').run(state);
+    return null;
+  }
+  d.prepare('DELETE FROM login_tokens WHERE state = ?').run(state);
+  return row.token;
 }
 
 export function recordSingleSubmission(userId: number, code: string, score: number | null, error: string | null, replay: string | null = null): void {

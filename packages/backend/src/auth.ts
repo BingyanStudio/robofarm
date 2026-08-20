@@ -2,7 +2,7 @@
 // 未配置 GITHUB_CLIENT_ID 时进入开发模式: 自动创建并登录一个本地演示账号。
 import { Router, Request, Response, NextFunction } from 'express';
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
-import { createSession, getUserBySession, upsertUserByLogin } from './db';
+import { createSession, getUserBySession, upsertUserByLogin, setLoginToken, takeLoginToken } from './db';
 
 const SESSION_COOKIE = 'robofarm_session';
 const STATE_TTL_MS = 10 * 60 * 1000;
@@ -16,9 +16,6 @@ interface OAuthState {
 }
 
 const pendingStates = new Map<string, OAuthState>();
-
-/** OAuth 回调成功后暂存的会话令牌 (按 state), 供 MCP 等无 Cookie 客户端领取 */
-const pendingLoginTokens = new Map<string, { token: string; createdAt: number }>();
 
 /** OAuth state 随 Cookie 下发, 回调时无需依赖进程内状态 (重启/多实例仍可登录) */
 const OAUTH_STATE_COOKIE = 'robofarm_oauth_state';
@@ -126,14 +123,13 @@ export function mcpLoginStart(baseUrl: string): { authorizeUrl?: string; state?:
   return { authorizeUrl: url, state: cookieValue, dev: false };
 }
 
-/** MCP 登录第二步: 用 OAuth state 换取会话令牌 (一次性, 10 分钟内有效) */
+/** MCP 登录第二步: 用 OAuth state 领取会话令牌 (一次性, 10 分钟内有效, 落库不受重启影响) */
 export function mcpLoginFinish(state: string): { token: string } | { error: string } {
-  const entry = pendingLoginTokens.get(state);
-  if (!entry || Date.now() - entry.createdAt > STATE_TTL_MS) {
+  const token = takeLoginToken(state, STATE_TTL_MS);
+  if (token === null) {
     return { error: 'state 无效或已过期 (请先完成浏览器登录)' };
   }
-  pendingLoginTokens.delete(state);
-  return { token: entry.token };
+  return { token };
 }
 
 export function devMode(): boolean {
@@ -264,8 +260,8 @@ export function createAuthRouter(): Router {
         cookie(SESSION_COOKIE, token),
         cookie(OAUTH_STATE_COOKIE, '', 0),
       ]);
-      // 供 MCP 客户端领取 (浏览器登录后, MCP 用 state 换取令牌)
-      pendingLoginTokens.set(state as string, { token, createdAt: Date.now() });
+      // 供 MCP 等无 Cookie 客户端领取 (浏览器登录后, MCP 用 state 换取令牌)
+      setLoginToken(state as string, token);
       res.redirect(`${frontendOrigin(req)}/#/menu`);
     } catch (err) {
       // 登录失败 (如 code 已过期/重复使用): 跳转前端, 由前端提示重试
