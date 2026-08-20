@@ -84,7 +84,7 @@ export function mcpGuide(): HTMLElement {
   // Same-origin priority: prefer VITE_MCP_BASE (env), otherwise default to current origin (dev via vite proxy)
   const envBase = (import.meta.env.VITE_MCP_BASE as string | undefined)?.trim();
   const origin = envBase ? new URL(envBase).origin : location.origin;
-  const llmUrl = new URL('/llm.txt', origin).href;
+  const llmUrl = new URL('/llms.txt', origin).href;
   const httpUrl = new URL('/mcp', origin).href;
 
   const item = (title: string, desc: string, url: string, copyLabel: string): HTMLElement =>
@@ -99,7 +99,7 @@ export function mcpGuide(): HTMLElement {
 
   const nodes: HTMLElement[] = [
     el('p', { class: 'mcp-guide-lead', text: '不想亲自 Coding? 让 Agent 帮你!' }),
-    item('llm.txt · 最简单', '把链接交给 AI, 它可直接获取游戏文档', llmUrl, '复制链接'),
+    item('llms.txt · 最简单', '把链接交给 AI, 它可直接获取游戏文档', llmUrl, '复制链接'),
     item('MCP · HTTP', '使用 MCP 接入, 获取文档并直接提交代码', httpUrl, '复制地址'),
   ];
   return el('div', { class: 'manual mcp-guide' }, nodes);

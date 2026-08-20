@@ -1,5 +1,5 @@
 // 后端 API 文档的单一数据来源: 结构化数据同时驱动
-// - 纯 Markdown 输出 (GET /api-docs, 并入 GET /llm.txt)
+// - 纯 Markdown 输出 (GET /api-docs, 并入 GET /llms.txt)
 // - 前端网页版文档页面 (#/api-docs, Tab 分类, 人类友好)
 import { sectionMarkdown } from './docs';
 
@@ -135,7 +135,7 @@ export const API_DOC_GROUPS: ApiDocGroup[] = [
         path: '/single/replay/:id',
         auth: true,
         title: '下载回放',
-        description: '下载某条提交的回放文件 (仅本人)。回放格式见 llm.txt 附录或前端回放导入。',
+        description: '下载某条提交的回放文件 (仅本人)。回放格式见 llms.txt 附录或前端回放导入。',
         responses: [
           { code: '200', body: '回放文件 (JSON, ReplayFile 格式)', note: 'id: 提交记录 id' },
           { code: '404', body: '{ "error": "记录不存在" }' },
@@ -284,7 +284,7 @@ export const API_DOC_GROUPS: ApiDocGroup[] = [
       },
       {
         method: 'GET',
-        path: '/llm.txt',
+        path: '/llms.txt',
         title: 'LLM 友好文档',
         description: '全部游戏文档按章节拼接 (text/plain), 供 AI 直接读取。',
         responses: [{ code: '200', body: 'text/plain' }],

@@ -1,5 +1,5 @@
 // Web version of API docs: all backend endpoints, shown in function-category tabs, human friendly.
-// Data comes from shared/src/api-docs.ts (same source as /api-docs Markdown / llm.txt).
+// Data comes from shared/src/api-docs.ts (same source as /api-docs Markdown / llms.txt).
 import { el } from '../ui/ui';
 import { icon } from '../ui/icon';
 import { API_DOC_GROUPS, API_DOC_CONVENTIONS } from '@robofarm/shared';

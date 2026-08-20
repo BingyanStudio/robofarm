@@ -153,8 +153,12 @@ export function createApp(): express.Express {
   });
 
   // LLM 友好文档: 全部文档按章节拼接 (Base URL 按实际请求动态生成)
-  app.get('/llm.txt', (req: Request, res: Response) => {
+  app.get('/llms.txt', (req: Request, res: Response) => {
     res.type('text/plain; charset=utf-8').send(llmTxt(requestBaseUrl(req)));
+  });
+  // 旧路径兼容: /llm.txt → /llms.txt
+  app.get('/llm.txt', (_req: Request, res: Response) => {
+    res.redirect(301, '/llms.txt');
   });
 
   // 后端 API 文档 (Markdown)

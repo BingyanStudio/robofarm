@@ -344,16 +344,25 @@ function cropSection(stats: GameStats): HTMLElement {
     return sec;
   }
   const sorted = Object.entries(byType).sort((a, b) => b[1] - a[1]);
-  for (const [type, count] of sorted) {
+  sorted.forEach(([type, count], i) => {
     const pct = Math.round((count / total) * 100);
+    // 绿-蓝-黄色系调色板, 按占比从大到小排列
+    const color = CROP_BAR_PALETTE[i % CROP_BAR_PALETTE.length];
     const row = el('div', { class: 'stats-crop-row' }, [
       el('span', { class: 'stats-crop-name', text: `${CROP_NAMES[type] ?? type}` }),
       el('span', { class: 'stats-crop-bar' }, [
-        el('span', { class: 'stats-crop-fill', style: `width: ${pct}%` }),
+        el('span', { class: 'stats-crop-fill', style: `width: ${pct}%; background: ${color}` }),
       ]),
       el('span', { class: 'stats-crop-count', text: `${count} (${pct}%)` }),
     ]);
     sec.append(row);
-  }
+  });
   return sec;
 }
+
+/** 进度条调色板: 绿-蓝-黄色系 */
+const CROP_BAR_PALETTE = [
+  '#66bb6a', '#4fc3f7', '#ffee58',
+  '#26a69a', '#42a5f5', '#ffd54f',
+  '#43a047', '#aed581', '#fff176',
+];
