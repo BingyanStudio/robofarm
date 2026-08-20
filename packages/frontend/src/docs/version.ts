@@ -6,7 +6,7 @@
 //   3. Write current version number (for next comparison)
 import { el, modal } from '../ui/ui';
 
-export const VERSION = '1.0.5';
+export const VERSION = '1.0.6';
 export const VERSION_KEY = 'robofarm.version';
 
 export interface UpdateEntry {
@@ -17,6 +17,17 @@ export interface UpdateEntry {
 
 /** Update log (from newest to oldest) */
 export const UPDATE_LOG: UpdateEntry[] = [
+    {
+        version: '1.0.6',
+        title: 'v1.0.6',
+        items: [
+            '## 登录',
+            '修复: 通过 MCP 接入时的登录问题 (授权流程与网页登录保持一致, 服务器重启后仍可正常登录)',
+            '## 界面',
+            '开始 / 停止按钮恢复常规按钮外观, 以绿色 (开始) / 红色 (停止) 作强调; 单人种植与模拟竞技的开始按钮初始即为绿色',
+            '排行榜: 按钮与个人成绩条目统一为金色高亮 (原条目为绿色边框)',
+        ],
+    },
     {
         version: '1.0.5',
         title: 'v1.0.5',
