@@ -24,6 +24,9 @@ import gsap from 'gsap';
 
 const CODE_KEY = 'robofarm.single';
 
+/** 排行榜头像: 已确认 GitHub 拉取失败的用户名, 避免每次打开排行榜重复请求 */
+const LB_AVATAR_FAILED = new Set<string>();
+
 export function singleScreen(root: HTMLElement): void {
   root.replaceChildren();
 
@@ -198,11 +201,27 @@ export function singleScreen(root: HTMLElement): void {
       function avatarTile(name: string, size = 40): HTMLElement {
         let h = 0;
         for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
-        return el('span', {
-          class: 'lb-avatar',
-          text: (name[0] ?? '?').toUpperCase(),
-          style: `width:${size}px;height:${size}px;background:hsl(${h} 42% 38%)`,
-        });
+        const letter = (): HTMLElement =>
+          el('span', {
+            class: 'lb-avatar',
+            text: (name[0] ?? '?').toUpperCase(),
+            style: `width:${size}px;height:${size}px;background:hsl(${h} 42% 38%)`,
+          });
+        // 优先 GitHub 头像 (按用户名拉取), 加载失败 (无账号/网络错误) 回退到字母块
+        if (LB_AVATAR_FAILED.has(name)) return letter();
+        const img = el('img', {
+          class: 'lb-avatar lb-avatar-img',
+          src: `https://github.com/${encodeURIComponent(name)}.png?size=${size * 2}`,
+          alt: name,
+          loading: 'lazy',
+          referrerpolicy: 'no-referrer',
+          style: `width:${size}px;height:${size}px`,
+          onerror: () => {
+            LB_AVATAR_FAILED.add(name);
+            img.replaceWith(letter());
+          },
+        }) as HTMLImageElement;
+        return img;
       }
 
       function buildVersionDropdown(): HTMLElement {

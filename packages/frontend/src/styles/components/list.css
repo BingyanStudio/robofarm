@@ -216,6 +216,11 @@
   border: 2px solid rgba(255, 255, 255, 0.18);
 }
 
+.lb-avatar-img {
+  display: block;
+  object-fit: cover;
+}
+
 .lb-podium__medal {
   position: absolute;
   bottom: -2px;
