@@ -1,75 +1,407 @@
-/* 对局统计弹窗: 最终得分 / 金钱折线图 / 种植构成 */
+/* 对局统计弹窗: 最终得分 / 金钱折线图 + 收益仪表盘 / 种植明细
+   借 Cirrus 结构规范 (分层圆角 / 双层阴影 / tabular-nums / 负字距 / ease-out-expo),
+   色调沿用 RoboFarm 深色森林绿。所有色值经 tokens.css 变量引用, 禁止硬编码。 */
 
 .stats-body {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  min-width: 560px;
-  max-width: 640px;
+  gap: 18px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.005em;
 }
 
+/* ───────── 最终得分: 对决卡片 ───────── */
 .stats-final {
   display: flex;
-  gap: 24px;
-  font-weight: 700;
-  font-size: 16px;
+  align-items: stretch;
+  gap: 12px;
 }
 
-.stats-final-self {
-  color: var(--money);
-}
-
-.stats-final-enemy {
-  color: var(--danger-text);
-}
-
-.stats-chart canvas {
-  width: 100%;
-  height: auto;
-  background: var(--bg-log);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  cursor: crosshair;
-}
-
-.stats-crops-title {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin-bottom: 6px;
-}
-
-.stats-crop-row {
+.stats-score {
+  flex: 1;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 3px 0;
-  font-size: 13px;
+  flex-direction: column;
+  gap: 5px;
+  position: relative;
+  padding: 14px 16px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: border-color var(--dur-med) var(--ease-out-expo),
+    box-shadow var(--dur-med) var(--ease-out-expo),
+    opacity var(--dur-med) var(--ease-out-expo);
 }
 
-.stats-crop-name {
-  width: 56px;
-  flex: none;
+.stats-score__label {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  height: 16px;
+  gap: 7px;
+  line-height: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: -0.005em;
+}
+
+.stats-score__dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  align-self: center;
+  border-radius: 50%;
+  background: var(--text-faint);
+}
+
+.stats-score__value {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
   color: var(--text-primary);
 }
 
-.stats-crop-bar {
-  flex: 1;
-  height: 12px;
+.stats-score__sub {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.stats-score__drones {
+  position: absolute;
+  right: 16px;
+  bottom: 15px;
+  padding: 3px 8px;
+  color: var(--text-muted);
   background: var(--bg-hover);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 14px;
+}
+
+/* 己方/对方语义色 */
+.stats-score--self .stats-score__dot {
+  background: var(--money);
+}
+.stats-score--self .stats-score__value {
+  color: var(--money);
+}
+.stats-score--enemy .stats-score__dot {
+  background: var(--danger-text);
+}
+.stats-score--enemy .stats-score__value {
+  color: var(--danger-text);
+}
+
+/* 胜方高亮: 内描边 + 柔光; 负方降透明 */
+.stats-score--winner {
+  border-color: var(--accent-border);
+  box-shadow:
+    0 0 0 1px var(--accent-border) inset,
+    0 14px 30px -18px var(--accent-glow);
+}
+.stats-score--loser {
+  opacity: 0.7;
+}
+
+/* VS 分隔 (多人) */
+.stats-vs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  flex: none;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+}
+
+/* 胜负徽标 */
+.stats-badge {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  letter-spacing: -0.005em;
+}
+.stats-badge--win {
+  color: var(--success);
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+}
+.stats-badge--lose {
+  color: var(--danger-text);
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+}
+
+/* ───────── 图表卡片 ───────── */
+.stats-charts {
+  display: flex;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.stats-chart,
+.stats-pie {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  /* Cirrus 双层阴影: 仅取自 ink 色的近/远两层 */
+  box-shadow:
+    0 1px 1px rgba(14, 17, 22, 0.04),
+    0 18px 36px -20px rgba(14, 17, 22, 0.48);
+  transition: box-shadow var(--dur-med) var(--ease-out-expo),
+    border-color var(--dur-med) var(--ease-out-expo);
+}
+
+.stats-chart:hover,
+.stats-pie:hover {
+  border-color: var(--border-strong);
+  box-shadow:
+    0 1px 1px rgba(14, 17, 22, 0.06),
+    0 22px 44px -22px rgba(14, 17, 22, 0.6);
+}
+
+.stats-chart__head,
+.stats-pie__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px 8px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.stats-chart__title,
+.stats-pie__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.008em;
+}
+
+.stats-chart__hint,
+.stats-pie__hint {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.stats-chart__canvas-wrap {
+  position: relative;
+  width: 560px;
+  height: 240px;
+}
+
+.stats-chart canvas,
+.stats-pie canvas {
+  display: block;
+  background: var(--bg-log);
+}
+
+.stats-chart canvas {
+  cursor: crosshair;
+}
+
+.stats-pie canvas {
+  cursor: default;
+}
+
+/* 折线图悬停信息置于独立 DOM 浮层: 不再挤压或覆盖画布内的数据。 */
+.stats-chart-tooltip {
+  position: absolute;
+  z-index: 1;
+  top: 48px;
+  width: 130px;
+  padding: 9px 10px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow:
+    0 1px 1px rgba(14, 17, 22, 0.06),
+    0 18px 36px -20px rgba(14, 17, 22, 0.48);
+  transition: opacity var(--dur-fast) var(--ease-out-expo),
+    transform var(--dur-fast) var(--ease-out-expo);
+}
+
+.stats-chart-tooltip--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.stats-chart-tooltip__turn {
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.stats-chart-tooltip__row {
+  display: grid;
+  grid-template-columns: 7px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 18px;
+}
+
+.stats-chart-tooltip__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.stats-chart-tooltip__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stats-chart-tooltip strong {
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ───────── 种植明细 ───────── */
+.stats-crops {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.stats-crops-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.008em;
+}
+
+.stats-crops-title small {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.stats-crop-row {
+  display: grid;
+  grid-template-columns: max-content minmax(160px, 1fr) 30%;
+  align-items: center;
+  column-gap: 12px;
+  min-height: 32px;
+  padding: 5px 14px 5px 10px;
+  font-size: 13px;
+  border-radius: var(--radius);
+  transition: background var(--dur-fast) var(--ease-out-expo);
+}
+
+.stats-crop-dot {
+  width: 9px;
+  height: 9px;
+  flex: none;
+  border-radius: 50%;
+}
+
+.stats-crop-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.stats-crop-name__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stats-crop-bar {
+  height: 8px;
+  background: var(--bg-log);
+  border-radius: var(--radius-pill);
   overflow: hidden;
 }
 
 .stats-crop-fill {
   display: block;
   height: 100%;
-  background: var(--accent);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
+  transition: width var(--dur-slow) var(--ease-out-expo);
 }
 
 .stats-crop-count {
-  width: 72px;
-  flex: none;
-  text-align: right;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  column-gap: 6px;
   color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.stats-crop-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 2px 8px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stats-crop-tag b {
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+@media (max-width: 760px) {
+  .stats-charts {
+    flex-direction: column;
+  }
+
+  .stats-chart,
+  .stats-pie,
+  .stats-chart__canvas-wrap,
+  .stats-chart canvas,
+  .stats-pie canvas {
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  .stats-crop-row {
+    column-gap: 8px;
+  }
 }

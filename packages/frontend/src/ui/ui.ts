@@ -1,4 +1,5 @@
 // Generic UI helpers.
+import gsap from 'gsap';
 
 export function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -27,22 +28,38 @@ export function button(label: string, onClick: () => void, opts: Record<string, 
 export function toast(message: string): void {
   const box = el('div', { class: 'toast', text: message });
   document.body.append(box);
-  setTimeout(() => box.remove(), 2600);
+  gsap.set(box, { xPercent: -50 });
+  gsap.fromTo(box, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.24, ease: 'power2.out' });
+  gsap.to(box, { opacity: 0, y: -8, duration: 0.2, delay: 2.4, ease: 'power2.in', onComplete: () => box.remove() });
 }
 
-export function modal(title: string, body: HTMLElement, opts: { noClose?: boolean } = {}): { close: () => void } {
+export function modal(
+  title: string,
+  body: HTMLElement,
+  opts: { noClose?: boolean; modalClass?: string; titleRight?: Node[] } = {}
+): { close: () => void } {
   const overlay = el('div', { class: 'modal-overlay' });
   const head = el('div', { class: 'modal-head' }, [
-    el('h3', { text: title }),
-    ...(opts.noClose ? [] : [button('关闭', () => overlay.remove(), { class: 'btn btn-small' })]),
+    el('div', { class: 'modal-head-left' }, [el('h3', { text: title }), ...(opts.titleRight ?? [])]),
+    ...(opts.noClose ? [] : [button('关闭', () => closeModal(), { class: 'btn btn-small' })]),
   ]);
   const content = el('div', { class: 'modal-body' }, [body]);
-  overlay.append(el('div', { class: 'modal' }, [head, content]));
+  const dialog = el('div', { class: `modal${opts.modalClass ? ' ' + opts.modalClass : ''}` }, [head, content]);
+  overlay.append(dialog);
   document.body.append(overlay);
+
+  gsap.fromTo(overlay, { opacity: 0 }, { opacity: 1, duration: 0.16, ease: 'power1.out' });
+  gsap.fromTo(dialog, { opacity: 0, scale: 0.94, y: 10 }, { opacity: 1, scale: 1, y: 0, duration: 0.26, ease: 'power3.out' });
+
+  function closeModal(): void {
+    gsap.to(overlay, { opacity: 0, duration: 0.15, ease: 'power1.in', onComplete: () => overlay.remove() });
+    gsap.to(dialog, { opacity: 0, scale: 0.97, y: 6, duration: 0.18, ease: 'power2.in' });
+  }
+
   overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) overlay.remove();
+    if (e.target === overlay) closeModal();
   });
-  return { close: () => overlay.remove() };
+  return { close: () => closeModal() };
 }
 
 export function page(children: (Node | string)[]): HTMLElement {

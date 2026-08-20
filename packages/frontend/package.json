@@ -20,7 +20,8 @@
     "@codemirror/view": "^6.34.0",
     "@robofarm/shared": "*",
     "@uiw/codemirror-theme-tokyo-night": "^4.25.11",
-    "codemirror": "^6.0.1"
+    "codemirror": "^6.0.1",
+    "gsap": "^3.15.0"
   },
   "devDependencies": {
     "typescript": "^5.6.0",

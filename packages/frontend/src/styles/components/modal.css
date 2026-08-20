@@ -8,7 +8,6 @@
   align-items: center;
   justify-content: center;
   z-index: var(--z-modal);
-  animation: px-fade-in var(--dur-fast) var(--ease-out) both;
 }
 
 .modal {
@@ -20,7 +19,6 @@
   max-height: 80vh;
   display: flex;
   flex-direction: column;
-  animation: px-pop-in var(--dur-med) var(--ease-out) both;
 }
 
 .modal-head {
@@ -33,6 +31,18 @@
 
 .modal-head h3 {
   margin: 0;
+}
+
+.modal-head-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 宽弹窗 (对局统计等需要横向并排图表的场景) */
+.modal-wide {
+  max-width: 960px;
+  width: 92%;
 }
 
 .modal-body {

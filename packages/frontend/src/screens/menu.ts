@@ -2,6 +2,7 @@
 import { el, button } from '../ui/ui';
 import { showUpdateLog } from '../docs/version';
 import { mcpCollapse } from '../docs/api-manual';
+import gsap from 'gsap';
 
 export function menuScreen(root: HTMLElement): void {
   root.replaceChildren();
@@ -61,4 +62,12 @@ export function menuScreen(root: HTMLElement): void {
     ]),
   ]);
   root.append(box);
+
+  // Entrance animation: stagger the menu box children (logo, hero, grid, MCP strip) on first open.
+  const items = Array.from(box.children);
+  gsap.fromTo(
+    items,
+    { opacity: 0, y: 18 },
+    { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: 'power3.out' }
+  );
 }

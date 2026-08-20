@@ -4,6 +4,7 @@
 // The main menu "API manual" modal reuses the same content (apiManualContent, fully expanded).
 import { el, button } from '../ui/ui';
 import { icon } from '../ui/icon';
+import gsap from 'gsap';
 import {
   CROPS,
   DOC_OPERATIONS,
@@ -105,47 +106,40 @@ export function mcpGuide(): HTMLElement {
   return el('div', { class: 'manual mcp-guide' }, nodes);
 }
 
-/** Collapsible MCP onboarding strip (<details>, collapsed by default). */
+/** Collapsible MCP onboarding strip (gsap-animated expand/collapse). */
 export function mcpCollapse(label = 'MCP 接入'): HTMLElement {
-  const strip = el('details', { class: 'mcp-strip' }, [
-    el('summary', { text: label }),
-  ]);
+  const strip = el('details', { class: 'mcp-strip' }, [el('summary', { text: label })]);
   const mcpBody = el('div', { class: 'mcp-collapse-body' }, [mcpGuide()]);
   strip.append(mcpBody);
 
-  // Native <details> removes its content as soon as `open` becomes false, which
-  // prevents a closing animation. Keep it open until the CSS grid collapse ends.
-  let closing = false;
-  function closeMcp(): void {
-    if (!strip.open || closing) return;
-    closing = true;
-    strip.classList.add('is-closing');
+  mcpBody.style.overflow = 'hidden';
+  gsap.set(mcpBody, { height: 0, opacity: 0 });
+
+  function measure(): number {
+    const prev = mcpBody.style.height;
+    mcpBody.style.height = 'auto';
+    const h = mcpBody.scrollHeight;
+    mcpBody.style.height = prev;
+    return h;
   }
-  mcpBody.addEventListener('transitionend', (event) => {
-    if (event.propertyName !== 'grid-template-rows' || !closing) return;
-    closing = false;
-    strip.classList.remove('is-closing');
-    strip.open = false;
-  });
-  // Browser <details> applies `open` before the first paint, so delay setting
-  // it by one frame to give the collapsed grid state a rendered starting point.
+
   const summary = strip.querySelector('summary')!;
   summary.addEventListener('click', (event) => {
-    if (strip.open) {
-      event.preventDefault();
-      closeMcp();
-      return;
-    }
     event.preventDefault();
-    requestAnimationFrame(() => {
+    if (strip.open) {
+      gsap.to(mcpBody, {
+        height: 0,
+        opacity: 0,
+        duration: 0.22,
+        ease: 'power3.in',
+        onComplete: () => (strip.open = false),
+      });
+    } else {
       strip.open = true;
-    });
+      gsap.to(mcpBody, { height: measure(), opacity: 1, duration: 0.28, ease: 'power3.out' });
+    }
   });
-  strip.addEventListener('toggle', () => {
-    if (!strip.open) return;
-    closing = false;
-    strip.classList.remove('is-closing');
-  });
+
   return strip;
 }
 
@@ -328,7 +322,7 @@ export function mountApiManual(): () => void {
   const head = el('div', { class: 'api-sidebar-head' }, [el('h3', { text: '无人机 API 手册' }), closeBtn]);
   const body = el('div', { class: 'api-sidebar-body' }, [apiManualTabs()]);
   // Toggle icon is part of the sidebar (on its left edge): sticks to right screen edge when collapsed, moves with panel when open
-  const toggle = el('button', { class: 'api-toggle', title: 'API 手册' }, [icon('book', 18)]);
+  const toggle = el('button', { class: 'api-toggle', title: 'API 手册' }, [icon('book', 26)]);
   sidebar.append(toggle, head, body);
   document.body.append(sidebar);
 

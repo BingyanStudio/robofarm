@@ -6,14 +6,19 @@
   left: 0;
   top: 50%;
   transform: translate(-100%, -50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid var(--border-strong);
   border-right: none;
   border-radius: var(--radius-md) 0 0 var(--radius-md);
   background: var(--bg-surface);
-  padding: 12px 8px;
+  width: 44px;
+  height: 56px;
+  padding: 0;
   cursor: pointer;
-  font-size: 18px;
-  line-height: 1.2;
+  font-size: 24px;
+  line-height: 1;
   z-index: 1;
 }
 
@@ -101,34 +106,16 @@
   transform: rotate(90deg);
 }
 
-/* Details cannot animate to/from `height:auto` by CSS alone. The dedicated
-   body wrapper instead animates a grid row from 0fr to 1fr. It remains in
-   normal flow, so the tab row below is pushed down rather than overlapped. */
+/* Collapsed/expanded height is driven by gsap (mcpCollapse), so the body wrapper
+   is a plain block whose inline height animates and remains in normal flow. */
 .mcp-strip > .mcp-collapse-body {
-  display: grid;
-  grid-template-rows: 0fr;
+  display: block;
   min-height: 0;
-  opacity: 0;
   overflow: hidden;
-  transition:
-    grid-template-rows var(--dur-med) var(--ease-in-out),
-    opacity var(--dur-fast) var(--ease-in-out);
 }
 
 .mcp-strip > .mcp-collapse-body > .mcp-guide {
   min-height: 0;
-  overflow: hidden;
-}
-
-.mcp-strip[open]:not(.is-closing) > .mcp-collapse-body {
-  grid-template-rows: 1fr;
-  opacity: 1;
-}
-
-/* JS keeps details open while this class plays the reverse transition. */
-.mcp-strip.is-closing > .mcp-collapse-body {
-  grid-template-rows: 0fr;
-  opacity: 0;
 }
 
 /* Doc tab panels fade in when switched. */
