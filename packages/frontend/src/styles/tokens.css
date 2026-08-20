@@ -60,8 +60,13 @@
   /* ---------- Generic button hover ---------- */
   --btn-hover-bg: #2c4437;
 
-  /* ---------- Money / showcase ---------- */
+  /* ---------- Money / gold (leaderboard medals, gold accent buttons, mine row) ---------- */
   --money: #f2cf62;
+  --gold-bg: #f2cf62;           /* gold accent button background */
+  --gold-bg-hover: #ffdd7d;
+  --gold-border: #d0ac4a;       /* gold borders (gold buttons / leaderboard mine row) */
+  --gold-fg: #2e2505;           /* text on gold background */
+  --gold-tint: rgba(216, 168, 42, 0.22); /* leaderboard mine-row fill */
 
   /* ---------- Editor lock bar ---------- */
   --lock-bg: #293d2c;

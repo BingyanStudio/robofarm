@@ -56,14 +56,14 @@
 
 /* Gold accent button (leaderboard etc.). */
 .btn-gold {
-  background: var(--accent);
-  border-color: var(--accent-border);
-  color: var(--accent-fg);
+  background: var(--gold-bg);
+  border-color: var(--gold-border);
+  color: var(--gold-fg);
   font-weight: 600;
 }
 
 .btn-gold:hover {
-  background: var(--accent-hover);
+  background: var(--gold-bg-hover);
 }
 
 /* Submit button: gold accent, right-aligned and elongated in the control bar. */
