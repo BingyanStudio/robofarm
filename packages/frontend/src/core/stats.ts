@@ -565,8 +565,11 @@ function drawCropPie(stats: GameStats): HTMLCanvasElement {
     }
     const single = slices.length === 1;
     slices.forEach((slice, index) => {
+      // 扇区间隙按角度自适应收缩: 占比过小的扇区若仍用固定 0.012 间隙,
+      // start+gap 会超过 end-gap, arc() 将反向绕满整圈并盖住其他扇区。
+      const gap = single ? 0 : Math.min(0.012, (slice.end - slice.start) / 4);
       // 单一作物时画出封闭整环, 不做扇区间隙也不做悬停外推 (会整体偏移)
-      drawRing(slice.start + (single ? 0 : 0.012), slice.end - (single ? 0 : 0.012), (!single && index === hoverIndex) ? 5 : 0);
+      drawRing(slice.start + gap, slice.end - gap, (!single && index === hoverIndex) ? 5 : 0);
       g.fillStyle = slice.color;
       g.fill();
     });
