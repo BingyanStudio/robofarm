@@ -14,7 +14,11 @@ import {
   ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { CROPS, DOC_SECTIONS, isCropType, sectionMarkdown, cropDocEntries, createSingleWorld, createCombatWorld } from '@robofarm/shared';
-import { mcpLoginStart, mcpLoginFinish } from '../auth';
+import { mcpLoginStart, mcpLoginFinish, userFromToken, AuthUser } from '../auth';
+import { getCombatCode, upsertCombatCode } from '../db';
+import { checkRateLimit } from '../services/ratelimit';
+import * as single from '../services/single';
+import * as combat from '../services/combat';
 
 const DOC_TITLES: Record<string, string> = {
   overview: '游戏概览',
@@ -29,10 +33,8 @@ const DOC_TITLES: Record<string, string> = {
 const ALL_SECTIONS = [...DOC_SECTIONS] as string[];
 
 export interface McpServerOptions {
-  /** 后端自身地址 (登录授权回调兜底 / 文档链接), 由会话创建时的请求推导 */
+  /** 后端对外地址 (登录授权回调兜底 / 文档链接), 由会话创建时的请求推导 */
   baseUrl?: string;
-  /** api_call 代理目标 (回环直连, 不经公网/反代/CDN, 避免 Cookie 被中间层剥掉) */
-  apiBaseUrl?: string;
 }
 
 export function createMcpServer(opts: McpServerOptions = {}): Server {
@@ -129,7 +131,7 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
       },
       {
         name: 'api_call',
-        description: '调用后端 HTTP API (代理): 任意 method + 相对路径 + JSON body, 返回 { status, data }。已登录会话自动携带 Cookie。',
+        description: '调用后端 API: 任意 method + 相对路径 + JSON body, 返回 { status, data }。登录会话自动以当前用户身份执行 (进程内直调)。',
         inputSchema: {
           type: 'object',
           properties: {
@@ -225,58 +227,137 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
     ],
   }));
 
-  /** 携带会话令牌调用后端 HTTP API (回环直连, 不经公网/反代/CDN, 避免 Cookie 被中间层剥掉) */
-  const apiRequest = async (
+  /** 会话令牌解析出的当前用户 (开发模式自动登录; 未登录返回 null) */
+  const current = (): AuthUser | null => userFromToken(sessionToken);
+
+  /**
+   * 进程内调用后端: 与 app.ts 的 HTTP 路由一一对应, 直接调用服务层函数,
+   * 不经 HTTP 往返 (本地回环/反代/CDN 可能剥掉 Cookie 导致 401)。
+   * 返回与 HTTP 一致的 { status, data }。
+   */
+  async function callBackend(
     method: string,
     path: string,
     body?: unknown
-  ): Promise<{ status: number; data: unknown }> => {
-    const base = opts.apiBaseUrl ?? opts.baseUrl ?? 'http://127.0.0.1:3001';
-    const res = await fetch(new URL(path, base), {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(sessionToken ? { Cookie: `robofarm_session=${sessionToken}` } : {}),
-      },
-      body: method === 'GET' || method === 'DELETE' || body === undefined ? undefined : JSON.stringify(body),
-    });
-    const text = await res.text();
-    let data: unknown = text;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      // 非 JSON 响应原样返回
-    }
-    return { status: res.status, data };
-  };
+  ): Promise<{ status: number; data: unknown }> {
+    const m = method.toUpperCase();
+    const [seg, queryStr] = path.split('?');
+    const q = new URLSearchParams(queryStr ?? '');
+    const uid = (): number | null => current()?.id ?? null;
+    const unauth = () => ({ status: 401 as const, data: { error: 'unauthorized' } });
 
-  /** 封装 apiRequest 结果: 非 2xx 标记错误, 401 提示登录流程 */
+    if (m === 'GET' && seg === '/auth/me') {
+      const user = current();
+      return user ? { status: 200, data: { user } } : unauth();
+    }
+
+    // ---- 单人种植 ----
+    if (m === 'GET' && seg === '/single/leaderboard') {
+      const name = (q.get('user') ?? '').trim();
+      return name
+        ? { status: 200, data: { user: single.singleUserRank(name) } }
+        : { status: 200, data: single.singleLeaderboard(uid()) };
+    }
+    if (seg === '/single/validate') {
+      const userId = uid();
+      if (userId == null) return unauth();
+      if (m === 'POST') {
+        const code = (body as { code?: unknown } | undefined)?.code;
+        if (typeof code !== 'string' || !code.trim()) return { status: 400, data: { error: '缺少代码' } };
+        const limit = Number(process.env.SINGLE_SUBMIT_LIMIT_PER_MIN ?? 0);
+        const rl = checkRateLimit(`single:${userId}`, limit);
+        if (!rl.ok) {
+          return { status: 429, data: { error: `提交过于频繁, 请 ${Math.ceil(rl.retryAfterMs / 1000)} 秒后再试` } };
+        }
+        const result = await single.startValidation(userId, code);
+        if (!result.ok) return { status: 409, data: { error: result.error } };
+        return { status: 200, data: { ok: true } };
+      }
+      if (m === 'GET') return { status: 200, data: single.validationStatus(userId) };
+    }
+    if (m === 'GET' && seg === '/single/history') {
+      const userId = uid();
+      if (userId == null) return unauth();
+      return { status: 200, data: { entries: single.singleHistory(userId) } };
+    }
+    const replayM = /^\/single\/replay\/(\d+)$/.exec(seg ?? '');
+    if (m === 'GET' && replayM) {
+      const userId = uid();
+      if (userId == null) return unauth();
+      const result = single.singleReplay(Number(replayM[1]), userId);
+      if ('error' in result) return { status: 404, data: { error: result.error } };
+      return { status: 200, data: result.file };
+    }
+
+    // ---- 竞技模式 ----
+    if (m === 'GET' && seg === '/combat/state') {
+      const userId = uid();
+      if (userId == null) return unauth();
+      const row = getCombatCode(userId);
+      return { status: 200, data: row ? { code: row.code, wins: row.wins, losses: row.losses } : null };
+    }
+    if (m === 'POST' && seg === '/combat/upload') {
+      const userId = uid();
+      if (userId == null) return unauth();
+      const code = (body as { code?: unknown } | undefined)?.code;
+      if (typeof code !== 'string' || !code.trim()) return { status: 400, data: { error: '缺少代码' } };
+      upsertCombatCode(userId, code);
+      return { status: 200, data: { ok: true } };
+    }
+    if (m === 'GET' && seg === '/combat/list') {
+      const userId = uid();
+      if (userId == null) return unauth();
+      return { status: 200, data: { entries: combat.combatList(userId) } };
+    }
+    if (m === 'POST' && seg === '/combat/start') {
+      const userId = uid();
+      if (userId == null) return unauth();
+      const opponentId = Number((body as { id?: unknown } | undefined)?.id);
+      if (!Number.isInteger(opponentId)) return { status: 400, data: { error: '缺少对手 id' } };
+      const result = combat.startMatch(userId, opponentId);
+      if ('error' in result) return { status: 400, data: { error: result.error } };
+      return { status: 200, data: { roomId: result.roomId } };
+    }
+    if (m === 'GET' && seg === '/combat/room') {
+      return { status: 200, data: { rooms: combat.listRooms() } };
+    }
+    if (m === 'GET' && seg === '/combat/history') {
+      const userId = uid();
+      if (userId == null) return unauth();
+      return { status: 200, data: { entries: combat.matchHistory(userId) } };
+    }
+    const combatReplayM = /^\/combat\/replay\/(\d+)$/.exec(seg ?? '');
+    if (m === 'GET' && combatReplayM) {
+      const userId = uid();
+      if (userId == null) return unauth();
+      const result = combat.matchReplay(Number(combatReplayM[1]), userId);
+      if ('error' in result) return { status: 404, data: { error: result.error } };
+      return { status: 200, data: result };
+    }
+
+    return { status: 404, data: { error: `未知接口: ${m} ${seg ?? ''}` } };
+  }
+
+  /** 封装 callBackend 结果: 非 2xx 标记错误, 401 提示登录流程 */
   const apiToolResult = async (
     method: string,
     path: string,
     body?: unknown
   ): Promise<{ content: { type: 'text'; text: string }[]; isError?: boolean }> => {
-    try {
-      const r = await apiRequest(method, path, body);
-      if (r.status === 401) {
-        return {
-          content: [{
-            type: 'text',
-            text: 'HTTP 401: 未登录。先调用 login_start + login_finish 获取会话令牌 (开发模式下后端自动登录, 无需此步骤)。',
-          }],
-          isError: true,
-        };
-      }
-      if (r.status >= 400) {
-        return { content: [{ type: 'text', text: `HTTP ${r.status}: ${JSON.stringify(r.data)}` }], isError: true };
-      }
-      return { content: [{ type: 'text', text: JSON.stringify(r.data, null, 2) }] };
-    } catch (err) {
+    const r = await callBackend(method, path, body);
+    if (r.status === 401) {
       return {
-        content: [{ type: 'text', text: `请求失败: ${err instanceof Error ? err.message : String(err)}` }],
+        content: [{
+          type: 'text',
+          text: 'HTTP 401: 未登录。先调用 login_start + login_finish 获取会话令牌 (开发模式下后端自动登录, 无需此步骤)。',
+        }],
         isError: true,
       };
     }
+    if (r.status >= 400) {
+      return { content: [{ type: 'text', text: `HTTP ${r.status}: ${JSON.stringify(r.data)}` }], isError: true };
+    }
+    return { content: [{ type: 'text', text: JSON.stringify(r.data, null, 2) }] };
   };
 
   server.setRequestHandler(CallToolRequestSchema, async (req) => {
@@ -391,20 +472,13 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
         if (!path.startsWith('/')) {
           return { content: [{ type: 'text', text: 'path 必须是相对路径 (以 / 开头)' }], isError: true };
         }
-        try {
-          const res = await apiRequest(method, path, args?.body);
-          return {
-            content: [{
-              type: 'text',
-              text: JSON.stringify({ status: res.status, data: res.data }, null, 2),
-            }],
-          };
-        } catch (err) {
-          return {
-            content: [{ type: 'text', text: `请求失败: ${err instanceof Error ? err.message : String(err)}` }],
-            isError: true,
-          };
-        }
+        const res = await callBackend(method, path, args?.body);
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({ status: res.status, data: res.data }, null, 2),
+          }],
+        };
       }
       // ---- 单人种植 ----
       case 'single_validate': {

@@ -182,6 +182,23 @@ export function currentUser(req: Request): AuthUser | null {
   };
 }
 
+/** 由会话令牌解析用户 (MCP 进程内直调用, 与 HTTP currentUser 等价; 开发模式自动登录) */
+export function userFromToken(token: string | null): AuthUser | null {
+  if (devMode()) {
+    const u = upsertUserByLogin('local-dev');
+    return { id: u.id, name: u.github_login, dev: true, avatar: null };
+  }
+  if (!token) return null;
+  const row = getUserBySession(token);
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.github_login,
+    dev: false,
+    avatar: githubAvatarUrl(row.github_id, row.github_login),
+  };
+}
+
 export function createAuthRouter(): Router {
   const router = Router();
 
