@@ -5,8 +5,9 @@
 //   2. Older or unrecognized version -> show update log
 //   3. Write current version number (for next comparison)
 import { el, modal } from '../ui/ui';
+import { GAME_VERSION } from '@robofarm/shared';
 
-export const VERSION = '1.0.6';
+export const VERSION = GAME_VERSION;
 export const VERSION_KEY = 'robofarm.version';
 
 export interface UpdateEntry {

@@ -13,7 +13,7 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import { CROPS, DOC_SECTIONS, isCropType, sectionMarkdown, cropDocEntries, createSingleWorld, createCombatWorld } from '@robofarm/shared';
+import { CROPS, DOC_SECTIONS, isCropType, sectionMarkdown, cropDocEntries, createSingleWorld, createCombatWorld, GAME_VERSION } from '@robofarm/shared';
 import { mcpLoginStart, mcpLoginFinish, userFromToken, AuthUser } from '../auth';
 import * as api from '../services/api';
 
@@ -36,7 +36,7 @@ export interface McpServerOptions {
 
 export function createMcpServer(opts: McpServerOptions = {}): Server {
   const server = new Server(
-    { name: 'robofarm-docs', version: '1.0.2' },
+    { name: 'robofarm-docs', version: GAME_VERSION },
     { capabilities: { resources: {}, tools: {}, prompts: {} } }
   );
   /** 该 MCP 会话的登录令牌 (经 login_start / login_finish 获得) */

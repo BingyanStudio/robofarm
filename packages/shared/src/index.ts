@@ -1,4 +1,5 @@
 // 主入口: 全部模块。具名 re-export 保证 tsc 产物静态可分析。
+export { GAME_VERSION } from './version';
 export { TIMEOUT_MS, LOAD_TIMEOUT_MS, MAX_WATER, DEFAULT_MAX_TURNS, TURN_INTERVAL_MS, TURN_INTERVALS_MS, START_MONEY, MAX_ENERGY, CHARGE_GAIN, HARVEST_ROW_COL_COST, WATER_ROW_COL_COST, INTERCEPT_ROW_COL_COST, CHANGE_TILE_COST, MAX_LOG_LINES, MAX_LOGS_PER_TURN } from './config';
 export type { Position, InternalOperation, TileInfo, CropInfo, DroneInfo, GameInfo, PlayerView, CropData, Tile, DroneState, PlayerState, WorldState, SnapshotTile, SnapshotDrone, SnapshotPlayer, SnapshotState, GameResult, GameEvent, GameMode, Frame } from './types';
 export { TileType, CropType, CropState } from './types';
