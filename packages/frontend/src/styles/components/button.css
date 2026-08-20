@@ -25,10 +25,10 @@
   cursor: not-allowed;
 }
 
-/* Start/stop toggle: start is green, stop is red. */
+/* Start/stop toggle: keep the normal button look, tinted green (start) / red (stop). */
 .btn-start {
-  background: var(--success-bg);
   border-color: var(--success-border);
+  color: var(--success);
 }
 
 .btn-start:hover {
@@ -36,8 +36,8 @@
 }
 
 .btn-stop {
-  background: var(--danger-bg);
   border-color: var(--danger-border);
+  color: var(--danger-text);
 }
 
 .btn-stop:hover {
