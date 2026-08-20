@@ -8,12 +8,29 @@
 
 .list-row {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 8px 10px;
+  height: 40px;
+  padding: 0 10px;
   background: var(--bg-panel);
   border-radius: var(--radius);
   font-size: 14px;
+}
+
+/* 排行榜名次行: 左侧文本省略号截断 (超长名不撑开行高) */
+.lb-row > span:first-child {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.list-row > .muted {
+  flex: none;
 }
 
 .list-row.clickable {
@@ -30,6 +47,37 @@
   align-items: center;
   gap: 6px;
   flex: none;
+}
+
+/* Share poster overlay: unboxed poster with actions floated over it. */
+.poster-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.62);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+}
+
+.poster-shell {
+  position: relative;
+}
+
+.share-poster-img {
+  display: block;
+  max-width: 90vw;
+  max-height: 88vh;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+}
+
+.poster-actions {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  display: flex;
+  gap: 8px;
 }
 
 .list-row.mine {
@@ -51,6 +99,179 @@
   gap: 6px;
   border-bottom: 1px solid var(--border);
   padding-bottom: 8px;
+}
+
+/* 版本下拉 (位于 "排行榜" 标题右侧): 自定义下拉 + gsap 展开/收起动效 */
+.lb-version {
+  position: relative;
+}
+
+.lb-version__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+
+.lb-version__btn:hover {
+  border-color: var(--link);
+}
+
+.lb-version__caret {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-muted);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.lb-version__btn.open .lb-version__caret {
+  transform: rotate(180deg);
+}
+
+.lb-version__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px -12px rgba(0, 0, 0, 0.6);
+  z-index: 5;
+}
+
+.lb-version__item {
+  display: block;
+  width: 100%;
+  padding: 7px 12px;
+  background: transparent;
+  color: var(--text-primary);
+  border: none;
+  text-align: left;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.lb-version__item:hover {
+  background: var(--bg-hover);
+}
+
+.lb-version__item.active {
+  color: var(--link);
+  font-weight: 600;
+}
+
+/* 前三名柱状领奖台: 左2 | 中1 | 右3, 柱顶头像 + 生长动效 */
+.lb-podium {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 18px;
+  padding: 8px 0 6px;
+}
+
+.lb-podium__slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  height: 240px;
+}
+
+.lb-podium__person {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.lb-podium__head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lb-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--text-strong);
+  font-weight: 700;
+  font-size: 16px;
+  flex: none;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+}
+
+.lb-podium__medal {
+  position: absolute;
+  bottom: -2px;
+  right: -6px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.lb-podium__name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lb-podium__bar {
+  width: 54px;
+  height: 0; /* 由 gsap 生长到目标高度 */
+  border-radius: var(--radius) var(--radius) 4px 4px;
+}
+
+.lb-podium__bar--1 {
+  background: var(--money); /* 金: 扁平纯色, 回归游戏主题 */
+}
+
+.lb-podium__bar--2 {
+  background: var(--text-muted); /* 银: 柔和灰绿, 扁平无金属渐变 */
+}
+
+.lb-podium__bar--3 {
+  background: var(--splitter-active); /* 铜: 深森林绿调, 与主题一致 */
+}
+
+.lb-podium__score {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--money);
+  font-variant-numeric: tabular-nums;
+}
+
+.lb-ellipsis {
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 16px;
+  line-height: 1;
+  padding: 2px 0;
+}
+
+/* 名次列表容器: 限高, 供定位到"我"时滚动
+   边缘渐隐由 JS 按滚动位置动态设置 mask, 顶部/底部触底时消除对应侧模糊 */
+.leaderboard .list {
+  max-height: 340px;
+  overflow-y: auto;
 }
 
 /* Submit verification progress: ring spinner + hint. */
