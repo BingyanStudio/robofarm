@@ -54,7 +54,7 @@ export class Renderer {
   private dragging = false;
   private lastX = 0;
   private lastY = 0;
-  private tooltip: HTMLDivElement;
+  private tooltip: HTMLDivElement | null = null;
   private opts: RenderOptions = {};
   private state: SnapshotState | null = null;
   private hoverPos: { x: number; y: number } | null = null;
@@ -127,13 +127,25 @@ export class Renderer {
     canvas.addEventListener('pointerup', () => (this.dragging = false));
     canvas.addEventListener('pointerleave', () => {
       this.hoverPos = null;
-      this.tooltip.style.display = 'none';
+      if (this.tooltip) this.tooltip.style.display = 'none';
       this.draw();
     });
-    this.tooltip = document.createElement('div');
-    this.tooltip.className = 'render-tooltip';
-    this.tooltip.style.display = 'none';
-    (canvas.parentElement ?? document.body).append(this.tooltip);
+  }
+
+  /** Lazily create the tooltip and attach it to the canvas's current parent.
+   *  The canvas may not be mounted yet when the Renderer is constructed (e.g. the
+   *  replay screen builds its layout afterwards), so attaching eagerly would put
+   *  the absolutely-positioned tooltip under document.body instead of the canvas
+   *  host, landing on the top bar. */
+  private ensureTooltip(): HTMLDivElement {
+    if (!this.tooltip) {
+      this.tooltip = document.createElement('div');
+      this.tooltip.className = 'render-tooltip';
+      this.tooltip.style.display = 'none';
+    }
+    const host = this.canvas.parentElement ?? document.body;
+    if (this.tooltip.parentElement !== host) host.append(this.tooltip);
+    return this.tooltip;
   }
 
   private resize(): void {
@@ -260,7 +272,7 @@ export class Renderer {
 
   /** Update the top-right info panel: Tile / drone / crop three sections. */
   private updateTooltip(): void {
-    const tip = this.tooltip;
+    const tip = this.ensureTooltip();
     if (!this.state || !this.hoverPos) {
       tip.style.display = 'none';
       return;
