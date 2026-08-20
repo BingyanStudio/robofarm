@@ -5,7 +5,7 @@
 // Layout: a persistent top bar (logo + back button + user card + per-screen
 // action slot) lives in #app permanently; only the #content area swaps per
 // route, so the top bar never rebuilds on navigation (Astro-style shell).
-import { setWasmUrl } from '@robofarm/shared';
+import { setWasmUrl, prewarmCompiler } from '@robofarm/shared';
 import { el, topBar, toast } from './ui/ui';
 import { userCard } from './ui/user-card';
 import { topActionsEl, setTopActions } from './ui/topbar-state';
@@ -31,7 +31,8 @@ const openManual = mountApiManual();
 checkVersionOnLoad(openManual);
 
 // Runtime config: esbuild.wasm may be deployed elsewhere (ESBUILD_WASM_URL from backend .env).
-// When set, browser compilation loads from that URL; otherwise keep same-origin /esbuild.wasm
+// When set, browser compilation loads from that URL; otherwise keep same-origin /esbuild.wasm.
+// 进入页面即后台预热编译器 (下载 esbuild.wasm), 首次编译直接 await 该下载, 不再临时等待。
 void (async () => {
   try {
     const res = await fetch('/config');
@@ -40,6 +41,7 @@ void (async () => {
   } catch {
     // Keep default same-origin loading
   }
+  prewarmCompiler();
 })();
 
 /** Lazy screen loaders — keyed by route name. `menu` is eager (landing screen). */

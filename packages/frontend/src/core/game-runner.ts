@@ -3,7 +3,7 @@
 // Screen-specific differences (code source / editor lock / end display) are injected via option callbacks to avoid duplicate implementation.
 import {
   GameController,
-  isCompilerInitialized,
+  compilerState,
   DEFAULT_MAX_TURNS,
   TURN_INTERVALS_MS,
   GameResult,
@@ -263,9 +263,14 @@ export class GameRunner {
     this.stopGame();
     this.statsEvents = [];
     this.turnEvents = [];
-    // First compile downloads the compiler (esbuild.wasm); log this event explicitly.
+    // Compiler downloads in the background since page load (prewarm); log the actual state.
+    const st = compilerState();
     this.log(
-      isCompilerInitialized() ? '[系统] 正在编译代码…' : '[系统] 首次编译, 正在下载编译器…'
+      st === 'ready'
+        ? '[系统] 正在编译代码…'
+        : st === 'loading'
+          ? '[系统] 正在下载编译器…'
+          : '[系统] 首次编译, 正在下载编译器…'
     );
     const built = await this.opts.buildGame((line) => this.log(line));
     if (!built) {

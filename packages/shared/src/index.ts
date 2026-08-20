@@ -17,7 +17,7 @@ export { GameController } from './game-controller';
 export { ReplayRecorder, wrapProgramForReplay, replayEvents, makeScriptedPlayer } from './replay';
 export type { ReplayFile, ReplayRound, ReplayDroneOp, ReplayPlayerConfig } from './replay';
 export type { PlayerProgram, PlayerTurnResult, GamePlayer, GameControllerOptions } from './game-controller';
-export { compilePlayerCode, setWasmUrl, setWasmModule, isCompilerInitialized } from './compile';
+export { compilePlayerCode, setWasmUrl, setWasmModule, isCompilerInitialized, compilerState, prewarmCompiler } from './compile';
 export type { CompileResult, CompileError } from './compile';
 export { DOC_OPERATIONS, DOC_FUNCTIONS, DOC_TYPES, DOC_RULES, DOC_OVERVIEW, DOC_SECTIONS, cropDocEntries, sectionMarkdown } from './docs';
 export { API_DOC_GROUPS, API_DOC_CONVENTIONS, apiDocsMarkdown, llmTxt } from './api-docs';

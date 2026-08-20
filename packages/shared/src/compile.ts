@@ -17,6 +17,8 @@ const STUB = '\n;export const __robofarm_run = typeof run !== "undefined" ? run 
 let wasmUrl: string | null = null;
 let wasmModule: WebAssembly.Module | null = null;
 let initPromise: Promise<void> | null = null;
+/** 编译器初始化状态: idle=未开始 / loading=下载或初始化中 / ready=可编译 */
+let initState: 'idle' | 'loading' | 'ready' = 'idle';
 
 const isBrowser = typeof (globalThis as { location?: unknown }).location !== 'undefined';
 
@@ -36,6 +38,7 @@ export function setWasmModule(mod: WebAssembly.Module): void {
 
 function ensureInit(): Promise<void> {
   if (!initPromise) {
+    initState = 'loading';
     let options: Record<string, unknown>;
     if (isBrowser) {
       // 浏览器: 必须通过 wasmURL 加载 esbuild.wasm (public/esbuild.wasm)
@@ -47,10 +50,15 @@ function ensureInit(): Promise<void> {
       // 常规 Node: esbuild-wasm 自行使用包内磁盘上的 wasm 文件
       options = {};
     }
-    initPromise = initialize(options as never).catch((err) => {
-      initPromise = null;
-      throw err;
-    });
+    initPromise = initialize(options as never)
+      .then(() => {
+        initState = 'ready';
+      })
+      .catch((err) => {
+        initPromise = null;
+        initState = 'idle';
+        throw err;
+      });
   }
   return initPromise;
 }
@@ -58,6 +66,22 @@ function ensureInit(): Promise<void> {
 /** 编译器是否已初始化过 (首次编译会下载 esbuild.wasm, 之后复用) */
 export function isCompilerInitialized(): boolean {
   return initPromise !== null;
+}
+
+/** 编译器初始化状态, 用于日志提示 (下载中 / 可编译) */
+export function compilerState(): 'idle' | 'loading' | 'ready' {
+  return initState;
+}
+
+/**
+ * 后台预热编译器: 页面加载后尽早开始下载并初始化 esbuild.wasm,
+ * 使首次编译时直接 await 已在进行中的下载, 不必临时等待。
+ * 幂等 (初始化只发生一次); 预热失败静默忽略, 首次编译会自动重试。
+ */
+export function prewarmCompiler(): void {
+  void ensureInit().catch(() => {
+    // 预热失败 (如离线) 不打扰用户, 首次编译时会重新初始化并提示
+  });
 }
 
 export interface CompileError {
