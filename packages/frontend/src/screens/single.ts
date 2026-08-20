@@ -69,6 +69,7 @@ export function singleScreen(root: HTMLElement): void {
     },
     gameStartLog: '[系统] 新对局开始',
     playerNames: ['玩家'],
+    onTurn: (events, round) => recorder?.afterStep(events, round),
     onStats: (stats) => showGameStats(stats, '对局统计'),
     onEnd: (result) => handleEnd(result),
   });

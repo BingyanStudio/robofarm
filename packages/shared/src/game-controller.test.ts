@@ -68,6 +68,11 @@ describe('GameController: 单人种植', () => {
     expect(seenTurn[0]).toBe(1);
     // 每回合都有快照
     expect(events.filter((e) => e.type === 'snapshot')).toHaveLength(10);
+    // 快照回合号 = 刚完成的回合号 (1..10), 与 turn 事件一致, 无 +1 错位 (曾出现 501/500)
+    const snapTurns = events.filter((e) => e.type === 'snapshot').map((e) => e.state.turn);
+    expect(snapTurns).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    const turnEvents = events.filter((e) => e.type === 'turn').map((e) => e.turn);
+    expect(snapTurns).toEqual(turnEvents);
   });
 
   it('程序报错导致游戏提前结束', async () => {

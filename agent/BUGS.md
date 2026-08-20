@@ -2,6 +2,26 @@
 
 修复后在对应行首打钩 (✓), 并简述修复方式。
 
+- [x] **浏览器本地单人模式下载的回放 rounds 数组为空**
+  现象: 本地跑完单人模式后点"保存回放", 下载的 JSON 里 rounds 是空数组。
+  原因: 前端 single.ts 用 ReplayRecorder 包装了程序 (能捕获每回合操作),
+  但从未调用 `recorder.afterStep()` 把操作落盘 → rounds 永远为空
+  (后端 single/combat 服务都有调用)。
+  修复 (packages/frontend/src/core/game-runner.ts): GameRunner 新增可选
+  `onTurn(events, round)` 回调, 在每回合 `controller.step()` 后调用;
+  single.ts 注册 `recorder.afterStep(events, round)`, 与后端一致,
+  本地回放文件现在含完整 rounds。
+- [x] **回合数显示 501 而不是 500 (状态栏 / 统计金钱曲线 / 回放末回合)**
+  现象: 游戏结束后状态栏显示 "回合 501 / 500"; 统计图金钱曲线横轴到 501
+  (超出 maxTurns); 回放最后一回合也是 501。
+  原因: `GameController.step()` 在 `stepTurn` 之后先执行 `world.turn += 1`,
+  再调用 `snapshotOf(this.world)` 生成快照; 而 `snapshotOf` 返回
+  `turn: world.turn + 1` → 快照回合号 = 刚完成回合 + 1 (第 500 回合的快照
+  显示 501)。turn 事件与玩家视图 (view.turn) 均正确, 只有快照错位。
+  修复 (packages/shared/src/view.ts): `snapshotOf` 改为返回 `world.turn`
+  (刚完成的回合号), 预览/初始快照 (turn=0) 相应显示 0; 状态栏、
+  统计横轴 (1..maxTurns, 末点 = 最终金钱)、回放末回合全部归位。
+  回归测试 (game-controller.test.ts): 断言快照回合序列 == turn 事件序列。
 - [x] **植物缺水时右上角图标应为 💧 Emoji**
   现象: 作物 Thirsty 时右上角只是一个小圆点 (程序化绘制的色块), 不够直观。
   修复 (packages/frontend/src/core/renderer.ts): 新增 `drawThirstyMarker()`,

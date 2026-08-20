@@ -107,7 +107,8 @@ export function buildPlayerView(
 export function snapshotOf(world: WorldState) {
   return {
     mode: world.mode,
-    turn: world.turn + 1,
+    // 快照在 step() 中 world.turn += 1 之后生成, 此时 world.turn 即刚完成的回合号
+    turn: world.turn,
     maxTurns: world.maxTurns,
     map: world.map.map((row) =>
       row.map((tile) => ({

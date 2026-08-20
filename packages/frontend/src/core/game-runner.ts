@@ -39,6 +39,8 @@ export interface GameRunnerOptions {
   onStats?: (stats: GameStats) => void;
   /** 玩家名称 (统计图例用; 默认 ['玩家']) */
   playerNames?: string[];
+  /** 每回合结束后回调 (回放录制等; round = 刚执行的回合号, 1..maxTurns) */
+  onTurn?: (events: GameEvent[], round: number) => void;
 }
 
 export class GameRunner {
@@ -214,6 +216,7 @@ export class GameRunner {
     }
     const events = await this.controller.step();
     this.statsEvents.push(...events);
+    this.opts.onTurn?.(events, this.controller.world.turn);
     this.view.apply(events);
   }
 
