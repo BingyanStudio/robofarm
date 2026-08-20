@@ -106,7 +106,7 @@ export function showGameStats(stats: GameStats, title: string): void {
   modal(title, body, { noClose: false });
 }
 
-/** 折线图 (Canvas): 金色 = 己方, 红色 = 对方 */
+/** 折线图 (Canvas): 金色 = 己方, 红色 = 对方; 鼠标悬停显示垂直线 + 回合/金钱图例 */
 function drawMoneyChart(stats: GameStats): HTMLCanvasElement {
   const W = 560;
   const H = 210;
@@ -117,7 +117,7 @@ function drawMoneyChart(stats: GameStats): HTMLCanvasElement {
   const canvas = el('canvas', { width: W, height: H }) as HTMLCanvasElement;
   const ctx = canvas.getContext('2d');
   if (!ctx) return canvas;
-  ctx.clearRect(0, 0, W, H);
+  const g: CanvasRenderingContext2D = ctx;
 
   const maxMoney = Math.max(100, ...stats.moneySeries.flat());
   const maxTurn = Math.max(1, stats.maxTurns);
@@ -126,48 +126,134 @@ function drawMoneyChart(stats: GameStats): HTMLCanvasElement {
   const x = (t: number): number => padL + (t / maxTurn) * plotW;
   const y = (m: number): number => H - padB - (m / maxMoney) * plotH;
 
-  // 网格与纵轴刻度 (5 档)
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-  ctx.fillStyle = '#75867b';
-  ctx.font = '11px sans-serif';
-  ctx.textAlign = 'right';
-  for (let i = 0; i <= 4; i++) {
-    const v = (maxMoney / 4) * i;
-    ctx.beginPath();
-    ctx.moveTo(padL, y(v));
-    ctx.lineTo(W - padR, y(v));
-    ctx.stroke();
-    ctx.fillText(String(Math.round(v)), padL - 6, y(v) + 4);
+  /** 悬停回合 (null = 未悬停) */
+  let hoverTurn: number | null = null;
+
+  function drawChart(): void {
+    g.clearRect(0, 0, W, H);
+
+    // 网格与纵轴刻度 (5 档)
+    g.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    g.fillStyle = '#75867b';
+    g.font = '11px sans-serif';
+    g.textAlign = 'right';
+    for (let i = 0; i <= 4; i++) {
+      const v = (maxMoney / 4) * i;
+      g.beginPath();
+      g.moveTo(padL, y(v));
+      g.lineTo(W - padR, y(v));
+      g.stroke();
+      g.fillText(String(Math.round(v)), padL - 6, y(v) + 4);
+    }
+    // 横向回合刻度
+    g.textAlign = 'center';
+    for (let i = 0; i <= 4; i++) {
+      const t = Math.round((maxTurn / 4) * i);
+      g.fillText(String(t), x(t), H - 8);
+    }
+    // 折线 (Catmull-Rom 样条平滑)
+    stats.playerNames.forEach((_, i) => {
+      const series = stats.moneySeries[i];
+      if (!series || series.length < 1) return;
+      g.strokeStyle = SERIES_COLORS[i % SERIES_COLORS.length];
+      g.lineWidth = 2;
+      g.beginPath();
+      traceSmooth(
+        g,
+        series.map((m, k) => ({ x: x(stats.turns[k] ?? 0), y: y(m) }))
+      );
+      g.stroke();
+    });
+
+    // 悬停: 垂直线 + 交点 + 图例
+    if (hoverTurn != null) {
+      const px = x(hoverTurn);
+      g.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+      g.setLineDash([4, 4]);
+      g.beginPath();
+      g.moveTo(px, padT);
+      g.lineTo(px, H - padB);
+      g.stroke();
+      g.setLineDash([]);
+
+      const first = stats.turns[0] ?? 0;
+      const idx = Math.min(Math.max(hoverTurn - first, 0), Math.max(stats.turns.length - 1, 0));
+
+      // 交点圆点
+      stats.playerNames.forEach((_, i) => {
+        const m = stats.moneySeries[i][idx];
+        if (m == null) return;
+        g.fillStyle = SERIES_COLORS[i % SERIES_COLORS.length];
+        g.beginPath();
+        g.arc(px, y(m), 3.5, 0, Math.PI * 2);
+        g.fill();
+        g.strokeStyle = 'rgba(0, 0, 0, 0.6)';
+        g.lineWidth = 1;
+        g.stroke();
+      });
+
+      // 图例框 (图内左上): "回合 xx: <金钱>"
+      const parts: { text: string; color: string }[] = [{ text: `回合 ${hoverTurn}:`, color: '#a6b5ac' }];
+      if (stats.playerNames.length <= 1) {
+        const m = stats.moneySeries[0][idx];
+        if (m != null) parts.push({ text: ` ${m}`, color: SERIES_COLORS[0] });
+      } else {
+        stats.playerNames.forEach((name, i) => {
+          const m = stats.moneySeries[i][idx];
+          if (m != null) parts.push({ text: ` ${name} ${m}`, color: SERIES_COLORS[i % SERIES_COLORS.length] });
+        });
+      }
+      g.font = 'bold 12px sans-serif';
+      g.textAlign = 'left';
+      let tw = 12;
+      for (const p of parts) tw += g.measureText(p.text).width;
+      const boxW = tw + 16;
+      const boxH = 26;
+      const bx = padL;
+      const by = padT;
+      g.fillStyle = 'rgba(11, 16, 14, 0.85)';
+      g.beginPath();
+      g.roundRect(bx, by, boxW, boxH, 4);
+      g.fill();
+      g.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+      g.stroke();
+      let cx = bx + 8;
+      g.textBaseline = 'middle';
+      for (const p of parts) {
+        g.fillStyle = p.color;
+        g.fillText(p.text, cx, by + boxH / 2);
+        cx += g.measureText(p.text).width;
+      }
+      g.textBaseline = 'alphabetic';
+    }
   }
-  // 横向回合刻度
-  ctx.textAlign = 'center';
-  for (let i = 0; i <= 4; i++) {
-    const t = Math.round((maxTurn / 4) * i);
-    ctx.fillText(String(t), x(t), H - 8);
-  }
-  // 折线 (Catmull-Rom 样条平滑)
-  stats.playerNames.forEach((_, i) => {
-    const series = stats.moneySeries[i];
-    if (!series || series.length < 1) return;
-    ctx.strokeStyle = SERIES_COLORS[i % SERIES_COLORS.length];
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    traceSmooth(
-      ctx,
-      series.map((m, k) => ({ x: x(stats.turns[k] ?? 0), y: y(m) }))
-    );
-    ctx.stroke();
+
+  // 鼠标交互: x 坐标 → 回合 → 重绘
+  canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0) return;
+    const px = ((e.clientX - rect.left) / rect.width) * W;
+    const t = Math.round(((px - padL) / plotW) * maxTurn);
+    const first = stats.turns[0] ?? 0;
+    hoverTurn = t < first || t > maxTurn ? null : Math.min(Math.max(t, 0), maxTurn);
+    drawChart();
   });
+  canvas.addEventListener('mouseleave', () => {
+    hoverTurn = null;
+    drawChart();
+  });
+
+  drawChart();
   return canvas;
 }
 
 /** Catmull-Rom 样条 (转为三次贝塞尔) 绘制平滑曲线 */
-function traceSmooth(ctx: CanvasRenderingContext2D, pts: { x: number; y: number }[]): void {
+function traceSmooth(g: CanvasRenderingContext2D, pts: { x: number; y: number }[]): void {
   const n = pts.length;
   if (n < 2) return;
-  ctx.moveTo(pts[0].x, pts[0].y);
+  g.moveTo(pts[0].x, pts[0].y);
   if (n === 2) {
-    ctx.lineTo(pts[1].x, pts[1].y);
+    g.lineTo(pts[1].x, pts[1].y);
     return;
   }
   for (let i = 0; i < n - 1; i++) {
@@ -175,7 +261,7 @@ function traceSmooth(ctx: CanvasRenderingContext2D, pts: { x: number; y: number 
     const p1 = pts[i];
     const p2 = pts[i + 1];
     const p3 = pts[i + 2] ?? p2;
-    ctx.bezierCurveTo(
+    g.bezierCurveTo(
       p1.x + (p2.x - p0.x) / 6,
       p1.y + (p2.y - p0.y) / 6,
       p2.x - (p3.x - p1.x) / 6,

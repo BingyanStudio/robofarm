@@ -29,6 +29,7 @@
   background: var(--bg-log);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  cursor: crosshair;
 }
 
 .stats-crops-title {
