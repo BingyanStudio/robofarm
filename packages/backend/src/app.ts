@@ -45,12 +45,14 @@ export function mountMcp(app: express.Express): void {
       }
     }
     const id = randomUUID();
+    // 请求实际到达的本地端口 (容器内监听端口, 与 PORT 环境变量/宿主机映射无关)
+    const localPort = req.socket?.localPort ?? Number(process.env.PORT ?? 3001);
     const server = createMcpServer({
       // 对外地址: 授权回调兜底 / 文档链接 (经反向代理时由请求推导)
       baseUrl: requestBaseUrl(req),
       // 回环直连地址: api_call 代理目标, 绕过公网/反代/CDN (其可能剥掉
       // 服务器自身请求的 Cookie, 导致已登录会话的 api_call 仍返回 401)
-      apiBaseUrl: `http://127.0.0.1:${process.env.PORT ?? '3001'}`,
+      apiBaseUrl: `http://127.0.0.1:${localPort}`,
     });
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => id,
