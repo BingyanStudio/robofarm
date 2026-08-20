@@ -8,15 +8,19 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { createAuthRouter, requireUser, currentUser, AuthUser, requestProto } from './auth';
 import { llmTxt, apiDocsMarkdown } from './api-docs';
-import * as single from './services/single';
+import * as api from './services/api';
 import * as combat from './services/combat';
-import { checkRateLimit } from './services/ratelimit';
-import { getCombatCode, upsertCombatCode } from './db';
 import { createMcpServer } from './mcp/server';
 
 /** requireUser 中间件之后可用: 当前登录用户 */
 function userOf(req: Request): AuthUser {
   return (req as Request & { user: AuthUser }).user;
+}
+
+/** 共享处理函数 (services/api.ts) 的结果 → HTTP 响应 */
+function send(res: Response, result: api.ApiResult): void {
+  if (result.status >= 400) res.status(result.status);
+  res.json(result.data);
 }
 
 /** MCP 会话: sessionId → (server, transport) */
@@ -90,104 +94,54 @@ export function createApp(): express.Express {
 
   // ---- 单人种植 ----
   app.get('/single/replay/:id', requireUser, (req: Request, res: Response) => {
-    const result = single.singleReplay(Number(req.params.id), userOf(req).id);
-    if ('error' in result) {
-      res.status(404).json({ error: result.error });
-      return;
-    }
-    res.json(result.file);
+    send(res, api.apiSingleReplay(userOf(req).id, Number(req.params.id)));
   });
 
   app.get('/single/history', requireUser, (req: Request, res: Response) => {
-    res.json({ entries: single.singleHistory(userOf(req).id) });
+    send(res, api.apiSingleHistory(userOf(req).id));
   });
 
   app.post('/single/validate', requireUser, async (req: Request, res: Response) => {
-    const code = req.body?.code;
-    if (typeof code !== 'string' || !code.trim()) {
-      res.status(400).json({ error: '缺少代码' });
-      return;
-    }
-    // 预留限流: 每用户每分钟提交次数上限 (env SINGLE_SUBMIT_LIMIT_PER_MIN, 0 = 不限流)
-    const limit = Number(process.env.SINGLE_SUBMIT_LIMIT_PER_MIN ?? 0);
-    const rl = checkRateLimit(`single:${userOf(req).id}`, limit);
-    if (!rl.ok) {
-      res.status(429).json({ error: `提交过于频繁, 请 ${Math.ceil(rl.retryAfterMs / 1000)} 秒后再试` });
-      return;
-    }
-    const result = await single.startValidation(userOf(req).id, code);
-    if (!result.ok) {
-      res.status(409).json({ error: result.error });
-      return;
-    }
-    res.json({ ok: true });
+    send(res, await api.apiSingleValidateSubmit(userOf(req).id, req.body));
   });
 
   app.get('/single/validate', requireUser, (req: Request, res: Response) => {
-    res.json(single.validationStatus(userOf(req).id));
+    send(res, api.apiSingleValidateStatus(userOf(req).id));
   });
 
   app.get('/single/leaderboard', (req: Request, res: Response) => {
-    // 携带 ?user=<用户名> 时查询指定玩家的得分与全榜名次; 否则返回按大版本分 Tab 的前 50 名
     const name = typeof req.query.user === 'string' ? req.query.user.trim() : '';
-    if (name) {
-      res.json({ user: single.singleUserRank(name) });
-      return;
-    }
-    const user = currentUser(req);
-    res.json(single.singleLeaderboard(user?.id ?? null));
+    send(res, api.apiSingleLeaderboard(currentUser(req)?.id ?? null, name));
   });
 
   // ---- 竞技模式 ----
   app.get('/combat/state', requireUser, (req: Request, res: Response) => {
-    const row = getCombatCode(userOf(req).id);
-    res.json(row ? { code: row.code, wins: row.wins, losses: row.losses } : null);
+    send(res, api.apiCombatState(userOf(req).id));
   });
 
   app.post('/combat/upload', requireUser, (req: Request, res: Response) => {
-    const code = req.body?.code;
-    if (typeof code !== 'string' || !code.trim()) {
-      res.status(400).json({ error: '缺少代码' });
-      return;
-    }
-    upsertCombatCode(userOf(req).id, code);
-    res.json({ ok: true });
+    send(res, api.apiCombatUpload(userOf(req).id, req.body));
   });
 
   app.get('/combat/list', requireUser, (req: Request, res: Response) => {
-    res.json({ entries: combat.combatList(userOf(req).id) });
+    send(res, api.apiCombatList(userOf(req).id));
   });
 
   app.post('/combat/start', requireUser, (req: Request, res: Response) => {
-    const opponentId = Number(req.body?.id);
-    if (!Number.isInteger(opponentId)) {
-      res.status(400).json({ error: '缺少对手 id' });
-      return;
-    }
-    const result = combat.startMatch(userOf(req).id, opponentId);
-    if ('error' in result) {
-      res.status(400).json({ error: result.error });
-      return;
-    }
-    res.json({ roomId: result.roomId });
+    send(res, api.apiCombatStart(userOf(req).id, req.body));
   });
 
   app.get('/combat/room', (_req: Request, res: Response) => {
     // 观战列表无需登录 (与 /ws 观战通道一致)
-    res.json({ rooms: combat.listRooms() });
+    send(res, api.apiCombatRoom());
   });
 
   app.get('/combat/history', requireUser, (req: Request, res: Response) => {
-    res.json({ entries: combat.matchHistory(userOf(req).id) });
+    send(res, api.apiCombatHistory(userOf(req).id));
   });
 
   app.get('/combat/replay/:id', requireUser, (req: Request, res: Response) => {
-    const result = combat.matchReplay(Number(req.params.id), userOf(req).id);
-    if ('error' in result) {
-      res.status(404).json({ error: result.error });
-      return;
-    }
-    res.json(result);
+    send(res, api.apiCombatReplay(userOf(req).id, Number(req.params.id)));
   });
 
   // MCP over HTTP: 向任意 Agent 提供游戏 API 文档
@@ -195,7 +149,7 @@ export function createApp(): express.Express {
 
   // 运行时配置 (前端启动时拉取): esbuild.wasm 可能单独部署在其他服务器
   app.get('/config', (_req: Request, res: Response) => {
-    res.json({ esbuildWasmUrl: process.env.ESBUILD_WASM_URL?.trim() || null });
+    send(res, api.apiConfig());
   });
 
   // LLM 友好文档: 全部文档按章节拼接 (Base URL 按实际请求动态生成)

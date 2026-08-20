@@ -15,10 +15,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { CROPS, DOC_SECTIONS, isCropType, sectionMarkdown, cropDocEntries, createSingleWorld, createCombatWorld } from '@robofarm/shared';
 import { mcpLoginStart, mcpLoginFinish, userFromToken, AuthUser } from '../auth';
-import { getCombatCode, upsertCombatCode } from '../db';
-import { checkRateLimit } from '../services/ratelimit';
-import * as single from '../services/single';
-import * as combat from '../services/combat';
+import * as api from '../services/api';
 
 const DOC_TITLES: Record<string, string> = {
   overview: '游戏概览',
@@ -231,9 +228,8 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
   const current = (): AuthUser | null => userFromToken(sessionToken);
 
   /**
-   * 进程内调用后端: 与 app.ts 的 HTTP 路由一一对应, 直接调用服务层函数,
-   * 不经 HTTP 往返 (本地回环/反代/CDN 可能剥掉 Cookie 导致 401)。
-   * 返回与 HTTP 一致的 { status, data }。
+   * 进程内调用后端: 与 app.ts 的 HTTP 路由共用 services/api.ts 的同一份实现
+   * (api_xxx 函数), 不经 HTTP 往返 (本地回环/反代/CDN 可能剥掉 Cookie 导致 401)。
    */
   async function callBackend(
     method: string,
@@ -243,99 +239,32 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
     const m = method.toUpperCase();
     const [seg, queryStr] = path.split('?');
     const q = new URLSearchParams(queryStr ?? '');
-    const uid = (): number | null => current()?.id ?? null;
-    const unauth = () => ({ status: 401 as const, data: { error: 'unauthorized' } });
+    const user = current();
+    const userId = user?.id ?? null;
 
-    if (m === 'GET' && seg === '/auth/me') {
-      const user = current();
-      return user ? { status: 200, data: { user } } : unauth();
-    }
-
-    // ---- 单人种植 ----
+    if (m === 'GET' && seg === '/auth/me') return api.apiAuthMe(user);
+    if (m === 'GET' && seg === '/config') return api.apiConfig();
     if (m === 'GET' && seg === '/single/leaderboard') {
-      const name = (q.get('user') ?? '').trim();
-      return name
-        ? { status: 200, data: { user: single.singleUserRank(name) } }
-        : { status: 200, data: single.singleLeaderboard(uid()) };
+      return api.apiSingleLeaderboard(userId, q.get('user') ?? '');
     }
     if (seg === '/single/validate') {
-      const userId = uid();
-      if (userId == null) return unauth();
-      if (m === 'POST') {
-        const code = (body as { code?: unknown } | undefined)?.code;
-        if (typeof code !== 'string' || !code.trim()) return { status: 400, data: { error: '缺少代码' } };
-        const limit = Number(process.env.SINGLE_SUBMIT_LIMIT_PER_MIN ?? 0);
-        const rl = checkRateLimit(`single:${userId}`, limit);
-        if (!rl.ok) {
-          return { status: 429, data: { error: `提交过于频繁, 请 ${Math.ceil(rl.retryAfterMs / 1000)} 秒后再试` } };
-        }
-        const result = await single.startValidation(userId, code);
-        if (!result.ok) return { status: 409, data: { error: result.error } };
-        return { status: 200, data: { ok: true } };
-      }
-      if (m === 'GET') return { status: 200, data: single.validationStatus(userId) };
+      if (m === 'POST') return await api.apiSingleValidateSubmit(userId, body);
+      if (m === 'GET') return api.apiSingleValidateStatus(userId);
     }
-    if (m === 'GET' && seg === '/single/history') {
-      const userId = uid();
-      if (userId == null) return unauth();
-      return { status: 200, data: { entries: single.singleHistory(userId) } };
-    }
+    if (m === 'GET' && seg === '/single/history') return api.apiSingleHistory(userId);
     const replayM = /^\/single\/replay\/(\d+)$/.exec(seg ?? '');
-    if (m === 'GET' && replayM) {
-      const userId = uid();
-      if (userId == null) return unauth();
-      const result = single.singleReplay(Number(replayM[1]), userId);
-      if ('error' in result) return { status: 404, data: { error: result.error } };
-      return { status: 200, data: result.file };
-    }
+    if (m === 'GET' && replayM) return api.apiSingleReplay(userId, Number(replayM[1]));
 
-    // ---- 竞技模式 ----
-    if (m === 'GET' && seg === '/combat/state') {
-      const userId = uid();
-      if (userId == null) return unauth();
-      const row = getCombatCode(userId);
-      return { status: 200, data: row ? { code: row.code, wins: row.wins, losses: row.losses } : null };
-    }
-    if (m === 'POST' && seg === '/combat/upload') {
-      const userId = uid();
-      if (userId == null) return unauth();
-      const code = (body as { code?: unknown } | undefined)?.code;
-      if (typeof code !== 'string' || !code.trim()) return { status: 400, data: { error: '缺少代码' } };
-      upsertCombatCode(userId, code);
-      return { status: 200, data: { ok: true } };
-    }
-    if (m === 'GET' && seg === '/combat/list') {
-      const userId = uid();
-      if (userId == null) return unauth();
-      return { status: 200, data: { entries: combat.combatList(userId) } };
-    }
-    if (m === 'POST' && seg === '/combat/start') {
-      const userId = uid();
-      if (userId == null) return unauth();
-      const opponentId = Number((body as { id?: unknown } | undefined)?.id);
-      if (!Number.isInteger(opponentId)) return { status: 400, data: { error: '缺少对手 id' } };
-      const result = combat.startMatch(userId, opponentId);
-      if ('error' in result) return { status: 400, data: { error: result.error } };
-      return { status: 200, data: { roomId: result.roomId } };
-    }
-    if (m === 'GET' && seg === '/combat/room') {
-      return { status: 200, data: { rooms: combat.listRooms() } };
-    }
-    if (m === 'GET' && seg === '/combat/history') {
-      const userId = uid();
-      if (userId == null) return unauth();
-      return { status: 200, data: { entries: combat.matchHistory(userId) } };
-    }
+    if (m === 'GET' && seg === '/combat/state') return api.apiCombatState(userId);
+    if (m === 'POST' && seg === '/combat/upload') return api.apiCombatUpload(userId, body);
+    if (m === 'GET' && seg === '/combat/list') return api.apiCombatList(userId);
+    if (m === 'POST' && seg === '/combat/start') return api.apiCombatStart(userId, body);
+    if (m === 'GET' && seg === '/combat/room') return api.apiCombatRoom();
+    if (m === 'GET' && seg === '/combat/history') return api.apiCombatHistory(userId);
     const combatReplayM = /^\/combat\/replay\/(\d+)$/.exec(seg ?? '');
-    if (m === 'GET' && combatReplayM) {
-      const userId = uid();
-      if (userId == null) return unauth();
-      const result = combat.matchReplay(Number(combatReplayM[1]), userId);
-      if ('error' in result) return { status: 404, data: { error: result.error } };
-      return { status: 200, data: result };
-    }
+    if (m === 'GET' && combatReplayM) return api.apiCombatReplay(userId, Number(combatReplayM[1]));
 
-    return { status: 404, data: { error: `未知接口: ${m} ${seg ?? ''}` } };
+    return api.apiUnknown(m, seg ?? '');
   }
 
   /** 封装 callBackend 结果: 非 2xx 标记错误, 401 提示登录流程 */
