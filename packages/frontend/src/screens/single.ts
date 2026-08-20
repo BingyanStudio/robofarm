@@ -18,7 +18,9 @@ import { icon } from '../ui/icon';
 import { setTopActions } from '../ui/topbar-state';
 import { api, fetchUser } from '../core/net';
 import { GameRunner } from '../core/game-runner';
-import { showGameStats, statsFromReplay } from '../core/stats';
+import { showGameStats, statsFromReplay, richestSnapshotFromReplay } from '../core/stats';
+import { openSharePoster } from '../core/share-poster';
+import gsap from 'gsap';
 
 const CODE_KEY = 'robofarm.single';
 
@@ -69,6 +71,7 @@ export function singleScreen(root: HTMLElement): void {
     },
     gameStartLog: '[系统] 新对局开始',
     playerNames: ['玩家'],
+    precompute: true,
     onTurn: (events, round) => recorder?.afterStep(events, round),
     onStats: (stats) => showGameStats(stats, '对局统计'),
     onEnd: (result) => handleEnd(result),
@@ -163,37 +166,121 @@ export function singleScreen(root: HTMLElement): void {
     else toast(`验证完成, 得分: ${r.score}`);
   }
 
+  type LbEntry = { name: string; score: number; me?: boolean; rank?: number };
+
   function showLeaderboard(): void {
     void (async () => {
       const { data } = await api.get('/single/leaderboard');
-      const tabs = (data?.tabs ?? []) as {
-        version: string;
-        entries: { name: string; score: number; me?: boolean }[];
-      }[];
+      const tabs = (data?.tabs ?? []) as { version: string; entries: LbEntry[] }[];
       const body = el('div', { class: 'leaderboard' });
       if (tabs.length === 0) {
         body.append(el('p', { class: 'hint', text: '暂无排行数据' }));
         modal('排行榜', body);
         return;
       }
-      let active = tabs.length - 1; // Default to the current version's live leaderboard (last tab)
-      const tabBar = el('div', { class: 'lb-tabs' });
+      const versionOf = (v: string): number[] => v.replace(/^v/i, '').split('.').map((n) => Number(n) || 0);
+      const versionLabel = (v: string): string => (v.startsWith('v') ? v : `v${v}`);
+      const orderedTabs = tabs
+        .map((t, i) => ({ index: i, version: t.version }))
+        .sort((a, b) => {
+          const va = versionOf(a.version);
+          const vb = versionOf(b.version);
+          for (let k = 0; k < Math.max(va.length, vb.length); k++) {
+            const d = (vb[k] ?? 0) - (va[k] ?? 0);
+            if (d !== 0) return d;
+          }
+          return 0;
+        });
+      let active = orderedTabs[0]?.index ?? 0;
+      const podiumHost = el('div', { class: 'lb-podium' });
       const listHost = el('div', { class: 'list' });
 
-      function renderTabs(): void {
-        tabBar.replaceChildren();
-        tabs.forEach((t, i) => {
-          tabBar.append(
-            el('button', {
-              class: 'lb-tab' + (i === active ? ' active' : ''),
-              text: t.version,
-              onClick: () => {
-                active = i;
-                renderTabs();
-                renderList();
-              },
-            })
-          );
+      function avatarTile(name: string, size = 40): HTMLElement {
+        let h = 0;
+        for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
+        return el('span', {
+          class: 'lb-avatar',
+          text: (name[0] ?? '?').toUpperCase(),
+          style: `width:${size}px;height:${size}px;background:hsl(${h} 42% 38%)`,
+        });
+      }
+
+      function buildVersionDropdown(): HTMLElement {
+        const wrap = el('div', { class: 'lb-version' });
+        const btn = el('button', { class: 'lb-version__btn', type: 'button' }, [
+          el('span', { class: 'lb-version__label', text: versionLabel(tabs[active]?.version ?? '') }),
+          el('span', { class: 'lb-version__caret', html: '<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4"/></svg>' }),
+        ]);
+        const menu = el('div', { class: 'lb-version__menu' });
+        const itemNodes: HTMLButtonElement[] = [];
+        orderedTabs.forEach((ot) => {
+          const t = tabs[ot.index];
+          const item = el('button', {
+            class: 'lb-version__item' + (ot.index === active ? ' active' : ''),
+            type: 'button',
+            text: versionLabel(t.version),
+            onClick: () => {
+              active = ot.index;
+              elBtnLabel.textContent = versionLabel(t.version);
+              itemNodes.forEach((n) => n.classList.remove('active'));
+              item.classList.add('active');
+              closeMenu();
+              render();
+            },
+          }) as HTMLButtonElement;
+          itemNodes.push(item);
+          menu.append(item);
+        });
+        const elBtnLabel = btn.querySelector('.lb-version__label') as HTMLElement;
+        wrap.append(btn, menu);
+
+        let open = false;
+        function openMenu(): void {
+          open = true;
+          btn.classList.add('open');
+          gsap.fromTo(menu, { height: 0, opacity: 0 }, { height: 'auto', opacity: 1, duration: 0.22, ease: 'power2.out' });
+        }
+        function closeMenu(): void {
+          open = false;
+          btn.classList.remove('open');
+          gsap.to(menu, { height: 0, opacity: 0, duration: 0.16, ease: 'power2.in', onComplete: () => { menu.style.height = '0px'; } });
+        }
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          open ? closeMenu() : openMenu();
+        });
+        document.addEventListener('click', (e) => {
+          if (open && !wrap.contains(e.target as Node)) closeMenu();
+        });
+        return wrap;
+      }
+
+      function renderPodium(rows: LbEntry[]): void {
+        podiumHost.replaceChildren();
+        const top3 = rows.slice(0, 3).map((r, i) => ({ ...r, rank: i + 1 }));
+        const order = [top3[1], top3[0], top3[2]].filter(Boolean);
+        const barHeights: Record<number, number> = { 1: 132, 2: 96, 3: 74 };
+        order.forEach((r) => {
+          const person = el('div', { class: 'lb-podium__person' }, [
+            el('div', { class: 'lb-podium__head' }, [
+              avatarTile(r.name, r.rank === 1 ? 52 : 44),
+              el('div', { class: 'lb-podium__medal', text: ['🥇', '🥈', '🥉'][r.rank - 1] }),
+            ]),
+            el('div', { class: 'lb-podium__name', text: r.name }),
+          ]);
+          const bar = el('div', { class: `lb-podium__bar lb-podium__bar--${r.rank}` });
+          const slot = el('div', { class: `lb-podium__slot lb-podium__slot--${r.rank}` }, [
+            person,
+            bar,
+            el('div', { class: 'lb-podium__score', text: String(r.score) }),
+          ]);
+          podiumHost.append(slot);
+          gsap.fromTo(bar, { height: 0 }, {
+            height: barHeights[r.rank],
+            duration: 0.9,
+            delay: (r.rank - 1) * 0.15,
+            ease: 'power3.out',
+          });
         });
       }
 
@@ -204,24 +291,67 @@ export function singleScreen(root: HTMLElement): void {
           listHost.append(el('p', { class: 'hint', text: '暂无排行数据' }));
           return;
         }
+        let prevRank = 3;
         rows.forEach((r, i) => {
-          // Top three use medal emoji (🥇🥈🥉); the rest use a numeric rank.
-          const rankNode = i < 3
-            ? document.createTextNode(['🥇', '🥈', '🥉'][i])
-            : document.createTextNode(`${i + 1}.`);
+          const rank = r.rank ?? i + 1;
+          if (rank <= 3) return;
+          if (r.me && rank > prevRank + 1) {
+            listHost.append(el('div', { class: 'lb-ellipsis', text: '···' }));
+          }
           listHost.append(
-            el('div', { class: 'list-row' + (r.me ? ' mine' : '') }, [
-              el('span', {}, [rankNode, document.createTextNode(` ${r.name}${r.me ? ' (我)' : ''}`)]),
+            el('div', { class: 'list-row lb-row' + (r.me ? ' mine' : '') }, [
+              el('span', {}, [document.createTextNode(`${rank}. `), document.createTextNode(r.name + (r.me ? ' (我)' : ''))]),
               el('span', { class: 'muted', text: `${r.score}` }),
             ])
           );
+          prevRank = rank;
         });
       }
 
-      body.append(tabBar, listHost);
-      renderTabs();
-      renderList();
-      modal('排行榜', body);
+      function render(): void {
+        renderPodium(tabs[active]?.entries ?? []);
+        renderList();
+        scrollToMe();
+      }
+
+      /** Locate the "me" row and scroll it into view with a decaying ease. */
+      function scrollToMe(): void {
+        const mine = listHost.querySelector<HTMLElement>('.list-row.mine');
+        if (!mine) return;
+        requestAnimationFrame(() => {
+          const listRect = listHost.getBoundingClientRect();
+          const mineRect = mine.getBoundingClientRect();
+          const relative = mineRect.top - listRect.top;
+          let target = listHost.scrollTop + relative - (listHost.clientHeight - mine.offsetHeight) / 2;
+          target = Math.max(0, Math.min(target, listHost.scrollHeight - listHost.clientHeight));
+
+          const distance = Math.abs(target - listHost.scrollTop);
+          const duration = Math.min(1.8, Math.max(0.5, distance / 400));
+          gsap.to(listHost, { scrollTop: target, duration, ease: 'power3.out' });
+        });
+      }
+
+      /** Fade the list's top/bottom edges, dropping the cursor-side fade at either extreme. */
+      function updateListMask(): void {
+        const el = listHost;
+        const scrollable = el.scrollHeight > el.clientHeight;
+        const atTop = el.scrollTop <= 1;
+        const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
+        const top = !scrollable || atTop ? 'rgba(0,0,0,1) 0px' : 'rgba(0,0,0,0) 0px';
+        const topMid = !scrollable || atTop ? '' : ', rgba(0,0,0,1) 14px';
+        const bottomMid = !scrollable || atBottom ? '' : ', rgba(0,0,0,1) calc(100% - 14px)';
+        const bottom = !scrollable || atBottom ? ', rgba(0,0,0,1) 100%' : ', rgba(0,0,0,0) 100%';
+        const mask = `linear-gradient(to bottom, ${top}${topMid}${bottomMid}${bottom})`;
+        el.style.webkitMaskImage = mask;
+        el.style.maskImage = mask;
+      }
+
+      listHost.addEventListener('scroll', updateListMask);
+
+      body.append(podiumHost, listHost);
+      render();
+      modal('排行榜', body, { titleRight: [buildVersionDropdown()] });
+      requestAnimationFrame(updateListMask);
     })();
   }
 
@@ -259,6 +389,27 @@ export function singleScreen(root: HTMLElement): void {
                 const res = await api.get(`/single/replay/${r.id}`);
                 if (res.status === 200) downloadJson(res.data, `robofarm-replay-single-${r.id}.json`);
                 else toast(res.data?.error ?? '回放下载失败');
+              })();
+            }, { class: 'btn btn-small' }),
+            button('分享', () => {
+              void (async () => {
+                if (r.score == null) {
+                  toast('该次成绩无有效分数');
+                  return;
+                }
+                const res = await api.get(`/single/replay/${r.id}`);
+                if (res.status !== 200) {
+                  toast(res.data?.error ?? '回放加载失败');
+                  return;
+                }
+                const snapshot = await richestSnapshotFromReplay(res.data);
+                const user = await fetchUser();
+                await openSharePoster({
+                  name: user?.name ?? '玩家',
+                  avatar: user?.avatar ?? null,
+                  score: r.score,
+                  snapshot,
+                });
               })();
             }, { class: 'btn btn-small btn-gold' }),
           ]);
