@@ -19,6 +19,19 @@ export interface UpdateEntry {
 /** Update log (from newest to oldest) */
 export const UPDATE_LOG: UpdateEntry[] = [
     {
+        version: '1.0.8',
+        title: 'v1.0.8',
+        items: [
+            '## UI',
+            '统计界面优化: 新增作物收入饼图; 优化图表配色',
+            '排行榜优化: 使用柱状图表征得分差距',
+            '新增 "分享" 功能: 单人模式可在 "我的成绩" 中生成分享图片',
+            '## Bugfix',
+            '修复单人模式浏览器模拟时, 生成回放数据为空的问题',
+            '修复回合数统计错误的问题',
+        ],
+    },
+    {
         version: '1.0.7',
         title: 'v1.0.7',
         items: [
