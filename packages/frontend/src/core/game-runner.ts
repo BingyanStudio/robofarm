@@ -78,7 +78,7 @@ export class GameRunner {
     this.view.apply([{ type: 'snapshot', state: snapshotOf(opts.previewWorld()) }]);
     this.statusText.textContent = `回合 0 / ${DEFAULT_MAX_TURNS}`;
 
-    this.btnStartStop = button('开始', () => void this.onStartStop(), { class: 'btn-start' });
+    this.btnStartStop = button('开始', () => void this.onStartStop(), { class: 'btn btn-start' });
     this.btnPause = button('暂停', () => this.togglePause());
     this.btnStep = button('步进', () => void this.onStep());
     this.btnSpeed = button('速度: 正常', () => {
