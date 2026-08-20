@@ -25,8 +25,8 @@
 }
 
 .list-row.mine {
-  background: rgba(216, 168, 42, 0.22);
-  border: 1px solid var(--accent-border);
+  background: var(--gold-tint);
+  border: 1px solid var(--gold-border);
   border-radius: var(--radius);
 }
 
