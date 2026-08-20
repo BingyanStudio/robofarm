@@ -50,6 +50,12 @@ function stateValid(cookieValue: string | undefined, queryState: string): boolea
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
+/** 校验自带签名的一次性 state (格式 state:exp:sig, 与 Cookie 方案同构)。
+ *  MCP 等无 Cookie 客户端使用: 回调时无需查进程内存, 重启 / 多实例仍可登录。 */
+function signedStateValid(stateStr: string): boolean {
+  return stateValid(stateStr, stateStr.split(':')[0] ?? '');
+}
+
 export interface AuthUser {
   id: number;
   name: string;
@@ -107,15 +113,17 @@ function redirectUri(req: Request): string {
 /** MCP 登录第一步: 返回 GitHub 授权地址 (含 state); 开发模式直接返回 dev 标记 */
 export function mcpLoginStart(baseUrl: string): { authorizeUrl?: string; state?: string; dev: boolean } {
   if (devMode()) return { dev: true };
-  const state = randomBytes(16).toString('hex');
-  pendingStates.set(state, { state, createdAt: Date.now() });
+  // 自包含签名 state (state:exp:sig): 回调直接校验签名, 不依赖进程内存,
+  // 浏览器完成授权 (可能跨进程/重启) 后仍可通过 stateOk 校验
+  const { cookieValue } = makeSignedState();
+  pendingStates.set(cookieValue, { state: cookieValue, createdAt: Date.now() });
   const callback = resolveCallbackUrl(baseUrl);
   // 最小权限: 不申请任何 scope —— 只用 GET /user 取用户名 (login), 零 scope 的令牌即可
   const url =
     `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(clientId())}` +
     `&redirect_uri=${encodeURIComponent(callback)}` +
-    `&state=${state}`;
-  return { authorizeUrl: url, state, dev: false };
+    `&state=${cookieValue}`;
+  return { authorizeUrl: url, state: cookieValue, dev: false };
 }
 
 /** MCP 登录第二步: 用 OAuth state 换取会话令牌 (一次性, 10 分钟内有效) */
@@ -222,7 +230,8 @@ export function createAuthRouter(): Router {
       (stateStr !== '' &&
         stored !== undefined &&
         Date.now() - stored.createdAt <= STATE_TTL_MS) ||
-      stateValid(cookies[OAUTH_STATE_COOKIE], stateStr);
+      stateValid(cookies[OAUTH_STATE_COOKIE], stateStr) ||
+      signedStateValid(stateStr);
     if (typeof code !== 'string' || !stateOk) {
       // 状态已消费 (刷新页面)、已过期或服务器重启: 跳转前端, 由前端提示重新登录
       console.warn(`[auth] 校验失败 (code=${typeof code !== 'string' ? '缺失' : '有'}, stateOk=${stateOk}), 302 → login_error=state`);
