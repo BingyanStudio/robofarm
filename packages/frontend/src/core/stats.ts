@@ -159,16 +159,17 @@ function drawMoneyChart(stats: GameStats): HTMLCanvasElement {
       const t = Math.round((maxTurn / 4) * i);
       g.fillText(String(t), x(t), H - 8);
     }
-    // 折线 (Catmull-Rom 样条平滑)
+    // 折线: 滑动平均消平阶梯 + Catmull-Rom 样条 → 呈现为平滑曲线
     stats.playerNames.forEach((_, i) => {
       const series = stats.moneySeries[i];
       if (!series || series.length < 1) return;
+      const smoothed = smoothSeries(series);
       g.strokeStyle = SERIES_COLORS[i % SERIES_COLORS.length];
       g.lineWidth = 2;
       g.beginPath();
       traceSmooth(
         g,
-        series.map((m, k) => ({ x: x(stats.turns[k] ?? 0), y: y(m) }))
+        smoothed.map((m, k) => ({ x: x(stats.turns[k] ?? 0), y: y(m) }))
       );
       g.stroke();
     });
@@ -287,6 +288,23 @@ function drawMoneyChart(stats: GameStats): HTMLCanvasElement {
 
   drawChart();
   return canvas;
+}
+
+/** 对序列做滑动平均 (窗口默认 7), 把"平台 + 跳变"的阶梯形数据抹平成连续曲线;
+ *  仅用于绘制, 悬停仍显示真实值 */
+function smoothSeries(values: number[], window = 7): number[] {
+  const half = Math.floor(window / 2);
+  return values.map((_, i) => {
+    let sum = 0;
+    let n = 0;
+    for (let j = i - half; j <= i + half; j++) {
+      const v = values[j];
+      if (v == null) continue;
+      sum += v;
+      n++;
+    }
+    return n > 0 ? sum / n : values[i];
+  });
 }
 
 /** Catmull-Rom 样条 (转为三次贝塞尔) 绘制平滑曲线 */
