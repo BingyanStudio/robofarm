@@ -9,6 +9,7 @@ import type { EditorHandle } from '../ui/editor';
 import { el, button, modal } from '../ui/ui';
 import { icon } from '../ui/icon';
 import { GameRunner } from '../core/game-runner';
+import { showGameStats } from '../core/stats';
 
 const KEY_ME = 'robofarm.simulate.me';
 const KEY_ENEMY = 'robofarm.simulate.enemy';
@@ -63,6 +64,8 @@ export function simulateScreen(root: HTMLElement): void {
       lockBar.style.display = locked ? 'flex' : 'none';
     },
     gameStartLog: '[系统] 新对局开始 (我方为左侧, 对方为镜像视角)',
+    playerNames: ['我方', '对方'],
+    onStats: (stats) => showGameStats(stats, '模拟竞技 · 对局统计'),
     onEnd: (result) => handleEnd(result),
   });
 

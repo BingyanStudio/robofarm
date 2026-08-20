@@ -10,10 +10,12 @@ import {
   WorldState,
   snapshotOf,
 } from '@robofarm/shared';
+import type { GameEvent } from '@robofarm/shared';
 import { BrowserProgram } from './browser-program';
 import { createGameLayout, GameLayout, GameView } from './game-layout';
 import { Renderer } from './renderer';
 import { el, button } from '../ui/ui';
+import { statsFromEvents, GameStats } from './stats';
 
 export interface BuiltGame {
   controller: GameController;
@@ -33,6 +35,10 @@ export interface GameRunnerOptions {
   gameStartLog: string;
   /** Match-end display (finished / error). The runner already unlocked the editor and refreshed button state. */
   onEnd: (result: GameResult) => void;
+  /** 对局统计回调 (本地运行结束时, 携带本局全部事件计算出的统计)。 */
+  onStats?: (stats: GameStats) => void;
+  /** 玩家名称 (统计图例用; 默认 ['玩家']) */
+  playerNames?: string[];
 }
 
 export class GameRunner {
@@ -55,6 +61,8 @@ export class GameRunner {
   private timer: ReturnType<typeof setTimeout> | null = null;
   /** On first Start click esbuild is fetched remotely; disable start/step buttons until compile finishes. */
   private compiling = false;
+  /** 本局全部事件 (用于结束时计算统计) */
+  private statsEvents: GameEvent[] = [];
 
   constructor(private opts: GameRunnerOptions) {
     this.layout = createGameLayout(opts.title);
@@ -174,6 +182,7 @@ export class GameRunner {
 
   private async newGame(autoPlay: boolean): Promise<void> {
     this.stopGame();
+    this.statsEvents = [];
     // First compile downloads the compiler (esbuild.wasm); log this event explicitly.
     this.log(
       isCompilerInitialized() ? '[系统] 正在编译代码…' : '[系统] 首次编译, 正在下载编译器…'
@@ -203,7 +212,9 @@ export class GameRunner {
       this.playing = false;
       return;
     }
-    this.view.apply(await this.controller.step());
+    const events = await this.controller.step();
+    this.statsEvents.push(...events);
+    this.view.apply(events);
   }
 
   private scheduleNext(delay: number = TURN_INTERVALS_MS[this.speedIdx]): void {
@@ -230,6 +241,10 @@ export class GameRunner {
     this.updateStartStop();
     this.updatePauseButton();
     this.opts.onEnd(result);
+    // 统计弹窗 (在结算弹窗之上)
+    this.opts.onStats?.(
+      statsFromEvents(this.statsEvents, this.opts.playerNames ?? ['玩家'])
+    );
   }
 
   /** Step: compile and create a match first if none exists, then run 1 turn (paused after creation). */

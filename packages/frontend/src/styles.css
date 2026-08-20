@@ -20,6 +20,7 @@
 @import './styles/components/list.css';
 @import './styles/components/manual.css';
 @import './styles/components/api-sidebar.css';
+@import './styles/components/stats.css';
 
 /* Screen-level styles */
 @import './styles/screens/menu.css';

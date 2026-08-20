@@ -1,0 +1,74 @@
+/* 对局统计弹窗: 最终得分 / 金钱折线图 / 种植构成 */
+
+.stats-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 560px;
+  max-width: 640px;
+}
+
+.stats-final {
+  display: flex;
+  gap: 24px;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.stats-final-self {
+  color: var(--money);
+}
+
+.stats-final-enemy {
+  color: var(--danger-text);
+}
+
+.stats-chart canvas {
+  width: 100%;
+  height: auto;
+  background: var(--bg-log);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.stats-crops-title {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.stats-crop-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 3px 0;
+  font-size: 13px;
+}
+
+.stats-crop-name {
+  width: 56px;
+  flex: none;
+  color: var(--text-primary);
+}
+
+.stats-crop-bar {
+  flex: 1;
+  height: 12px;
+  background: var(--bg-hover);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.stats-crop-fill {
+  display: block;
+  height: 100%;
+  background: var(--money);
+  border-radius: var(--radius-sm);
+}
+
+.stats-crop-count {
+  width: 72px;
+  flex: none;
+  text-align: right;
+  color: var(--text-muted);
+}

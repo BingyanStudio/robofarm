@@ -4,6 +4,7 @@ import { el, button, modal, toast, fmtTime, downloadJson } from '../ui/ui';
 import { setTopActions } from '../ui/topbar-state';
 import { api, fetchUser } from '../core/net';
 import { DEFAULT_CODE } from '../core/game-layout';
+import { statsFromReplay, showGameStats } from '../core/stats';
 
 const KEY = 'robofarm.simulate.me'; // Synced with simulate's "my drone"
 
@@ -141,6 +142,18 @@ export function matchScreen(root: HTMLElement): void {
           el('span', { text: `vs ${r.opponent} · ${label[r.result]}` }),
           el('span', { class: 'muted', text: fmtTime(r.created_at) }),
         ]);
+        const statBtn = button('统计', () => {
+          void (async () => {
+            const res = await api.get(`/combat/replay/${r.id}`);
+            if (res.status === 200) {
+              const stats = await statsFromReplay(res.data);
+              if (stats) showGameStats(stats, '竞技对局 · 统计');
+              else toast('回放数据无法识别');
+            } else toast(res.data?.error ?? '统计加载失败');
+          })();
+        }, { class: 'btn btn-small' });
+        statBtn.addEventListener('click', (e) => e.stopPropagation());
+        row.append(statBtn);
         const dlBtn = button('下载回放', () => {
           void (async () => {
             const res = await api.get(`/combat/replay/${r.id}`);
