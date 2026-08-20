@@ -119,6 +119,14 @@ function drawMoneyChart(stats: GameStats): HTMLCanvasElement {
   if (!ctx) return canvas;
   const g: CanvasRenderingContext2D = ctx;
 
+  // 高清渲染: 按设备像素比放大位图, 绘制时等比缩放 (最多 2 倍), 避免高分屏发虚
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = `${W}px`;
+  canvas.style.height = `${H}px`;
+  g.scale(dpr, dpr);
+
   const maxMoney = Math.max(100, ...stats.moneySeries.flat());
   const maxTurn = Math.max(1, stats.maxTurns);
   const plotW = W - padL - padR;
@@ -209,8 +217,42 @@ function drawMoneyChart(stats: GameStats): HTMLCanvasElement {
       for (const p of parts) tw += g.measureText(p.text).width;
       const boxW = tw + 16;
       const boxH = 26;
-      const bx = padL;
-      const by = padT;
+      const margin = 8;
+      // 图例自动选择不与折线相交的角落 (采样各段线段检查重叠, 取重叠最少的角)
+      const corners: [number, number][] = [
+        [padL + margin, padT + margin], // 左上
+        [W - padR - boxW - margin, padT + margin], // 右上
+        [padL + margin, H - padB - boxH - margin], // 左下
+        [W - padR - boxW - margin, H - padB - boxH - margin], // 右下
+      ];
+      const overlapScore = (bx: number, by: number): number => {
+        let n = 0;
+        for (const series of stats.moneySeries) {
+          for (let k = 0; k + 1 < series.length; k++) {
+            const x1 = x(stats.turns[k] ?? 0);
+            const y1 = y(series[k]);
+            const x2 = x(stats.turns[k + 1] ?? 0);
+            const y2 = y(series[k + 1]);
+            for (let s = 0; s <= 4; s++) {
+              const px2 = x1 + ((x2 - x1) * s) / 4;
+              const py2 = y1 + ((y2 - y1) * s) / 4;
+              if (px2 >= bx && px2 <= bx + boxW && py2 >= by && py2 <= by + boxH) n++;
+            }
+          }
+        }
+        return n;
+      };
+      let bx = corners[0][0];
+      let by = corners[0][1];
+      let bestScore = overlapScore(bx, by);
+      for (const [cx2, cy2] of corners) {
+        const s = overlapScore(cx2, cy2);
+        if (s < bestScore) {
+          bestScore = s;
+          bx = cx2;
+          by = cy2;
+        }
+      }
       g.fillStyle = 'rgba(11, 16, 14, 0.85)';
       g.beginPath();
       g.roundRect(bx, by, boxW, boxH, 4);
