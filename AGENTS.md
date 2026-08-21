@@ -130,7 +130,8 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
   当前地块: 土地 / 水池 / 沙地 / 盐碱地。
 - 无人机操作: 玩家侧为**操作类** API (`Move` / `Teleport` / `Plant` / `CollectWater` /
   `Water` / `Harvest` / `Clear` / `Intercept` / `Charge` / `HarvestRow` / `HarvestCol` /
-  `WaterRow` / `WaterCol` / `InterceptRow` / `InterceptCol` / `PlantRow` / `PlantCol`,
+  `WaterRow` / `WaterCol` / `InterceptRow` / `InterceptCol` / `PlantRow` / `PlantCol` /
+  `ChangeTile` / `Fertilize` / `FertilizeRow` / `FertilizeCol`,
   均继承 `DroneOperation`, 参数经构造函数传入),
   每个操作一个文件在 `shared/src/ops/` (继承 + 重写静态 `apply()` 实现语义),
   引擎按实例的 **`type` 字段**识别操作; 内部传输/引擎仍用判别联合 `InternalOperation`
@@ -139,9 +140,10 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
   新增操作 = 在 `ops/` 新建操作类 (声明 `type` + 静态 `fields` + 重写静态 `apply`)
   + 在 `ops/index.ts` 的 `OP_CLASSES` 登记, 共两处, 引擎零改动。
 - **能量机制**: DroneState.energy (上限 MAX_ENERGY=10, 初始 0), Charge 原地 +5;
-  行/列范围操作消耗能量 (收割 4 / 浇灌 3 / 种植 3 / 拦截 6, 常量在 config.ts);
+  行/列范围操作消耗能量 (收割 4 / 浇灌 3 / 种植 3 / 拦截 6 / 施肥 8, 常量在 config.ts);
+  Fertilize 消耗 FERTILIZE_COST=3 (非土地失败且不扣能量), 施肥 +FERTILIZE_GAIN=3 肥力;
   Teleport 消耗 ceil(欧氏距离) 能量 (尝试时即扣除, 仲裁失败不退还; 竞技模式只能
-  在我方半场内传送, 与移动同走仲裁); ChangeTile 消耗 CHANGE_TILE_COST=4;
+  在我方半场内传送, 与移动同走仲裁); ChangeTile 消耗 CHANGE_TILE_COST=3;
   NewDrone 消耗 NEW_DRONE_COST=4000 金钱 (上限 DRONE_LIMIT: 单人 2 / 竞技 3,
   GameInfo.droneLimit 可查)。
   行/列范围操作覆盖以无人机为中心的 3 格 (interceptZone 记录施法点 center);
@@ -150,10 +152,11 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
   跳过无法种植的格子 (地块不适配/已有作物/金钱不足) (PlantRow/PlantCol 静态
   `fields` 的 `crops` 字段 kind 校验)。
 - 当前作物: 草莓 / 葡萄 / 小麦 (需水) / 荷花 (水生) / 南瓜 (需水) /
-  西瓜 (成本 1000/收获 1800/100 周期) /
-  紫云英 (成本 100/收获 140/40 周期, 收获恢复 4 点肥力) /
+  西瓜 (成本 1000/收获 2000/80 周期) /
+  紫云英 (成本 100/收获 120/30 周期, 每回合加速 1 株邻格, 收获恢复 4 点肥力) /
   香菇 (基础 20 周期, 实际周期 = 20 + 2×场上香菇数, 需水, 成熟后分 4 回合按上右下左扩散 onGrown) /
-  水仙 (生长自动浇水 growUpdate),
+  水仙 (生长自动浇水 growUpdate) /
+  仙人掌 (沙地/盐碱地, 15 周期且不受环境 debuff, 收获把脚下转为土地),
   完整属性见 agent/CROP.md, 数据在 `shared/src/crops/` (每种作物一个文件,
   基本属性 / 特殊效果 / 统计配色 `color` 都写在自己文件里), 由 registry.ts 汇总进 `CROPS`
   (改文档或加地块/作物 = 新建 tiles/ 或 crops/ 文件 + registry.ts 登记, 只改这两处)。
@@ -172,6 +175,8 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
 - **生长特效 (growUpdate)**: 与 onGrown 同构, 每个生长回合执行 (如 Daffodil 的自动浇水,
   每 3 周期按 上→右→下→左 给邻格缺水作物浇水, 一次/回合, 成熟失效), 处理器同样
   定义在各作物自己的文件里 (原 engine.ts 的 `GROWTH_EFFECTS` 字典已移除)。
+- **收获特效 (onHarvested)**: 作物被收获时执行 (单格与行/列收割都触发),
+  如仙人掌把脚下沙地/盐碱地转为土地 (肥力 2)。
 - **动态生长周期**: 作物在 `growCycles(tile, world)` 里重写即可自定义实际周期
   (基类默认按地块 growthFactor, 沙地 ×3; 覆盖则忽略地块倍率), 如香菇的
   growCyclesBase + 2×场上香菇数 (engine/helpers 的 `tryPlantAt` 与香菇扩散都走它)。

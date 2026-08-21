@@ -115,17 +115,17 @@
 
 - [x] Feature: 增加作物 "仙人掌"
         id: `cactus`
-        生长周期: 15 cycles
+        生长周期: 15 cycles (固定, 不受环境 debuff 影响)
         浇水: 无需
         可种植: 沙地, 盐碱地
         肥力: 0
         成本: 80
         收益: 100
         特性: 收获时, 将脚下的地块转变为土地, 肥力为 2
-       → crops/cactus.ts: growCyclesBase 15 / thirstCountBase 0 / canPlant 沙地·盐碱地 /
-       plantCost 80 / value 100 / fertilityCost 0; 作物基类新增收获特效回调
-       `onHarvested` (types.ts HarvestEffectContext), 收获 (单格 + 行/列) 后调用,
-       仙人掌把脚下地块转为土地 (肥力 2); registry 注册 + CROP.md + MCP
-       specialMechanisms 输出"收获特效"; engine.test.ts 沙地 (45 周期) 与盐碱地
-       (22 周期) 两条收获转土地测试。
+       → crops/cactus.ts: growCyclesBase 15 / 重写 growCycles 固定 15 (忽略沙地 ×3、
+       盐碱地 ×1.5) / thirstCountBase 0 / canPlant 沙地·盐碱地 / plantCost 80 /
+       value 100 / fertilityCost 0; 作物基类新增收获特效回调 `onHarvested`
+       (types.ts HarvestEffectContext), 收获 (单格 + 行/列) 后调用, 仙人掌把脚下
+       地块转为土地 (肥力 2); registry 注册 + CROP.md + MCP specialMechanisms 输出
+       "收获特效"; engine.test.ts 沙地与盐碱地两条收获转土地测试 (均固定 15 周期)。
         描述: 环境植物, 能将不适宜生长的地块转为土地

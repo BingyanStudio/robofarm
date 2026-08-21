@@ -790,6 +790,34 @@ describe('engine: 新作物 (西瓜/紫云英/香菇)', () => {
     const shiitakeCount = w.map.flat().filter((t) => t.crop?.type === CropType.Shiitake).length;
     expect(shiitakeCount).toBeGreaterThanOrEqual(4);
   });
+
+  it('紫云英: 生长中每回合按上右下左仅加速 1 株邻格作物 (剩余 >= 2 且不缺水)', () => {
+    const w = single();
+    placeCrop(w, [3, 3], { type: CropType.MilkVetch, state: CropState.Growing, growthRemaining: 10 });
+    placeCrop(w, [3, 2], { type: CropType.Pumpkin, state: CropState.Growing, growthRemaining: 95 }); // 上
+    placeCrop(w, [4, 3], { type: CropType.Pumpkin, state: CropState.Growing, growthRemaining: 95 }); // 右
+    placeCrop(w, [3, 4], { type: CropType.Pumpkin, state: CropState.Growing, growthRemaining: 95 }); // 下
+    placeCrop(w, [2, 3], { type: CropType.Pumpkin, state: CropState.Growing, growthRemaining: 95 }); // 左
+    stepTurn(w, actions([0, null]));
+    // 上 (3,2) 先结算 (行 2 早于紫云英所在行 3) → 95→94, 再被紫云英加速 → 93
+    expect(w.map[2][3].crop!.growthRemaining).toBe(93);
+    // 其余邻格本次未被加速 (每回合仅 1 株)
+    expect(w.map[3][4].crop!.growthRemaining).toBe(94); // 右
+    expect(w.map[4][3].crop!.growthRemaining).toBe(94); // 下
+    expect(w.map[3][2].crop!.growthRemaining).toBe(94); // 左
+  });
+
+  it('紫云英: 上方不可加速时, 依次尝试 右→下→左', () => {
+    const w = single();
+    placeCrop(w, [3, 3], { type: CropType.MilkVetch, state: CropState.Growing, growthRemaining: 10 });
+    placeCrop(w, [3, 2], { type: CropType.Pumpkin, state: CropState.Growing, growthRemaining: 1 }); // 上: 距成熟 < 2, 不可加速
+    placeCrop(w, [4, 3], { type: CropType.Pumpkin, state: CropState.Growing, growthRemaining: 95 }); // 右
+    stepTurn(w, actions([0, null]));
+    // 右 (4,3): 上不可加速 → 加速右 (95→94), 右随后自身 -1 → 93
+    expect(w.map[3][4].crop!.growthRemaining).toBe(93);
+    // 上: 1→0 成熟
+    expect(w.map[2][3].crop!.state).toBe(CropState.Grown);
+  });
 });
 
 describe('engine: 水仙 (autoWater) 与 ChangeTile', () => {
@@ -1008,19 +1036,19 @@ describe('engine: 施肥 (Fertilize)', () => {
 });
 
 describe('engine: 仙人掌 (cactus)', () => {
-  it('仙人掌: 土地不能种, 沙地可种 (45 周期 = 15×3), 收获后脚下转为土地 (肥力 2)', () => {
+  it('仙人掌: 土地不能种, 沙地可种, 不受沙地 debuff (固定 15 周期), 收获后转为土地 (肥力 2)', () => {
     const w = single();
     w.players[0].money = 100;
     // 土地上不能种 (初始位置 (3,3) 是土地)
     w.drones[0].position = [3, 3];
     let events = stepTurn(w, actions([0, { type: 'plant', crop: CropType.Cactus }]));
     expect(eventsOfType(events, 'invalid-op')).toHaveLength(1);
-    // 沙地上可种, 周期 = 15 × 3 = 45
+    // 沙地上可种, 周期固定 15 (growCycles 重写: 忽略沙地 ×3)
     w.drones[0].position = [0, 0]; // 沙地
     events = stepTurn(w, actions([0, { type: 'plant', crop: CropType.Cactus }]));
     expect(eventsOfType(events, 'plant')).toHaveLength(1);
-    expect(w.map[0][0].crop!.growthRemaining).toBe(44); // 45 - 1
-    for (let i = 0; i < 43; i++) stepTurn(w, actions([0, null]));
+    expect(w.map[0][0].crop!.growthRemaining).toBe(14); // 15 - 1
+    for (let i = 0; i < 13; i++) stepTurn(w, actions([0, null]));
     expect(w.map[0][0].crop!.state).toBe(CropState.Growing);
     stepTurn(w, actions([0, null]));
     expect(w.map[0][0].crop!.state).toBe(CropState.Grown);
@@ -1033,14 +1061,14 @@ describe('engine: 仙人掌 (cactus)', () => {
     expect(w.players[0].money).toBe(120); // 100 - 80 + 100
   });
 
-  it('仙人掌: 盐碱地上生长 ×1.5 (22 周期), 收获后转为土地 (肥力 2)', () => {
+  it('仙人掌: 盐碱地上同样固定 15 周期 (不受 ×1.5 debuff), 收获后转为土地 (肥力 2)', () => {
     const w = single();
     w.players[0].money = 100;
     w.map[0][0] = { type: TileType.Salt, crop: null }; // 盐碱地
     w.drones[0].position = [0, 0];
     stepTurn(w, actions([0, { type: 'plant', crop: CropType.Cactus }]));
-    expect(w.map[0][0].crop!.growthRemaining).toBe(21); // floor(15*1.5)=22 - 1
-    for (let i = 0; i < 20; i++) stepTurn(w, actions([0, null]));
+    expect(w.map[0][0].crop!.growthRemaining).toBe(14); // 15 - 1 (盐碱地 ×1.5 被忽略)
+    for (let i = 0; i < 13; i++) stepTurn(w, actions([0, null]));
     expect(w.map[0][0].crop!.state).toBe(CropState.Growing);
     stepTurn(w, actions([0, null]));
     expect(w.map[0][0].crop!.state).toBe(CropState.Grown);
