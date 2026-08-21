@@ -21,7 +21,7 @@ function countShiitake(world: WorldState): number {
 export class Shiitake extends BaseCrop {
   readonly type = CropType.Shiitake;
   readonly name = '香菇';
-  readonly description = '成熟后, 每回合按照 [上右下左] 顺序种下新的香菇，一共四颗。但场上香菇越多，香菇生长越慢。';
+  readonly description = '成熟后, 向周边散步新的香菇，一共四颗。场上香菇越多，香菇生长越慢。少量恢复土地肥力。';
   readonly plantCost = 80;
   readonly fertilityCost = -2;
   readonly value = 40;
@@ -33,7 +33,7 @@ export class Shiitake extends BaseCrop {
     return tile.type === TileType.Soil;
   }
   /** 种植条件描述 */
-  readonly canPlantDesc = '仅土地';
+  readonly canPlantDesc = '土地';
 
   /** 动态生长周期: 基础 20 + 2 × 场上香菇总数 (忽略地块倍率, 香菇只长在土地) */
   growCycles(_tile: Tile, world: WorldState): number {

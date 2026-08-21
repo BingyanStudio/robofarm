@@ -7,7 +7,7 @@ import { BaseCrop } from './base';
 export class MilkVetch extends BaseCrop {
   readonly type = CropType.MilkVetch;
   readonly name = '紫云英';
-  readonly description = '绿肥植物，生长时会加速周围作物的生长。不能种在太肥沃的土地上。';
+  readonly description = '绿肥植物，生长时会加速周围作物的生长。';
   readonly fertilityCost = -4; // 绿肥: 收获时恢复土地肥力
   readonly plantCost = 100;
   readonly value = 120;

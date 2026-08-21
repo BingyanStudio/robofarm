@@ -87,7 +87,7 @@
   改动:
   1. CropTypeConfig / BaseCrop 新增必填 `canPlantDesc: string`; 9 种作物各自填写
      (与 canPlant 一致): 草莓/葡萄 "土地 / 沙地", 小麦 "除水池外的地块
-     (土地 / 沙地 / 盐碱地)", 荷花/水仙 "仅水池", 南瓜/西瓜 "土地 / 盐碱地",
+     (土地 / 沙地 / 盐碱地)", 荷花/水仙 "水池", 南瓜/西瓜 "土地 / 盐碱地",
      紫云英 "土地 (肥力 < 6) / 沙地", 香菇 "仅土地"。
   2. docs.ts cropDocEntries 的 "可种在" 标签改为直接使用 `cfg.canPlantDesc`
      (不再用 plantableTiles 探测推导); MCP get_crop 同步输出 canPlantDesc。

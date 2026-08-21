@@ -17,5 +17,5 @@ export class Wheat extends BaseCrop {
     return tile.type !== TileType.Water;
   }
   /** 种植条件描述 */
-  readonly canPlantDesc = '除水池外的地块 (土地 / 沙地 / 盐碱地)';
+  readonly canPlantDesc = '土地 / 沙地 / 盐碱地';
 }
