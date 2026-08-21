@@ -14,8 +14,8 @@ export class Pumpkin extends BaseCrop {
   readonly color = '#e89a3c';
 
   canPlant(tile: Tile): boolean {
-    return tile.type === TileType.Soil || tile.type === TileType.Salt;
+    return (tile.type === TileType.Soil && tile.fertility! > 2) || tile.type === TileType.Salt;
   }
   /** 种植条件描述 */
-  readonly canPlantDesc = '土地 / 盐碱地';
+  readonly canPlantDesc = '土地(肥力 > 2) / 盐碱地';
 }
