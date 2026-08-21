@@ -238,7 +238,7 @@ function cropTypeDocEntry(): DocEntry {
         params: Object.values(CROPS).map(
             (c) =>
                 `\`${c.type}\`: ${c.name} — 成本 ${c.plantCost}, 收获 ${c.value}, ` +
-                `${c.growCyclesBase} 回合成熟, ${c.thirstInterval === null ? '无需浇水' : `每 ${c.thirstInterval} 回合需浇水`}`
+                `${c.growCyclesBase} 回合成熟, ${c.thirstCountBase === 0 ? '无需浇水' : `总缺水 ${c.thirstCountBase} 次`}`
         ),
     };
 }
@@ -317,7 +317,7 @@ export function cropDocEntries(): DocEntry[] {
             `成本: ${cfg.plantCost}`,
             `收获: ${cfg.value}`,
             `成熟: ${cfg.growCyclesBase} 回合`,
-            cfg.thirstInterval === null ? '需水: 无需浇水' : `需水: 每 ${cfg.thirstInterval} 回合`,
+            cfg.thirstCountBase === 0 ? '需水: 无需浇水' : `需水: ${cfg.thirstCountBase} 次`,
             `可种在: ${plantableTiles(cfg).map((t) => TILES[t].name).join(' / ')}`,
             // 肥力消耗: 0 不显示; 负数 = 恢复肥力
             cfg.fertilityCost === 0

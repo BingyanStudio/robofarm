@@ -380,7 +380,7 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
               plantCost: cfg.plantCost,
               value: cfg.value,
               growCyclesBase: cfg.growCyclesBase,
-              thirstInterval: cfg.thirstInterval,
+              thirstCountBase: cfg.thirstCountBase,
               fertilityCost: cfg.fertilityCost,
               habitats: plantableTiles(cfg),
               // 特殊机制 (未设置则无)

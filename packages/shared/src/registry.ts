@@ -92,17 +92,15 @@ export interface CropTypeConfig {
    */
   growCycles(tile: Tile, world: WorldState): number;
   /**
-   * 总缺水次数: 默认 floor(实际生长周期 / thirstInterval) × 地块浇水倍率
-   * (盐碱地 ×2), 由 BaseCrop 实现, 子类可按需重写。
+   * 总缺水次数: 默认 thirstCountBase × 地块浇水倍率 (盐碱地 ×2), 由 BaseCrop
+   * 实现, 子类可按需重写 (如香菇随动态周期增减)。
    */
   thirstCount(tile: Tile, world: WorldState): number;
   /**
-   * 缺水的触发间隔 (回合数): 作物总缺水次数 = floor(实际生长周期 / thirstInterval),
-   * 实际周期在种植时按 growCycles() 动态计算 (如沙地 ×3);
-   * 缺水均匀分布在生长过程中 (每约 thirstInterval 回合一次)。
-   * null 表示无需浇水。
+   * 基准总缺水次数 (土地上的次数): 整个生长周期内总共需要浇水的次数,
+   * 0 表示无需浇水。缺水时机在种植时随机选取 (见 rng.ts), 与次数无关。
    */
-  thirstInterval: number | null;
+  thirstCountBase: number;
   /**
    * 统计图表语义色 (饼图 / 进度条 / 图例共用, 由前端消费)。
    * 原前端 stats.ts 的 CROP_COLORS 迁入各作物自己的文件。

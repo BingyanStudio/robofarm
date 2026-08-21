@@ -26,7 +26,8 @@ export abstract class BaseCrop implements CropTypeConfig {
   abstract readonly value: number;
   /** 基准生长周期 (土地上的回合数; 前端贴图进度也用它) */
   abstract readonly growCyclesBase: number;
-  abstract readonly thirstInterval: number | null;
+  /** 基准总缺水次数 (土地上的次数, 0 = 无需浇水); 缺水时机种植时随机选取 */
+  abstract readonly thirstCountBase: number;
   /** 统计图表语义色 (饼图 / 图例 / 进度条共用) */
   abstract readonly color: string;
 
@@ -47,11 +48,9 @@ export abstract class BaseCrop implements CropTypeConfig {
   }
 
   /**
-   * 总缺水次数: 默认 floor(实际生长周期 / thirstInterval) × 地块浇水倍率
-   * (盐碱地 ×2)。子类可按需重写。
+   * 总缺水次数: 默认 thirstCountBase × 地块浇水倍率 (盐碱地 ×2)。子类可按需重写。
    */
-  thirstCount(tile: Tile, world: WorldState): number {
-    if (this.thirstInterval === null) return 0;
-    return Math.floor(this.growCycles(tile, world) / this.thirstInterval) * TILES[tile.type].thirstFactor;
+  thirstCount(tile: Tile, _world: WorldState): number {
+    return this.thirstCountBase * TILES[tile.type].thirstFactor;
   }
 }

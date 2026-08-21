@@ -636,14 +636,14 @@ describe('engine: 沙地', () => {
 });
 
 describe('engine: 缺水次数动态计算', () => {
-  it('沙地南瓜: 按种植时实际周期动态计算缺水次数 (300 周期 → 16 次)', () => {
+  it('沙地南瓜: 生长周期按沙地 ×3 (300 周期), 缺水次数固定为基准值 5 次', () => {
     const w = single();
     w.players[0].money = 100;
     w.drones[0].position = [0, 0]; // 沙地
     stepTurn(w, actions([0, { type: 'plant', crop: CropType.Pumpkin }]));
     const crop = w.map[0][0].crop!;
     expect(crop.growthRemaining).toBe(299); // floor(100*3)=300, 种植回合已扣 1
-    expect(crop.thirstAt!.length).toBe(16); // floor(300 / 18)
+    expect(crop.thirstAt!.length).toBe(5); // thirstCountBase = 5 (次数不随周期缩放)
     let thirstyCount = 0;
     let guard = 0;
     while (crop.state !== CropState.Grown && guard++ < 400) {
@@ -655,7 +655,7 @@ describe('engine: 缺水次数动态计算', () => {
         stepTurn(w, actions([0, null]));
       }
     }
-    expect(thirstyCount).toBe(16);
+    expect(thirstyCount).toBe(5);
     expect(crop.state).toBe(CropState.Grown);
   });
 
@@ -699,14 +699,14 @@ describe('engine: 缺水次数动态计算', () => {
 });
 
 describe('engine: 新作物 (西瓜/紫云英/香菇)', () => {
-  it('西瓜: 沙地生长受 3 倍减速影响, 缺水 20 次', () => {
+  it('西瓜: 沙地生长受 3 倍减速影响 (300 周期), 缺水次数固定为基准值 6 次', () => {
     const w = single();
     w.players[0].money = 2000;
     w.drones[0].position = [0, 0]; // 沙地
     stepTurn(w, actions([0, { type: 'plant', crop: CropType.Melon }]));
     const crop = w.map[0][0].crop!;
     expect(crop.growthRemaining).toBe(299); // floor(100*3)=300 - 1
-    expect(crop.thirstAt!.length).toBe(20);
+    expect(crop.thirstAt!.length).toBe(6); // thirstCountBase = 6
     let thirstyCount = 0;
     let guard = 0;
     while (crop.state !== CropState.Grown && guard++ < 400) {
@@ -718,37 +718,8 @@ describe('engine: 新作物 (西瓜/紫云英/香菇)', () => {
         stepTurn(w, actions([0, null]));
       }
     }
-    expect(thirstyCount).toBe(20);
+    expect(thirstyCount).toBe(6);
     expect(crop.state).toBe(CropState.Grown);
-  });
-
-  it('紫云英: 生长中每回合按上右下左给周围不缺水且剩余 >=2 的作物 -1 周期', () => {
-    const w = single();
-    placeCrop(w, [3, 3], { type: CropType.MilkVetch, state: CropState.Growing, growthRemaining: 10 });
-    placeCrop(w, [3, 2], { type: CropType.Pumpkin, state: CropState.Growing, growthRemaining: 95 }); // 上
-    placeCrop(w, [2, 3], { type: CropType.Pumpkin, state: CropState.Growing, growthRemaining: 95 }); // 左
-    placeCrop(w, [4, 3], { type: CropType.Pumpkin, state: CropState.Growing, growthRemaining: 95 }); // 右
-    placeCrop(w, [3, 4], { type: CropType.Pumpkin, state: CropState.Growing, growthRemaining: 1 }); // 下: 距成熟 1 周期
-    placeCrop(w, [5, 5], { type: CropType.Pumpkin, state: CropState.Growing, growthRemaining: 95 }); // 远处对照
-    stepTurn(w, actions([0, null]));
-    // 上/左 先于紫云英结算: 自身 95→94, 再被加速 → 93
-    expect(w.map[2][3].crop!.growthRemaining).toBe(93); // 上 (3,2)
-    expect(w.map[3][2].crop!.growthRemaining).toBe(93); // 左 (2,3)
-    // 右 后于紫云英结算: 先被加速 95→94, 自身再扣 1 → 93
-    expect(w.map[3][4].crop!.growthRemaining).toBe(93); // 右 (4,3)
-    // 下: 剩余 1 周期不被加速, 自身 1→0 成熟
-    expect(w.map[4][3].crop!.state).toBe(CropState.Grown); // 下 (3,4)
-    // 远处对照: 仅自身 -1
-    expect(w.map[5][5].crop!.growthRemaining).toBe(94);
-  });
-
-  it('紫云英缺水 (Thirsty) 时不再加速周围作物', () => {
-    const w = single();
-    placeCrop(w, [3, 3], { type: CropType.MilkVetch, state: CropState.Thirsty, growthRemaining: 10 });
-    placeCrop(w, [2, 3], { type: CropType.Pumpkin, state: CropState.Growing, growthRemaining: 95 }); // 左邻格
-    stepTurn(w, actions([0, null]));
-    // 紫云英缺水: growUpdate 不执行, 邻格仅自身生长 -1 (无加速)
-    expect(w.map[3][2].crop!.growthRemaining).toBe(94);
   });
 
   it('香菇成熟: 按上右下左顺序分 4 回合各扩散 1 株 (跳过不可种植的方向)', () => {

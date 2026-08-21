@@ -56,3 +56,21 @@
 - [x] Enhancement: 多人竞技游戏界面 Tooltip 展示 Tile 信息时, 带上 己方/对方半场 信息
   改动: renderer.ts updateTooltip — 竞技模式下地块行追加 `己方半场 / 对方半场`
   (屏幕左半即当前视角 (含镜像) 的己方半场, 与半场分割线一致)。
+
+- [ ] Balance: 无人机 ChangeTile 操作能耗降低为 4; 改地块为土地时，土地的肥力为 0
+- [x] Refactor: `thirstInterval` 重构为 `thirstCountBase`, 作物属性均按总缺水次数记录
+  改动:
+  1. CropTypeConfig / BaseCrop: `thirstInterval: number | null` → **`thirstCountBase:
+     number`** (基准总缺水次数, 0 = 无需浇水, 不再有 null)。
+  2. 作物数值换算 (土地基准): 草莓/葡萄/荷花/水仙 0, 小麦 2 (30/15), 南瓜 5
+     (100/18), 西瓜 6 (100/15), 紫云英 4 (160/40), 香菇 1 + 重写 thirstCount。
+  3. `BaseCrop.thirstCount(tile, world)` 改为 `thirstCountBase × 地块浇水倍率`
+     (盐碱地 ×2), **次数不再随实际周期缩放** (沙地只加生长周期、不加缺水次数);
+     香菇重写 thirstCount = floor(growCycles / growCyclesBase) × 倍率, 保留
+     "缺水次数随场上香菇数增减" 的原机制。
+  4. 消费方适配: renderer Tooltip (thirstCountBase > 0), MCP get_crop
+     (thirstCountBase), docs.ts (需水: N 次 / 无需浇水)。
+  5. 紫云英同步调整 (由你修改): 移除 growUpdate 加速邻格机制, 属性改为
+     收获 140 / 40 周期 / 恢复肥力 4; 移除两个对应的加速测试, 沙地南瓜/西瓜
+     缺水次数测试改为固定基准值 (5 / 6 次)。
+  6. 全部 94 个测试通过, shared/backend/frontend 构建通过。

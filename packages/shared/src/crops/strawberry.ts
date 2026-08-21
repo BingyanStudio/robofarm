@@ -10,7 +10,7 @@ export class Strawberry extends BaseCrop {
   readonly plantCost = 0;
   readonly value = 5;
   readonly growCyclesBase = 5;
-  readonly thirstInterval = null; // 无需浇水
+  readonly thirstCountBase = 0; // 无需浇水
   readonly color = '#ef5a6f';
 
   canPlant(tile: Tile): boolean {

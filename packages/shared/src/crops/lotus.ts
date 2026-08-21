@@ -9,7 +9,7 @@ export class Lotus extends BaseCrop {
   readonly plantCost = 30;
   readonly value = 90;
   readonly growCyclesBase = 40;
-  readonly thirstInterval = null; // 无需浇水
+  readonly thirstCountBase = 0; // 无需浇水
   readonly color = '#f48fb1';
 
   canPlant(tile: Tile): boolean {

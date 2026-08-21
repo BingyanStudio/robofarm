@@ -23,13 +23,24 @@ export class Shiitake extends BaseCrop {
   readonly name = '香菇';
   readonly description = '成熟后, 每回合按照 [上右下左] 顺序种下新的香菇，一共四颗。但场上香菇越多，香菇生长越慢。';
   readonly plantCost = 80;
+  readonly fertilityCost = -2;
   readonly value = 40;
   readonly growCyclesBase = 20;
-  readonly thirstInterval = 20; // 实际周期按场上香菇数动态计算, 缺水次数随之增减
+  readonly thirstCountBase = 1; // 基础 1 次, 实际次数随动态周期增减 (见 thirstCount 重写)
   readonly color = '#c0846a';
 
   canPlant(tile: Tile): boolean {
     return tile.type === TileType.Soil;
+  }
+
+  /** 动态生长周期: 基础 20 + 2 × 场上香菇总数 (忽略地块倍率, 香菇只长在土地) */
+  growCycles(_tile: Tile, world: WorldState): number {
+    return this.growCyclesBase + 2 * countShiitake(world);
+  }
+
+  /** 总缺水次数: 随动态周期增减 (每 growCyclesBase 周期 1 次, 再乘地块浇水倍率) */
+  thirstCount(tile: Tile, world: WorldState): number {
+    return Math.floor(this.growCycles(tile, world) / this.growCyclesBase) * TILES[tile.type].thirstFactor;
   }
 
   /** 成熟特效: 进入扩散期, 之后每回合按上右下左顺序扩散 1 株 (共 4 次) */
@@ -42,11 +53,6 @@ export class Shiitake extends BaseCrop {
     if (!crop.spreadLeft || crop.spreadLeft <= 0) return;
     this.spawnShiitake(world, pos, 4 - crop.spreadLeft, events);
     crop.spreadLeft -= 1;
-  }
-
-  /** 动态生长周期: 基础 20 + 2 × 场上香菇总数 (忽略地块倍率, 香菇只长在土地) */
-  growCycles(_tile: Tile, world: WorldState): number {
-    return this.growCyclesBase + 2 * countShiitake(world);
   }
 
   /**

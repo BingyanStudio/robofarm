@@ -10,7 +10,7 @@ export class Wheat extends BaseCrop {
   readonly plantCost = 30;
   readonly value = 120;
   readonly growCyclesBase = 30;
-  readonly thirstInterval = 15; // 生长中缺水 2 次
+  readonly thirstCountBase = 2; // 总缺水 2 次
   readonly color = '#e0c068';
 
   canPlant(tile: Tile): boolean {

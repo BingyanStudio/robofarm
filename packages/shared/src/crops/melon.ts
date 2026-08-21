@@ -11,7 +11,7 @@ export class Melon extends BaseCrop {
   readonly plantCost = 1000;
   readonly value = 1800;
   readonly growCyclesBase = 100;
-  readonly thirstInterval = 15; // 生长中缺水 6 次 (沙地 ×3 时 20 次)
+  readonly thirstCountBase = 6; // 总缺水 6 次 (沙地 ×3 时 20 次)
   readonly color = '#66bb6a';
 
   canPlant(tile: Tile): boolean {

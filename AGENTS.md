@@ -107,7 +107,7 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
   如土地根据肥力判定沙漠化/盐碱化)。
   **土地肥力**: 仅土地持有 `Tile.fertility` (初始 INITIAL_TILE_FERTILITY=5,
   上限 MAX_TILE_FERTILITY=10), 可经 `getTile().fertility` 查询;
-  收获作物时扣除该作物的 **fertilityCost** (负数 = 恢复肥力, 如紫云英 -2):
+  收获作物时扣除该作物的 **fertilityCost** (负数 = 恢复肥力, 如紫云英 -4):
   肥力 < 0 → **沙漠化** (转沙地), 肥力 > 上限 → **盐碱化** (转盐碱地, 生长 ×1.5
   且浇水 ×2)。
   作物配置: 每种作物一个 class (继承 `crops/base.ts` 的 `BaseCrop`), 字段:
@@ -116,11 +116,12 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
   `growCyclesBase` (基准周期, 前端贴图进度也用)、
   **`growCycles(tile, world)`** (实际周期: 基类默认按地块 growthFactor, 沙地 ×3;
   特殊作物重写, 如香菇 = growCyclesBase + 2×场上香菇数)、
-  **`thirstCount(tile, world)`** (总缺水次数: 基类默认 floor(实际周期/thirstInterval)
-  × 地块 thirstFactor)、`thirstInterval` (**null = 无需浇水**, 如草莓)。
+  **`thirstCount(tile, world)`** (总缺水次数: 基类默认 thirstCountBase × 地块
+  thirstFactor; 子类可重写, 如香菇随动态周期增减)、`thirstCountBase`
+  (**基准总缺水次数, 0 = 无需浇水**, 如草莓)。
   **缺水机制**: 作物进入 Thirsty 后长期保持该状态、生长不推进,
   **不枯萎** (GAME.md 已取消枯萎设定), 浇水后从剩余进度继续生长。
-  缺水次数在种植时按实际生长周期动态计算 (CropData.thirstAt.length),
+  缺水次数在种植时按 thirstCount 动态计算 (CropData.thirstAt.length),
   **缺水时机 = 种植时随机选取** (rng.ts 的 pickThirstPoints): 基础随机性来自
   **游戏开始时随机取得的种子** (WorldState.rngSeed, 对玩家不可预测, 防止把随机
   机制硬编码进代码), 叠加 玩家/位置/作物/回合 使同局内各次种植互不相同;
@@ -150,9 +151,9 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
   `fields` 的 `crops` 字段 kind 校验)。
 - 当前作物: 草莓 / 葡萄 / 小麦 (需水) / 荷花 (水生) / 南瓜 (需水) /
   西瓜 (成本 1000/收获 1800/100 周期) /
-  紫云英 (成本 100/收获 120/160 周期, 生长加速邻格 onGrow) /
-  香菇 (基础 20 周期, 实际周期 = 20 + 2×场上香菇数, 需水, 成熟后分 4 回合按上右下左扩散 onMature) /
-  水仙 (生长自动浇水 onGrow),
+  紫云英 (成本 100/收获 140/40 周期, 收获恢复 4 点肥力) /
+  香菇 (基础 20 周期, 实际周期 = 20 + 2×场上香菇数, 需水, 成熟后分 4 回合按上右下左扩散 onGrown) /
+  水仙 (生长自动浇水 growUpdate),
   完整属性见 agent/CROP.md, 数据在 `shared/src/crops/` (每种作物一个文件,
   基本属性 / 特殊效果 / 统计配色 `color` 都写在自己文件里), 由 registry.ts 汇总进 `CROPS`
   (改文档或加地块/作物 = 新建 tiles/ 或 crops/ 文件 + registry.ts 登记, 只改这两处)。

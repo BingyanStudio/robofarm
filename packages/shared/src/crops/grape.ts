@@ -9,7 +9,7 @@ export class Grape extends BaseCrop {
   readonly plantCost = 20;
   readonly value = 40;
   readonly growCyclesBase = 15;
-  readonly thirstInterval = null; // 无需浇水
+  readonly thirstCountBase = 0; // 无需浇水
   readonly color = '#9b6dd7';
 
   canPlant(tile: Tile): boolean {

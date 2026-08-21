@@ -12,7 +12,7 @@ export class Daffodil extends BaseCrop {
   readonly plantCost = 150;
   readonly value = 100;
   readonly growCyclesBase = 80;
-  readonly thirstInterval = null; // 无需浇水
+  readonly thirstCountBase = 0; // 无需浇水
   readonly color = '#f2d24b';
 
   canPlant(tile: Tile): boolean {

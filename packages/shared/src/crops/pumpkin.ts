@@ -10,7 +10,7 @@ export class Pumpkin extends BaseCrop {
   readonly plantCost = 100;
   readonly value = 500;
   readonly growCyclesBase = 100;
-  readonly thirstInterval = 18; // 生长中缺水 5 次 (每 18 回合一次)
+  readonly thirstCountBase = 5; // 总缺水 5 次
   readonly color = '#e89a3c';
 
   canPlant(tile: Tile): boolean {

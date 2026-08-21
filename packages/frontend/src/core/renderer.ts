@@ -325,7 +325,7 @@ export class Renderer {
       if (c.state === CropState.Growing) {
         info =
           `生长中, ${c.cyclesToGrown} 回合后成熟` +
-          (cfg.thirstInterval !== null ? ' · 需定期浇水' : ' · 无需浇水');
+          (cfg.thirstCountBase > 0 ? ' · 需定期浇水' : ' · 无需浇水');
       } else if (c.state === CropState.Thirsty) {
         info =
           c.cyclesToGrown > 0
