@@ -15,8 +15,8 @@ export class Melon extends BaseCrop {
   readonly color = '#66bb6a';
 
   canPlant(tile: Tile): boolean {
-    return tile.type === TileType.Soil || tile.type === TileType.Salt;
+    return (tile.type === TileType.Soil && tile.fertility! > 5) || tile.type === TileType.Salt;
   }
   /** 种植条件描述 */
-  readonly canPlantDesc = '土地 / 盐碱地';
+  readonly canPlantDesc = '土地(肥力 > 4) / 盐碱地';
 }
