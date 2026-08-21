@@ -256,7 +256,7 @@ export function userRank(login: string): { name: string; score: number; rank: nu
     .prepare(
       `SELECT u.github_login AS name, MAX(s.score) AS score
        FROM single_submissions s JOIN users u ON u.id = s.user_id
-       WHERE u.github_login = ? AND s.score IS NOT NULL
+       WHERE u.github_login = ? AND s.score IS NOT NULL${NEW_VALIDATION_FILTER}
        GROUP BY s.user_id`
     )
     .get(login) as unknown as { name: string; score: number } | undefined;
@@ -265,7 +265,7 @@ export function userRank(login: string): { name: string; score: number; rank: nu
     .prepare(
       `SELECT COUNT(DISTINCT s.user_id) AS cnt
        FROM single_submissions s JOIN users u ON u.id = s.user_id
-       WHERE s.score IS NOT NULL AND s.score > ?`
+       WHERE s.score IS NOT NULL${NEW_VALIDATION_FILTER} AND s.score > ?`
     )
     .get(row.score) as unknown as { cnt: number };
   return { name: row.name, score: row.score, rank: better.cnt + 1 };
@@ -329,6 +329,13 @@ export function takeLoginToken(state: string, ttlMs: number): string | null {
   return row.token;
 }
 
+/**
+ * 排行榜只统计新式多局验证 (固定 5 个随机种子) 的提交: 此类提交的 replay 列为
+ * `{"scores": [...], "replays": [...]}` 载荷; 旧式单局验证的 replay 为单个
+ * ReplayFile (以 `{"mode":` 开头), 不计入 v2.1.0 之后的排行榜。
+ */
+const NEW_VALIDATION_FILTER = ` AND s.replay LIKE '{"scores":%'`;
+
 export function recordSingleSubmission(userId: number, code: string, score: number | null, error: string | null, replay: string | null = null): void {
   getDb()
     .prepare('INSERT INTO single_submissions (user_id, code, score, error, replay, created_at) VALUES (?, ?, ?, ?, ?, ?)')
@@ -354,7 +361,7 @@ export function leaderboard(limit = 50): { user_id: number; name: string; score:
     .prepare(
       `SELECT u.id AS user_id, u.github_login AS name, MAX(s.score) AS score
        FROM single_submissions s JOIN users u ON u.id = s.user_id
-       WHERE s.score IS NOT NULL
+       WHERE s.score IS NOT NULL${NEW_VALIDATION_FILTER}
        GROUP BY s.user_id
        ORDER BY score DESC LIMIT ?`
     )

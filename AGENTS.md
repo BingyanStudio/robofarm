@@ -302,6 +302,8 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
 - 当前大版本标签: `LEADERBOARD_VERSION` (db.ts), 改版本号时同步改这两个常量。
 - 排行榜 (v1.0.2): Tab 按大版本展示前 50 名; 登录玩家排名经 `?user=` 查询
   (db.ts `userRank`) 固定吸附弹窗底端, 在前 50 名内则原位高亮。
+- 排行榜 (v2.1.0): 只统计**新式多局验证** (固定 5 种子) 的提交 —— db.ts 的
+  `NEW_VALIDATION_FILTER` 按 replay 列载荷格式过滤 (`{"scores":` 前缀), 旧式单局验证数据不计入。
 - WS 协议: `match-start` / `replay-buffer` (迟到观众回放) / `turn {turn, events}` /
   `match-end {matchId, result}` / `error`。对局在服务器按 `TURN_INTERVAL_MS` 节奏推演。
 - 对战推演用 `services/combat.ts` 的 runMatch: 编译双方代码 → 两个 NodeProgram →
