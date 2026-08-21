@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { GameController, PlayerProgram, PlayerTurnResult } from './game-controller';
 import { PlayerView } from './types';
 import { Move } from './player-api';
-import { ReplayRecorder, replayEvents } from './replay';
+import { ReplayRecorder, replayEvents, replayVersionMismatch } from './replay';
+import { GAME_VERSION } from './version';
 
 /** 简单的脚本化玩家程序, 不依赖平台沙箱 */
 class ScriptedProgram implements PlayerProgram {
@@ -47,10 +48,14 @@ describe('replay: 录制与重放', () => {
       players: ['玩家'],
       result: { type: 'finished', money: [originalMoney] },
     });
-    // 文件结构: 每回合有 round / drones / output
+    // 文件结构: 每回合有 round / drones / output; 携带录制时的版本号
     expect(file.rounds.length).toBe(10);
     expect(file.rounds[0].round).toBe(1);
     expect(file.rounds[0].drones[0].op).toEqual({ type: 'plant', crop: 'strawberry' });
+    expect(file.version).toBe(GAME_VERSION);
+    expect(replayVersionMismatch(file)).toBe(false);
+    expect(replayVersionMismatch({ version: '0.9.9' })).toBe(true);
+    expect(replayVersionMismatch({})).toBe(false); // 旧文件无版本号 → 不警告
 
     // 重放: 事件流与原始一致 (最终金钱相同)
     const events = await replayEvents(file);

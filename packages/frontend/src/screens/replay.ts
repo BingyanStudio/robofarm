@@ -11,6 +11,7 @@ import { el, button, toast } from '../ui/ui';
 import { setTopActions } from '../ui/topbar-state';
 import { api } from '../core/net';
 import { GameView } from '../core/game-layout';
+import { warnReplayVersion } from '../core/stats';
 import { replayEvents, createSingleWorld, createCombatWorld, snapshotOf } from '@robofarm/shared';
 import type { GameEvent, ReplayFile } from '@robofarm/shared';
 
@@ -27,6 +28,8 @@ async function normalizeReplay(data: unknown): Promise<ReplayData | null> {
   }
   if (Array.isArray(d?.rounds) && typeof d.maxTurns === 'number' && Array.isArray(d.players)) {
     const file = d as ReplayFile;
+    // 版本一致性检查: 录制版本与当前版本不一致时弹出警告
+    warnReplayVersion(file);
     const events = await replayEvents(file);
     return {
       config: { mode: file.mode, players: file.players.map((n) => ({ name: n })), maxTurns: file.maxTurns },

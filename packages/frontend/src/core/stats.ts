@@ -1,7 +1,7 @@
 // 对局统计: 金钱曲线 + 种植构成。
 // 本地运行 (GameRunner 收集事件) 与服务器回放 (replayEvents 重建事件) 共用同一计算。
 import { el, modal } from '../ui/ui';
-import { replayEvents, ReplayFile, cropConfig, isCropType } from '@robofarm/shared';
+import { replayEvents, ReplayFile, cropConfig, isCropType, replayVersionMismatch, GAME_VERSION } from '@robofarm/shared';
 import type { GameEvent, SnapshotState } from '@robofarm/shared';
 import gsap from 'gsap';
 
@@ -88,6 +88,16 @@ export async function statsFromReplay(file: unknown): Promise<GameStats | null> 
   const players = Array.isArray(d.players) && d.players.length > 0 ? d.players : ['玩家'];
   const events = await replayEvents(d as ReplayFile);
   return statsFromEvents(events, players);
+}
+
+/** 回放文件录制版本与当前版本不一致时弹出警告 (供播放/统计入口调用) */
+export function warnReplayVersion(file: unknown): void {
+  if (!replayVersionMismatch(file as Partial<ReplayFile>)) return;
+  const v = (file as Partial<ReplayFile>).version;
+  modal(
+    '版本警告',
+    el('p', { text: `该回放由 v${v} 版本录制, 当前游戏版本为 v${GAME_VERSION}。版本不匹配可能导致回放结果与录制时不同。` })
+  );
 }
 
 /** Find the snapshot with the most planted crops (used for share posters). */

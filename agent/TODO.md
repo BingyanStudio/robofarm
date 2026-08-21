@@ -129,3 +129,14 @@
        地块转为土地 (肥力 2); registry 注册 + CROP.md + MCP specialMechanisms 输出
        "收获特效"; engine.test.ts 沙地与盐碱地两条收获转土地测试 (均固定 15 周期)。
         描述: 环境植物, 能将不适宜生长的地块转为土地
+
+- [x] Feature: 回放文件携带产生时的游戏版本号, 播放时版本不匹配则弹出警告
+  改动:
+  1. shared/replay.ts: ReplayFile 新增 `version` 字段 (录制时的 GAME_VERSION),
+     ReplayRecorder.buildFile 写入; 新增 `replayVersionMismatch(file)` 判断
+     (文件有版本号且与当前版本不同 → 不匹配; 旧文件无版本号 → 不警告)。
+  2. frontend core/stats.ts 新增 `warnReplayVersion(file)`: 不匹配时弹出
+     "版本警告" modal (显示录制版本与当前版本)。
+  3. 播放入口接入: 回放页 normalizeReplay (本地导入 + 竞技历史回放), 单人
+     "我的成绩 → 统计" (重放前检查)。
+  4. replay.test.ts 断言 buildFile 携带版本号、replayVersionMismatch 三种情况。

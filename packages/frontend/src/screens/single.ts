@@ -18,7 +18,7 @@ import { icon } from '../ui/icon';
 import { setTopActions } from '../ui/topbar-state';
 import { api, fetchUser } from '../core/net';
 import { GameRunner } from '../core/game-runner';
-import { showGameStats, statsFromReplay, richestSnapshotFromReplay } from '../core/stats';
+import { showGameStats, statsFromReplay, richestSnapshotFromReplay, warnReplayVersion } from '../core/stats';
 import { openSharePoster } from '../core/share-poster';
 import gsap from 'gsap';
 
@@ -398,6 +398,7 @@ export function singleScreen(root: HTMLElement): void {
               void (async () => {
                 const res = await api.get(`/single/replay/${r.id}`);
                 if (res.status === 200) {
+                  warnReplayVersion(res.data); // 版本不匹配时弹出警告
                   const stats = await statsFromReplay(res.data);
                   if (stats) showGameStats(stats, '对局统计');
                   else toast('回放数据无法识别');
