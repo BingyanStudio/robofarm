@@ -1,24 +1,25 @@
 // 紫云英: 绿肥植物, 生长时加速周围作物的生长。
-// 特殊效果 (onGrow: accelerateNeighbors) 直接定义在本文件, 引擎直接调用,
-// 不再依赖 engine.ts 里的 GROWTH_EFFECTS 字典。
+// 特殊效果 (onGrow) 直接定义在本文件, 引擎直接调用。
 import { CropState, CropType, TileType } from '../types';
-import type { CropTypeConfig } from '../registry';
+import type { GrowthEffectContext } from '../types';
+import { BaseCrop } from './base';
 
-export const milkVetch: CropTypeConfig = {
-  type: CropType.MilkVetch,
-  name: '紫云英',
-  description: '绿肥植物，生长时会加速周围作物的生长。',
-  habitats: [TileType.Soil, TileType.Sand],
-  plantCost: 100,
-  value: 120,
-  growCycles: 160,
-  thirstInterval: 40, // 生长中缺水 4 次
-  color: '#7e9be8',
+export class MilkVetch extends BaseCrop {
+  readonly type = CropType.MilkVetch;
+  readonly name = '紫云英';
+  readonly description = '绿肥植物，生长时会加速周围作物的生长。';
+  readonly habitats = [TileType.Soil, TileType.Sand];
+  readonly plantCost = 100;
+  readonly value = 120;
+  readonly growCyclesBase = 160;
+  readonly thirstInterval = 40; // 生长中缺水 4 次
+  readonly color = '#7e9be8';
+
   /**
    * 生长中每回合按 上→右→下→左 顺序检查周围 Tile,
    * 若有作物且不缺水 (Growing) 且距离成熟剩余 >= 2 周期, 则其生长时间 -1 周期。
    */
-  onGrow({ world, pos }) {
+  onGrow({ world, pos }: GrowthEffectContext): void {
     for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
       const nx = pos[0] + dx;
       const ny = pos[1] + dy;
@@ -28,5 +29,5 @@ export const milkVetch: CropTypeConfig = {
       if (nb.growthRemaining < 2) continue; // 距成熟不足 2 周期不加速
       nb.growthRemaining -= 1;
     }
-  },
-};
+  }
+}

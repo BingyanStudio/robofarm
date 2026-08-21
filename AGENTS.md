@@ -94,10 +94,13 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
 ## 核心设计: 扩展机制 (禁止 if 硬编码特例)
 
 - 地块/作物: `shared/src/registry.ts` 数据注册表 (`TILES` / `CROPS`)。
-  地块配置: name、canCollectWater、**growthFactor** (沙地 1.5, 种植时生长周期
-  ×growthFactor 向下取整)、sprite/spriteWithCrop (前端贴图名, 有作物时用 _field 变体)、
-  color (程序化绘制兜底)。
-  作物配置: habitats(可种地块)、plantCost、value、growCycles、
+  地块配置: name、canCollectWater、**growthFactor** (沙地 1.5, 作物基类
+  `BaseCrop.growCycles()` 默认按它计算实际周期并向下取整)、sprite/spriteWithCrop
+  (前端贴图名, 有作物时用 _field 变体)、color (程序化绘制兜底)。
+  作物配置: 每种作物一个 class (继承 `crops/base.ts` 的 `BaseCrop`), 字段:
+  habitats(可种地块)、plantCost、value、`growCyclesBase` (基准周期, 前端贴图进度也用)、
+  **`growCycles(tile, world)`** (实际周期: 基类默认按地块 growthFactor, 沙地 ×1.5;
+  特殊作物重写, 如香菇 = growCyclesBase + 2×场上香菇数)、
   `thirstInterval` (**null = 无需浇水**, 如草莓)。
   **缺水机制**: 作物进入 Thirsty 后长期保持该状态、生长不推进,
   **不枯萎** (GAME.md 已取消枯萎设定), 浇水后从剩余进度继续生长。
@@ -135,8 +138,8 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
   基本属性 / 特殊效果 / 统计配色 `color` 都写在自己文件里), 由 registry.ts 汇总进 `CROPS`
   (改文档或加作物只改这两处)。
 - **沙漠化 / 间作**: 收获作物时, 若其周围存在沙地则该格转化为沙地 (仅蚕食土地,
-  不影响水池, engine.ts `maybeDesertify`); 若作物的四方向邻格有 ≥2 个不同种类作物,
-  收获收益 +20% (向下取整, engine.ts `intercroppingValue`)。
+  不影响水池, ops/helpers.ts `maybeDesertify`); 若作物的四方向邻格有 ≥2 个不同种类作物,
+  收获收益 +20% (向下取整, ops/helpers.ts `intercroppingValue`)。
 - **成熟特效 (onMature)**: 每种作物成熟时都会执行其挂接的特效 (多数作物不声明)。
   特效是作物配置上的**函数** (`crops/<type>.ts` 的 `onMature` 字段), 引擎直接调用,
   无需按 id 查表 (原 engine.ts 的 `MATURITY_EFFECTS` 字典已移除)。
@@ -145,8 +148,9 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
 - **生长特效 (onGrow)**: 与 onMature 同构, 每个生长回合执行 (如 Daffodil 的自动浇水,
   每 3 周期按 上→右→下→左 给邻格缺水作物浇水, 一次/回合, 成熟失效), 处理器同样
   定义在各作物自己的文件里 (原 engine.ts 的 `GROWTH_EFFECTS` 字典已移除)。
-- **动态生长周期 (plantCycles)**: 作物可用 `plantCycles(world)` 自定义实际生长周期
-  (覆盖 growCycles 与地块倍率), 如香菇的 20 + 2×场上香菇数。
+- **动态生长周期**: 作物在 `growCycles(tile, world)` 里重写即可自定义实际周期
+  (基类默认按地块 growthFactor, 沙地 ×1.5; 覆盖则忽略地块倍率), 如香菇的
+  growCyclesBase + 2×场上香菇数 (engine/helpers 的 `tryPlantAt` 与香菇扩散都走它)。
 - **ChangeTile**: 消耗 CHANGE_TILE_COST=6, 需上下左右有同类型地块 (orthNeighbors 检查),
   有作物的地块不可转换; 按操作类方式注册 (ops/change-tile.ts + ops/index.ts)。
 

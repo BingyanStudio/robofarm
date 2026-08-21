@@ -13,7 +13,7 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import { CROPS, DOC_SECTIONS, isCropType, sectionMarkdown, cropDocEntries, createSingleWorld, createCombatWorld, GAME_VERSION } from '@robofarm/shared';
+import { CROPS, DOC_SECTIONS, isCropType, sectionMarkdown, cropDocEntries, createSingleWorld, createCombatWorld, GAME_VERSION, BaseCrop } from '@robofarm/shared';
 import { mcpLoginStart, mcpLoginFinish, userFromToken, AuthUser } from '../auth';
 import * as api from '../services/api';
 
@@ -369,7 +369,8 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
         const special: string[] = [];
         if (cfg.onMature) special.push('成熟特效');
         if (cfg.onGrow) special.push('生长特效');
-        if (cfg.plantCycles) special.push('动态生长周期');
+        // 重写了 growCycles() (如香菇) → 动态生长周期
+        if (cfg.growCycles !== BaseCrop.prototype.growCycles) special.push('动态生长周期');
         return {
           content: [{
             type: 'text',
@@ -378,11 +379,10 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
               name: cfg.name,
               plantCost: cfg.plantCost,
               value: cfg.value,
-              growCycles: cfg.growCycles,
+              growCyclesBase: cfg.growCyclesBase,
               thirstInterval: cfg.thirstInterval,
               habitats: cfg.habitats,
               // 特殊机制 (未设置则无)
-              growthOverride: cfg.growthOverride,
               specialMechanisms: special.length > 0 ? special : undefined,
               description: cfg.description,
             }, null, 2),

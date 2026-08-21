@@ -31,11 +31,6 @@ export interface DroneAction {
   durationMs: number;
 }
 
-/** 香菇实际生长周期: 委托给香菇配置里的 plantCycles (20 + 2 × 场上香菇总数) */
-function shiitakeGrowCycles(world: WorldState): number {
-  return cropConfig(CropType.Shiitake).plantCycles!(world);
-}
-
 /**
  * 执行一个回合。
  * @param actions 全局无人机 id → 动作
@@ -212,7 +207,7 @@ function tickCrop(world: WorldState, crop: CropData, pos: Position, events: Game
         // 第 (thirstsDone+1) 次缺水发生在剩余回合数降到 ceil((剩余次数)·实际周期/(总次数+1)) 时。
         const total = crop.thirstTotal ?? 0;
         const done = crop.thirstsDone ?? 0;
-        const cycles = crop.plantCycles ?? cfg.growCycles;
+        const cycles = crop.plantCycles ?? cfg.growCyclesBase;
         if (
           total > 0 &&
           done < total &&
@@ -260,13 +255,14 @@ function spawnShiitake(world: WorldState, pos: Position, dirIndex: number, event
   if (nx < 0 || nx >= world.map[0].length || ny < 0 || ny >= world.map.length) return;
   const tile = world.map[ny][nx];
   if (tile.crop || tile.type !== TileType.Soil) return;
-  // 扩散出的香菇同样按场上香菇总数动态计算生长周期
-  const cycles = shiitakeGrowCycles(world);
+  // 扩散出的香菇同样按场上香菇总数动态计算生长周期 (growCycles 重写)
+  const cfg = cropConfig(CropType.Shiitake);
+  const cycles = cfg.growCycles(tile, world);
   tile.crop = {
     type: CropType.Shiitake,
     state: CropState.Growing,
     growthRemaining: cycles,
-    thirstTotal: cropConfig(CropType.Shiitake).thirstInterval === null ? 0 : Math.floor(cycles / 20),
+    thirstTotal: cfg.thirstInterval === null ? 0 : Math.floor(cycles / cfg.thirstInterval),
     thirstsDone: 0,
     plantCycles: cycles,
   };

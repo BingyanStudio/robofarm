@@ -1,6 +1,6 @@
 // 操作语义共用的辅助函数 (从 engine.ts 迁出, 供各操作类使用)。
 import { CropState, CropType, DroneState, Position, TileType, WorldState } from '../types';
-import { TILES, cropConfig } from '../registry';
+import { cropConfig } from '../registry';
 import { inBounds } from '../maps';
 
 /** 上下左右四个正交邻格 (越界跳过) */
@@ -57,7 +57,8 @@ export function maybeDesertify(world: WorldState, pos: Position): void {
 /**
  * 尝试在指定格种植作物 (与单格 Plant 相同的判定: 地块适配 / 无作物 / 金钱足够)。
  * 成功时扣除成本并写入作物数据, 返回 true; 任一条件不满足则不改动任何状态, 返回 false。
- * 生长周期按地块类型倍率 / 作物 growthOverride / 作物 plantCycles 动态计算。
+ * 实际生长周期由作物自己的 growCycles(tile, world) 计算 (基类默认按地块倍率,
+ * 特殊作物重写, 如香菇按场上数量)。
  */
 export function tryPlantAt(world: WorldState, drone: DroneState, pos: Position, crop: CropType): boolean {
   const cfg = cropConfig(crop);
@@ -67,13 +68,9 @@ export function tryPlantAt(world: WorldState, drone: DroneState, pos: Position, 
   const player = world.players[drone.player];
   if (player.money < cfg.plantCost) return false;
   player.money -= cfg.plantCost;
-  // 生长周期受地块类型影响 (如沙地 ×1.5, 数据在 TILES 注册表);
-  // 作物可用 growthOverride 覆盖地块倍率 (特殊机制);
-  // 作物可用 plantCycles 自定义动态周期 (如香菇: 20 + 2 × 场上香菇总数);
+  // 实际周期 = 作物 growCycles(tile, world) (基类默认沙地 ×1.5 向下取整);
   // 总缺水次数按该次种植的实际周期动态计算 (不依赖固定的剩余取模)
-  const adjusted = cfg.plantCycles
-    ? cfg.plantCycles(world)
-    : Math.floor(cfg.growCycles * (cfg.growthOverride ?? TILES[tile.type].growthFactor));
+  const adjusted = cfg.growCycles(tile, world);
   tile.crop = {
     type: crop,
     state: CropState.Growing,

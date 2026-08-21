@@ -99,7 +99,7 @@ export function hasCropSprites(sprites: Sprites | null, type: CropType): boolean
   return !!sprites && !!sprites.crops[type] && sprites.crops[type]!.length > 0;
 }
 
-/** Number of grow cycles a crop has (used for stage sprite rendering). */
+/** Number of base grow cycles a crop has (used for stage sprite rendering). */
 export function growCyclesOf(type: CropType): number {
-  return cropConfig(type).growCycles;
+  return cropConfig(type).growCyclesBase;
 }

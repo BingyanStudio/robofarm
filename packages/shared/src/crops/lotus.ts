@@ -1,15 +1,15 @@
 // 荷花: 水生植物, 让水池也成为盈利点。
 import { CropType, TileType } from '../types';
-import type { CropTypeConfig } from '../registry';
+import { BaseCrop } from './base';
 
-export const lotus: CropTypeConfig = {
-  type: CropType.Lotus,
-  name: '荷花',
-  description: '水生植物，让水池也成为盈利点。',
-  habitats: [TileType.Water],
-  plantCost: 30,
-  value: 90,
-  growCycles: 40,
-  thirstInterval: null, // 无需浇水
-  color: '#f48fb1',
-};
+export class Lotus extends BaseCrop {
+  readonly type = CropType.Lotus;
+  readonly name = '荷花';
+  readonly description = '水生植物，让水池也成为盈利点。';
+  readonly habitats = [TileType.Water];
+  readonly plantCost = 30;
+  readonly value = 90;
+  readonly growCyclesBase = 40;
+  readonly thirstInterval = null; // 无需浇水
+  readonly color = '#f48fb1';
+}

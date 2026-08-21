@@ -47,3 +47,24 @@
      normalizeOp 兼容 class 实例与 `{ type }` 纯对象, 类名被压缩 (constructor.name
      不可靠) 时仍按实例 `type` 字段识别 (ops.test.ts 回归覆盖)。
   4. 行为零变化: 全部 100 个测试通过, shared/backend/frontend 构建通过。
+- [x] Refactor: 作物删除 `growthOverride`; `growCycles` 与 `plantCycles()` 合并为
+  `growCycles(tile, world)` 函数, 由作物基类提供默认实现 (沙地 ×1.5), 子类按需重写
+  改动:
+  1. 新增 `crops/base.ts` 抽象基类 `BaseCrop` (implements CropTypeConfig): 声明
+     全部属性字段, 并提供 `growCycles(tile, world)` 默认实现 —— 按种植地块的
+     `TILES[tile.type].growthFactor` 计算 (沙地 1.5 → ×1.5 向下取整)。
+  2. 9 个作物文件从"配置对象"改为 **class** (继承 BaseCrop, 只填属性),
+     registry.ts 的 `CROPS` 统一 `new Xxx()` 实例化。
+  3. 删除 `CropTypeConfig.growthOverride` 与 `plantCycles`; 新增
+     `growCyclesBase` (基准周期, 土地上的回合数, 前端贴图进度也用它) 与
+     `growCycles(tile, world)`。西瓜/南瓜等不再有"沙地免疫"字段, 沙地一律 ×1.5
+     (与原先实际行为一致, 西瓜沙地减速测试保留)。
+  4. 香菇重写 `growCycles(_tile, world) = growCyclesBase + 2×场上香菇数`
+     (原 plantCycles 逻辑迁移); `tryPlantAt` 与香菇扩散 (spawnShiitake) 统一走
+     `cfg.growCycles(tile, world)`, 引擎删除 shiitakeGrowCycles 辅助函数。
+  5. 消费方适配: `sprites.ts` / `docs.ts` / MCP `get_crop` 改用 `growCyclesBase`;
+     MCP 的"动态生长周期"检测改为 `cfg.growCycles !== BaseCrop.prototype.growCycles`;
+     `BaseCrop` 从 shared 导出。
+  6. 注意: `CropData.plantCycles` (种植时记录的实际周期, 缺水触发用) 是**数据字段**,
+     与配置函数无关, 保留不动。
+  7. 行为零变化: 全部 100 个测试通过, shared/backend/frontend 构建通过。
