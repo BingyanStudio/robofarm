@@ -41,13 +41,28 @@ export const PLANT_ROW_COL_COST = 3;
 export const INTERCEPT_ROW_COL_COST = 6;
 
 /** ChangeTile (地块转换) 的能量消耗 */
-export const CHANGE_TILE_COST = 6;
+export const CHANGE_TILE_COST = 3;
+
+/** Fertilize (单格施肥) 的能量消耗 */
+export const FERTILIZE_COST = 3;
+
+/** FertilizeRow / FertilizeCol (行/列施肥) 的能量消耗 */
+export const FERTILIZE_ROW_COL_COST = 8;
+
+/** 每次施肥增加的肥力 */
+export const FERTILIZE_GAIN = 3;
 
 /** NewDrone 的金钱消耗 */
 export const NEW_DRONE_COST = 4000;
 
 /** 每名玩家的无人机数量上限 (按游戏模式) */
 export const DRONE_LIMIT: Record<'single' | 'combat', number> = { single: 2, combat: 3 };
+
+/** 土地初始肥力 */
+export const INITIAL_TILE_FERTILITY = 5;
+
+/** 土地肥力上限 (肥力被增加到超过该值 → 盐碱化) */
+export const MAX_TILE_FERTILITY = 10;
 
 /** 每个玩家程序最多保留的日志行数 */
 export const MAX_LOG_LINES = 200;

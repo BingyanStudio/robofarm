@@ -13,7 +13,7 @@ import {
   TileType,
   WorldState,
 } from './types';
-import { START_MONEY } from './config';
+import { START_MONEY, INITIAL_TILE_FERTILITY } from './config';
 
 export const SINGLE_WIDTH = 7;
 export const SINGLE_HEIGHT = 7;
@@ -55,7 +55,12 @@ export function mirrorPosition(pos: Position, width: number): Position {
 }
 
 function emptyTile(type: TileType): Tile {
-  return { type, crop: null };
+  // 仅土地持有肥力属性 (初始 INITIAL_TILE_FERTILITY)
+  return {
+    type,
+    crop: null,
+    ...(type === TileType.Soil ? { fertility: INITIAL_TILE_FERTILITY } : {}),
+  };
 }
 
 function buildMap(width: number, height: number): Tile[][] {
@@ -84,7 +89,15 @@ function applyLandscape(map: Tile[][]): void {
   }
 }
 
-export function createSingleWorld(maxTurns: number): WorldState {
+/**
+ * 本局随机种子: 未显式传入时随机取得。种子对玩家不可预测 (避免把随机机制
+ * 硬编码进代码), 且计入回放文件, 回放时用同一种子重推演。
+ */
+function drawSeed(seed?: number): number {
+  return seed ?? Math.floor(Math.random() * 0xffffffff) >>> 0;
+}
+
+export function createSingleWorld(maxTurns: number, rngSeed?: number): WorldState {
   const map = buildMap(SINGLE_WIDTH, SINGLE_HEIGHT);
   applyLandscape(map);
   const spawn = SINGLE_SPAWNS[0];
@@ -99,10 +112,10 @@ export function createSingleWorld(maxTurns: number): WorldState {
     interceptZone: null,
   };
   const players: PlayerState[] = [{ id: 0, money: START_MONEY, alive: true }];
-  return { mode: 'single', map, drones: [drone], players, turn: 0, maxTurns };
+  return { mode: 'single', map, drones: [drone], players, turn: 0, maxTurns, rngSeed: drawSeed(rngSeed) };
 }
 
-export function createCombatWorld(maxTurns: number): WorldState {
+export function createCombatWorld(maxTurns: number, rngSeed?: number): WorldState {
   const map = buildMap(COMBAT_WIDTH, COMBAT_HEIGHT);
   // 左半与单人地图相同 (含沙地)
   applyLandscape(map);
@@ -132,7 +145,7 @@ export function createCombatWorld(maxTurns: number): WorldState {
     { id: 0, money: START_MONEY, alive: true },
     { id: 1, money: START_MONEY, alive: true },
   ];
-  return { mode: 'combat', map, drones, players, turn: 0, maxTurns };
+  return { mode: 'combat', map, drones, players, turn: 0, maxTurns, rngSeed: drawSeed(rngSeed) };
 }
 
 /**
@@ -164,6 +177,19 @@ export function tileAt(world: WorldState, pos: Position): Tile {
 
 export function samePos(a: Position, b: Position): boolean {
   return a[0] === b[0] && a[1] === b[1];
+}
+
+/** 上下左右四个正交邻格 (越界跳过) */
+export function orthNeighbors(pos: Position, world: WorldState): Position[] {
+  const out: Position[] = [];
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+    const nx = pos[0] + dx;
+    const ny = pos[1] + dy;
+    if (nx >= 0 && nx < world.map[0].length && ny >= 0 && ny < world.map.length) {
+      out.push([nx, ny]);
+    }
+  }
+  return out;
 }
 
 /** 供测试/调试使用的辅助: 在当前地块种植作物 */

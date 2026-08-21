@@ -13,7 +13,7 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import { CROPS, DOC_SECTIONS, isCropType, sectionMarkdown, cropDocEntries, createSingleWorld, createCombatWorld, GAME_VERSION } from '@robofarm/shared';
+import { CROPS, DOC_SECTIONS, isCropType, sectionMarkdown, cropDocEntries, createSingleWorld, createCombatWorld, GAME_VERSION, BaseCrop, plantableTiles } from '@robofarm/shared';
 import { mcpLoginStart, mcpLoginFinish, userFromToken, AuthUser } from '../auth';
 import * as api from '../services/api';
 
@@ -364,6 +364,14 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
           };
         }
         const cfg = CROPS[crop];
+        // 特效/特殊机制: 特效是挂在配置上的函数, 无法 JSON 序列化, 因此转换为可读描述。
+        const special: string[] = [];
+        if (cfg.onGrown) special.push('成熟特效');
+        if (cfg.grownUpdate) special.push('成熟后每回合特效');
+        if (cfg.growUpdate) special.push('生长特效');
+        if (cfg.onHarvested) special.push('收获特效');
+        // 重写了 growCycles() (如香菇) → 动态生长周期
+        if (cfg.growCycles !== BaseCrop.prototype.growCycles) special.push('动态生长周期');
         return {
           content: [{
             type: 'text',
@@ -372,13 +380,13 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
               name: cfg.name,
               plantCost: cfg.plantCost,
               value: cfg.value,
-              growCycles: cfg.growCycles,
-              thirstInterval: cfg.thirstInterval,
-              habitats: cfg.habitats,
+              growCyclesBase: cfg.growCyclesBase,
+              thirstCountBase: cfg.thirstCountBase,
+              fertilityCost: cfg.fertilityCost,
+              habitats: plantableTiles(cfg),
+              canPlantDesc: cfg.canPlantDesc,
               // 特殊机制 (未设置则无)
-              growthOverride: cfg.growthOverride,
-              onMature: cfg.onMature,
-              onGrow: cfg.onGrow,
+              specialMechanisms: special.length > 0 ? special : undefined,
               description: cfg.description,
             }, null, 2),
           }],
@@ -553,11 +561,13 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
               '  - `new Intercept([x, y])` 竞技模式单格拦截\n' +
               '  - `new InterceptRow()` / `new InterceptCol()` 拦截整行/列 (6 能量)\n' +
               '  - `new Charge()` 原地充能 +5 (能量上限 10)\n' +
-              '  - `new ChangeTile(tileType)` 转换脚下地块为 soil/water/sand (6 能量, 需相邻同类型地块)\n' +
-              '- 可用 API: `getSelf()` (含 water/energy) / `getGame()` (含 money) / `getMap()` / `getTile(p)` / `getCrop(p)` / `getDrone(p)`, 坐标越界返回 null。\n' +
+              '  - `new ChangeTile(tileType)` 转换脚下地块为 soil/water/sand (3 能量, 需相邻同类型地块; 转为土地时肥力为 0)\n' +
+              '  - `new Fertilize()` 给脚下土地施肥 +3 肥力 (3 能量, 非土地失败不扣能量)\n' +
+              '  - `new FertilizeRow()` / `new FertilizeCol()` 行/列 3 格土地施肥 +3 (8 能量, 非土地跳过)\n' +
+              '- 可用 API: `getSelf()` (含 water/energy) / `getGame()` (含 money) / `getMap()` / `getTile(p)` (含 fertility) / `getCrop(p)` / `getDrone(p)`, 坐标越界返回 null。\n' +
               '- 作物列表 (代码名, 成本/收获/成熟回合/需水/可种地块):\n' + cropSummary() + '\n' +
-              '- 机制: 沙漠化 (收获的格相邻有沙地则转化为沙地); 间作 (四方向 ≥2 个不同作物, 收获 +20%); 香菇总周期 = 20 + 2×场上香菇数\n' +
-              '- 竞技模式: 自己半场在左侧 (14×7), 对方半场收获进入临时资金池, 返回己方半场入账; 种植不受半场限制 (可到对方半场占位), 铲除仅限己方半场。沙地上生长周期 ×1.5, 草莓/葡萄/南瓜/西瓜/紫云英可种。\n' +
+              '- 机制: 土地有肥力 (初始 5, 上限 10): 收获扣除作物肥力消耗, 肥力 < 0 → 沙漠化 (转沙地), 肥力 > 上限 → 盐碱化 (转盐碱地, 生长 ×1.5 且浇水 ×2); 间作 (四方向 ≥2 个不同作物, 收获 +20%); 香菇总周期 = 20 + 2×场上香菇数\n' +
+              '- 竞技模式: 自己半场在左侧 (14×7), 对方半场收获进入临时资金池, 返回己方半场入账; 种植不受半场限制 (可到对方半场占位), 铲除仅限己方半场。沙地上生长周期 ×3。\n' +
               '- 限制: 单次 run() 400ms 超时即判负; 禁止网络/异步 API。\n' +
               '- 完整文档可用 get_doc / robofarm://docs/* 获取。\n\n' +
               (goal ? `策略目标: ${String(goal)}\n\n` : '') +

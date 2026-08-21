@@ -94,55 +94,95 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
 ## 核心设计: 扩展机制 (禁止 if 硬编码特例)
 
 - 地块/作物: `shared/src/registry.ts` 数据注册表 (`TILES` / `CROPS`)。
-  地块配置: name、canCollectWater、**growthFactor** (沙地 1.5, 种植时生长周期
-  ×growthFactor 向下取整)、sprite/spriteWithCrop (前端贴图名, 有作物时用 _field 变体)、
-  color (程序化绘制兜底)。
-  作物配置: habitats(可种地块)、plantCost、value、growCycles、
-  `thirstInterval` (**null = 无需浇水**, 如草莓)。
+  地块配置: 每种地块一个 class (继承 `tiles/base.ts` 的 `BaseTile`), 字段:
+  name、canCollectWater (基类默认 false, 水池重写为 true)、
+  **growthFactor** (基类默认 1, 沙地重写 3 / 盐碱地 1.5, 作物基类
+  `BaseCrop.growCycles()` 默认按它计算实际周期并向下取整)、
+  **thirstFactor** (基类默认 1, 盐碱地重写 2 → 浇水次数 ×2, `BaseCrop.thirstCount()`
+  消费)、sprite/spriteWithCrop (前端贴图名, 有作物时用 _field 变体)、
+  color (程序化绘制兜底)、
+  作物生命周期回调 (可选, 引擎在对应时机直接调用, 不 if 硬编码):
+  **onCropPlanted** (种下, 含范围种植与香菇扩散) / **onCropWatered** (浇水,
+  含行/列浇水与水仙自动浇水) / **onCropHarvested** (收获, 含行/列收割;
+  如土地根据肥力判定沙漠化/盐碱化)。
+  **土地肥力**: 仅土地持有 `Tile.fertility` (初始 INITIAL_TILE_FERTILITY=5,
+  上限 MAX_TILE_FERTILITY=10), 可经 `getTile().fertility` 查询;
+  收获作物时扣除该作物的 **fertilityCost** (负数 = 恢复肥力, 如紫云英 -4):
+  肥力 < 0 → **沙漠化** (转沙地), 肥力 > 上限 → **盐碱化** (转盐碱地, 生长 ×1.5
+  且浇水 ×2)。
+  作物配置: 每种作物一个 class (继承 `crops/base.ts` 的 `BaseCrop`), 字段:
+  **`canPlant(tile)`** (是否可种在该地块, 替代原 habitats, 基类不判断、子类实现,
+  可检查肥力等)、`fertilityCost` (肥力消耗, 基类默认 0)、plantCost、value、
+  `growCyclesBase` (基准周期, 前端贴图进度也用)、
+  **`growCycles(tile, world)`** (实际周期: 基类默认按地块 growthFactor, 沙地 ×3;
+  特殊作物重写, 如香菇 = growCyclesBase + 2×场上香菇数)、
+  **`thirstCount(tile, world)`** (总缺水次数: 基类默认 thirstCountBase × 地块
+  thirstFactor; 子类可重写, 如香菇随动态周期增减)、`thirstCountBase`
+  (**基准总缺水次数, 0 = 无需浇水**, 如草莓)。
   **缺水机制**: 作物进入 Thirsty 后长期保持该状态、生长不推进,
   **不枯萎** (GAME.md 已取消枯萎设定), 浇水后从剩余进度继续生长。
-  缺水次数在种植时按实际生长周期动态计算 (CropData.thirstTotal =
-  floor(实际周期 / thirstInterval)), 触发点 = ceil((剩余次数)·thirstInterval),
-  **不依赖固定的剩余取模**, 因此沙地 (周期 ×1.5) 等调整过周期的作物缺水次数同步增加。
-  当前地块: 土地 / 水池 / 沙地 (可种草莓/葡萄/南瓜)。
-- 无人机操作: 玩家侧为**操作类** API (`shared/src/player-api.ts` 的 `Move` /
-  `Teleport` / `Plant` / `CollectWater` / `Water` / `Harvest` / `Clear` / `Intercept` /
-  `Charge` / `HarvestRow` / `HarvestCol` / `WaterRow` / `WaterCol` /
-  `InterceptRow` / `InterceptCol` / `PlantRow` / `PlantCol`, 均继承 `DroneOperation`,
-  参数经构造函数传入),
-  引擎按**构造类名**识别操作; 内部传输/引擎仍用判别联合 `DroneOperation`
-  (`types.ts`), 由 `ops.ts` 的 `normalizeOp` 把类实例统一转换为纯对象
-  (同时兼容 `{ type: ... }` 旧写法)。新增操作 = 添加操作类 + OP_SCHEMAS +
-  OP_HANDLERS 三处。
+  缺水次数在种植时按 thirstCount 动态计算 (CropData.thirstAt.length),
+  **缺水时机 = 种植时随机选取** (rng.ts 的 pickThirstPoints): 基础随机性来自
+  **游戏开始时随机取得的种子** (WorldState.rngSeed, 对玩家不可预测, 防止把随机
+  机制硬编码进代码), 叠加 玩家/位置/作物/回合 使同局内各次种植互不相同;
+  种子计入回放文件 (ReplayFile.seed), 回放用同一种子重推演, 保证一致。
+  沙地 (周期 ×3) / 盐碱地 (×1.5 且浇水 ×2) 等调整过周期的作物缺水次数同步增加。
+  当前地块: 土地 / 水池 / 沙地 / 盐碱地。
+- 无人机操作: 玩家侧为**操作类** API (`Move` / `Teleport` / `Plant` / `CollectWater` /
+  `Water` / `Harvest` / `Clear` / `Intercept` / `Charge` / `HarvestRow` / `HarvestCol` /
+  `WaterRow` / `WaterCol` / `InterceptRow` / `InterceptCol` / `PlantRow` / `PlantCol` /
+  `ChangeTile` / `Fertilize` / `FertilizeRow` / `FertilizeCol`,
+  均继承 `DroneOperation`, 参数经构造函数传入),
+  每个操作一个文件在 `shared/src/ops/` (继承 + 重写静态 `apply()` 实现语义),
+  引擎按实例的 **`type` 字段**识别操作; 内部传输/引擎仍用判别联合 `InternalOperation`
+  (`types.ts`), 由 `ops/index.ts` 的 `normalizeOp` 把类实例统一转换为纯对象
+  (同时兼容 `{ type: ... }` 旧写法)。
+  新增操作 = 在 `ops/` 新建操作类 (声明 `type` + 静态 `fields` + 重写静态 `apply`)
+  + 在 `ops/index.ts` 的 `OP_CLASSES` 登记, 共两处, 引擎零改动。
 - **能量机制**: DroneState.energy (上限 MAX_ENERGY=10, 初始 0), Charge 原地 +5;
-  行/列范围操作消耗能量 (收割 4 / 浇灌 3 / 种植 3 / 拦截 6, 常量在 config.ts);
+  行/列范围操作消耗能量 (收割 4 / 浇灌 3 / 种植 3 / 拦截 6 / 施肥 8, 常量在 config.ts);
+  Fertilize 消耗 FERTILIZE_COST=3 (非土地失败且不扣能量), 施肥 +FERTILIZE_GAIN=3 肥力;
   Teleport 消耗 ceil(欧氏距离) 能量 (尝试时即扣除, 仲裁失败不退还; 竞技模式只能
-  在我方半场内传送, 与移动同走仲裁); ChangeTile 消耗 CHANGE_TILE_COST=6;
+  在我方半场内传送, 与移动同走仲裁); ChangeTile 消耗 CHANGE_TILE_COST=3;
   NewDrone 消耗 NEW_DRONE_COST=4000 金钱 (上限 DRONE_LIMIT: 单人 2 / 竞技 3,
   GameInfo.droneLimit 可查)。
   行/列范围操作覆盖以无人机为中心的 3 格 (interceptZone 记录施法点 center);
   行/列收割仅限己方半场; 行/列拦截在回合结束结算。
   行/列种植 (PlantRow/PlantCol) 按 plants 数组顺序在 3 格内种植,
-  跳过无法种植的格子 (地块不适配/已有作物/金钱不足) (ops.ts 的 `crops` 字段 kind 校验)。
+  跳过无法种植的格子 (地块不适配/已有作物/金钱不足) (PlantRow/PlantCol 静态
+  `fields` 的 `crops` 字段 kind 校验)。
 - 当前作物: 草莓 / 葡萄 / 小麦 (需水) / 荷花 (水生) / 南瓜 (需水) /
-  西瓜 (成本 1000/收获 1800/100 周期) /
-  紫云英 (成本 100/收获 120/160 周期, 生长加速邻格 onGrow) /
-  香菇 (基础 20 周期, 实际周期 = 20 + 2×场上香菇数, 需水, 成熟后分 4 回合按上右下左扩散 onMature) /
-  水仙 (生长自动浇水 onGrow),
-  完整属性见 agent/CROP.md, 数据在 `CROPS` 注册表 (改文档或加作物只改这一处)。
-- **沙漠化 / 间作**: 收获作物时, 若其周围存在沙地则该格转化为沙地 (仅蚕食土地,
-  不影响水池, engine.ts `maybeDesertify`); 若作物的四方向邻格有 ≥2 个不同种类作物,
-  收获收益 +20% (向下取整, engine.ts `intercroppingValue`)。
-- **成熟特效 (onMature)**: 每种作物成熟时都会执行其挂接的特效 (多数作物不声明)。
-  效果按 id 在 engine.ts 的 `MATURITY_EFFECTS` 表注册 (如 selfSpread),
-  新增特效 = 加一个处理器 + 在注册表声明, 无需 if 硬编码。
-  香菇: 成熟时设置 `spreadLeft=4`, 之后每回合在 Grown 分支按上右下左扩散 1 株
-  (CropData.spreadLeft 字段, 到 0 停止)。
-- **生长特效 (onGrow)**: 与 onMature 同构, 每个生长回合执行 (如 Daffodil 的 autoWater,
-  每 3 周期按 上→右→下→左 给邻格缺水作物浇水, 一次/回合, 成熟失效), 处理器在
-  engine.ts 的 `GROWTH_EFFECTS` 表注册。
-- **ChangeTile**: 消耗 CHANGE_TILE_COST=6, 需上下左右有同类型地块 (orthNeighbors 检查),
-  有作物的地块不可转换; 按操作三处注册 (player-api + OP_SCHEMAS + OP_HANDLERS)。
+  西瓜 (成本 1000/收获 2000/80 周期) /
+  紫云英 (成本 100/收获 120/30 周期, 每回合加速 1 株邻格, 收获恢复 4 点肥力) /
+  香菇 (基础 20 周期, 实际周期 = 20 + 2×场上香菇数, 需水, 成熟后分 4 回合按上右下左扩散 onGrown) /
+  水仙 (生长自动浇水 growUpdate) /
+  仙人掌 (沙地/盐碱地, 15 周期且不受环境 debuff, 收获把脚下转为土地),
+  完整属性见 agent/CROP.md, 数据在 `shared/src/crops/` (每种作物一个文件,
+  基本属性 / 特殊效果 / 统计配色 `color` 都写在自己文件里), 由 registry.ts 汇总进 `CROPS`
+  (改文档或加地块/作物 = 新建 tiles/ 或 crops/ 文件 + registry.ts 登记, 只改这两处)。
+- **沙漠化 / 盐碱化 / 间作**: 收获作物时, 土地按扣除该作物 fertilityCost 后的
+  肥力判定: < 0 → 沙漠化转沙地, > 上限 → 盐碱化转盐碱地 (作为**土地地块的
+  `onCropHarvested` 回调** 实现, 见 tiles/soil.ts);
+  若作物的四方向邻格有 ≥2 个不同种类作物,
+  收获收益 +20% (向下取整, ops/helpers.ts `intercroppingValue`)。
+- **成熟特效 (onGrown)**: 每种作物成熟时都会执行其挂接的特效 (多数作物不声明)。
+  特效是作物配置上的**函数** (`crops/<type>.ts` 的 `onGrown` 字段), 引擎直接调用,
+  无需按 id 查表 (原 engine.ts 的 `MATURITY_EFFECTS` 字典已移除)。
+- **成熟后每回合特效 (grownUpdate)**: 作物处于 Grown 状态时每个回合都会执行
+  (多数作物不声明)。香菇的扩散整体在 crops/shiitake.ts 实现: `onGrown` 设置
+  `spreadLeft=4`, `grownUpdate` 每回合按上右下左扩散 1 株 (私有 spawnShiitake 在邻格
+  种下新香菇, CropData.spreadLeft 字段到 0 停止)。
+- **生长特效 (growUpdate)**: 与 onGrown 同构, 每个生长回合执行 (如 Daffodil 的自动浇水,
+  每 3 周期按 上→右→下→左 给邻格缺水作物浇水, 一次/回合, 成熟失效), 处理器同样
+  定义在各作物自己的文件里 (原 engine.ts 的 `GROWTH_EFFECTS` 字典已移除)。
+- **收获特效 (onHarvested)**: 作物被收获时执行 (单格与行/列收割都触发),
+  如仙人掌把脚下沙地/盐碱地转为土地 (肥力 2)。
+- **动态生长周期**: 作物在 `growCycles(tile, world)` 里重写即可自定义实际周期
+  (基类默认按地块 growthFactor, 沙地 ×3; 覆盖则忽略地块倍率), 如香菇的
+  growCyclesBase + 2×场上香菇数 (engine/helpers 的 `tryPlantAt` 与香菇扩散都走它)。
+- **ChangeTile**: 消耗 CHANGE_TILE_COST=4, 需上下左右有同类型地块 (orthNeighbors 检查),
+  有作物的地块不可转换; 转为土地时肥力为 0; 按操作类方式注册
+  (ops/change-tile.ts + ops/index.ts)。
 
 ## 引擎语义 (shared/src/engine.ts, 改前必读)
 

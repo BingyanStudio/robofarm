@@ -52,10 +52,10 @@ export interface LeaderboardSnapshotRow {
   created_at: number;
 }
 
-/** 当前大版本的排行榜版本号 (每版冻结一次旧排行榜; 显示为 v1.x 系列标签) */
-export const LEADERBOARD_VERSION = 'v1.x';
-/** 上一个大版本的排行榜标签 (V1.0.0 发布时冻结整个 V0.x 时代) */
-export const PREV_LEADERBOARD_VERSION = 'v0.x';
+/** 当前大版本的排行榜版本号 (每版冻结一次旧排行榜; 显示为 v2.x 系列标签) */
+export const LEADERBOARD_VERSION = 'v2.x';
+/** 上一个大版本的排行榜标签 (V2.0.0 发布时冻结整个 V1.x 时代) */
+export const PREV_LEADERBOARD_VERSION = 'v1.x';
 
 let db: DatabaseSync | null = null;
 
@@ -170,6 +170,7 @@ function migrate(d: DatabaseSync): void {
     console.log('[db][debug] users 表已有 github_id 列, 跳过迁移');
   }
   applyV100Migrations(d);
+  applyV200Migrations(d);
 }
 
 /**
@@ -197,6 +198,33 @@ function applyV100Migrations(d: DatabaseSync): void {
   if (!applied('v1.0.0.clear-single-submissions')) {
     d.exec('DELETE FROM single_submissions');
     mark('v1.0.0.clear-single-submissions');
+  }
+}
+
+/**
+ * V2.0.0 一次性数据迁移 (用 meta 表记录, 幂等):
+ * 1. 清空多人代码匹配池 (所有玩家恢复"未上传代码"状态)
+ * 2. 冻结 V1.x 时代排行榜为快照 Tab
+ * 3. 清空单人提交: 旧成绩已冻结进快照, 新版本的排行榜从空开始
+ */
+function applyV200Migrations(d: DatabaseSync): void {
+  const applied = (key: string): boolean =>
+    d.prepare('SELECT 1 FROM meta WHERE key = ?').get(key) !== undefined;
+  const mark = (key: string): void => {
+    d.prepare('INSERT OR IGNORE INTO meta (key, value) VALUES (?, ?)').run(key, String(Date.now()));
+  };
+
+  if (!applied('v2.0.0.clear-combat-codes')) {
+    d.exec('DELETE FROM combat_codes');
+    mark('v2.0.0.clear-combat-codes');
+  }
+  if (!applied('v2.0.0.leaderboard-snapshot')) {
+    takeLeaderboardSnapshot(d, PREV_LEADERBOARD_VERSION);
+    mark('v2.0.0.leaderboard-snapshot');
+  }
+  if (!applied('v2.0.0.clear-single-submissions')) {
+    d.exec('DELETE FROM single_submissions');
+    mark('v2.0.0.clear-single-submissions');
   }
 }
 

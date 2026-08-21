@@ -6,6 +6,7 @@
 import { GameController, PlayerProgram, PlayerTurnResult } from './game-controller';
 import { normalizeOp } from './ops';
 import { GameEvent, GameMode, InternalOperation } from './types';
+import { GAME_VERSION } from './version';
 
 /** 单回合内某架无人机的操作 */
 export interface ReplayDroneOp {
@@ -29,6 +30,16 @@ export interface ReplayFile {
   mode: GameMode;
   maxTurns: number;
   players: string[];
+  /**
+   * 录制该回放时的游戏版本号 (GAME_VERSION), 播放时用于版本一致性检查;
+   * 旧回放文件可能缺失。
+   */
+  version?: string;
+  /**
+   * 本局随机种子: 游戏开始时随机取得, 回放时用同一种子重推演,
+   * 保证缺水时机等随机机制与游玩时完全一致。旧回放文件可能缺失。
+   */
+  seed?: number;
   result: { type: 'finished' | 'error'; money?: number[]; message?: string } | null;
   rounds: ReplayRound[];
 }
@@ -64,6 +75,8 @@ export function wrapProgramForReplay(
 export class ReplayRecorder {
   private readonly rounds: ReplayRound[] = [];
   private pending: ReplayDroneOp[] = [];
+  /** 本局随机种子 (来自 controller.world.rngSeed, 随回放文件保存) */
+  seed: number = 0;
 
   /** 包装玩家程序 (每个玩家各包装一次) */
   wrap(program: PlayerProgram): PlayerProgram {
@@ -88,13 +101,20 @@ export class ReplayRecorder {
       mode: meta.mode,
       maxTurns: meta.maxTurns,
       players: meta.players,
+      version: GAME_VERSION,
+      seed: this.seed,
       result: meta.result,
       rounds: this.rounds,
     };
   }
 }
 
-/** 从回放文件重新推演 (脚本化操作, 确定性), 返回完整事件流 (含 snapshot / end) */
+/** 回放文件的录制版本与当前游戏版本是否不一致 (用于播放时警告) */
+export function replayVersionMismatch(file: Pick<ReplayFile, 'version'>): boolean {
+  return file.version != null && file.version !== GAME_VERSION;
+}
+
+/** 从回放文件重新推演 (脚本化操作, 用回放文件里的随机种子, 确定性), 返回完整事件流 (含 snapshot / end) */
 export async function replayEvents(file: ReplayFile): Promise<GameEvent[]> {
   const players = file.players.map((name, pi) => ({
     name,
@@ -106,6 +126,8 @@ export async function replayEvents(file: ReplayFile): Promise<GameEvent[]> {
     mode: file.mode,
     players,
     maxTurns: file.maxTurns,
+    // 旧回放文件可能没有 seed, 退化为随机 (新文件一定携带)
+    seed: file.seed,
   });
   const all: GameEvent[] = [];
   while (!controller.over) {

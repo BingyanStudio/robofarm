@@ -1,7 +1,7 @@
 // Canvas game renderer: draws tiles/crops/drones, supports zoom (wheel) and drag-to-pan.
 // Rendering uses absolute coordinates; the mirror option renders from the opponent's view (combat mode P2).
 import type { SnapshotState, CropInfo, Position } from '@robofarm/shared';
-import { CropState, TileType, TILES, cropConfig } from '@robofarm/shared';
+import { CropState, TileType, TILES, cropConfig, MAX_TILE_FERTILITY } from '@robofarm/shared';
 import { loadSprites, cropStageIndex, growCyclesOf } from './sprites';
 import type { Sprites } from './sprites';
 import { el } from '../ui/ui';
@@ -28,6 +28,7 @@ const FX = {
   water: { color: theme.fxWater, alpha: 0.45 }, // light blue: water
   harvest: { color: theme.fxHarvest, alpha: 0.7 }, // deep gold: harvest (starts more opaque)
   intercept: { color: theme.fxIntercept, alpha: 0.45 }, // light red: intercept
+  fertilize: { color: theme.fxFertilize, alpha: 0.5 }, // green: fertilize
 } as const;
 
 /** Effect duration (milliseconds). */
@@ -209,7 +210,7 @@ export class Renderer {
   }
 
   /** Tile effect: water (light blue) / harvest (light gold) / intercept (light red), covers the whole tile and fades over 0.2s. */
-  tileFx(type: 'water' | 'harvest' | 'intercept', x: number, y: number): void {
+  tileFx(type: 'water' | 'harvest' | 'intercept' | 'fertilize', x: number, y: number): void {
     this.fx.set(`${x},${y}`, { type, x, y, start: performance.now() });
     this.ensureLoop();
   }
@@ -283,10 +284,20 @@ export class Renderer {
     const rows: HTMLElement[] = [];
 
     // 1. Tile
+    // 竞技模式: 屏幕左半 (无论是否镜像视角) 即当前视角的己方半场;
+    // 土地: 附带肥力信息 (仅土地有 fertility)。
+    const tileExtras: string[] = [];
+    if (this.state.mode === 'combat') {
+      tileExtras.push(dx < this.state.map[0].length / 2 ? '己方半场' : '对方半场');
+    }
+    if (tile.fertility !== undefined) {
+      tileExtras.push(`肥力 ${tile.fertility}/${MAX_TILE_FERTILITY}`);
+    }
     rows.push(
       el('div', { class: 'tt-row' }, [
         el('span', { class: 'tt-title', text: TILES[tile.type].name }),
         el('span', { class: 'muted', text: `  (${x}, ${y})` }),
+        ...tileExtras.map((e) => el('span', { class: 'muted', text: ` · ${e}` })),
       ])
     );
 
@@ -315,7 +326,7 @@ export class Renderer {
       if (c.state === CropState.Growing) {
         info =
           `生长中, ${c.cyclesToGrown} 回合后成熟` +
-          (cfg.thirstInterval !== null ? ' · 需定期浇水' : ' · 无需浇水');
+          (cfg.thirstCountBase > 0 ? ' · 需定期浇水' : ' · 无需浇水');
       } else if (c.state === CropState.Thirsty) {
         info =
           c.cyclesToGrown > 0

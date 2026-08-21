@@ -1,6 +1,6 @@
 // 游戏 API 文档的单一事实来源 (shared)。
 // 前端右侧手册与后端 MCP 服务器都从这里生成内容, 保证两边一致。
-import { CROPS, TILES } from './registry';
+import { CROPS } from './registry';
 
 export interface DocEntry {
     /** 条目锚点 id (供前端文档内跳转) */
@@ -161,9 +161,33 @@ export const DOC_OPERATIONS: DocEntry[] = [
         id: 'doc-ChangeTile',
         name: 'ChangeTile',
         def: 'class ChangeTile extends DroneOperation',
-        desc: '将脚下地块转换为指定类型 (soil / water / sand), 消耗 6 能量。前提: 上下左右必须有至少一个与目标类型相同的地块, 不允许凭空创造; 有作物的地块不能转换。',
+        desc: '将脚下地块转换为指定类型 (soil / water / sand), 消耗 3 能量; 转为土地时肥力为 0。前提: 上下左右必须有至少一个与目标类型相同的地块, 不允许凭空创造; 有作物的地块不能转换。',
         params: ['`tileType`: `\'soil\' | \'water\' | \'sand\'` — 目标地块类型'],
         example: 'return new ChangeTile(\'water\');',
+    },
+    {
+        id: 'doc-Fertilize',
+        name: 'Fertilize',
+        def: 'class Fertilize extends DroneOperation',
+        desc: '给脚下土地施肥 (肥力 +3), 消耗 3 能量; 若不是土地则失败且不扣能量。',
+        params: [],
+        example: 'return new Fertilize();',
+    },
+    {
+        id: 'doc-FertilizeRow',
+        name: 'FertilizeRow',
+        def: 'class FertilizeRow extends DroneOperation',
+        desc: '给以自己为中心的行 3 格内土地施肥 (肥力 +3), 非土地格子跳过 (不返还能量), 消耗 8 能量。',
+        params: [],
+        example: 'return new FertilizeRow();',
+    },
+    {
+        id: 'doc-FertilizeCol',
+        name: 'FertilizeCol',
+        def: 'class FertilizeCol extends DroneOperation',
+        desc: '给以自己为中心的列 3 格内土地施肥 (肥力 +3), 非土地格子跳过 (不返还能量), 消耗 8 能量。',
+        params: [],
+        example: 'return new FertilizeCol();',
     },
 ];
 
@@ -238,7 +262,7 @@ function cropTypeDocEntry(): DocEntry {
         params: Object.values(CROPS).map(
             (c) =>
                 `\`${c.type}\`: ${c.name} — 成本 ${c.plantCost}, 收获 ${c.value}, ` +
-                `${c.growCycles} 回合成熟, ${c.thirstInterval === null ? '无需浇水' : `每 ${c.thirstInterval} 回合需浇水`}`
+                `${c.growCyclesBase} 回合成熟, ${c.thirstCountBase === 0 ? '无需浇水' : `总缺水 ${c.thirstCountBase} 次`}`
         ),
     };
 }
@@ -316,10 +340,16 @@ export function cropDocEntries(): DocEntry[] {
         params: [
             `成本: ${cfg.plantCost}`,
             `收获: ${cfg.value}`,
-            `成熟: ${cfg.growCycles} 回合`,
-            cfg.thirstInterval === null ? '需水: 无需浇水' : `需水: 每 ${cfg.thirstInterval} 回合`,
-            `可种在: ${cfg.habitats.map((t) => TILES[t].name).join(' / ')}`,
-        ],
+            `成熟: ${cfg.growCyclesBase} 回合`,
+            cfg.thirstCountBase === 0 ? '需水: 无需浇水' : `需水: ${cfg.thirstCountBase} 次`,
+            `可种在: ${cfg.canPlantDesc}`,
+            // 肥力消耗: 0 不显示; 负数 = 恢复肥力
+            cfg.fertilityCost === 0
+                ? null
+                : cfg.fertilityCost < 0
+                    ? `肥力: 恢复 ${-cfg.fertilityCost}`
+                    : `肥力: 消耗 ${cfg.fertilityCost}`,
+        ].filter((p): p is string => p !== null),
     }));
 }
 
@@ -367,15 +397,18 @@ export const DOC_RULES: DocParagraphSection[] = [
             '土地:',
             '基础地块，能种植绝大多数作物',
             '沙地:',
-            '营养较少的地块, 部分作物无法种植; 在上面种植的作物, 生长周期为正常的 1.5 倍',
+            '营养较少的地块, 部分作物无法种植; 在上面种植的作物, 生长周期为正常的 3 倍',
             '水池:',
             '含水地块，无人机可在上方蓄水。部分水生作物可以在上面种植',
+            '盐碱地:',
+            '营养过多而不适宜农业的地块，部分作物无法种植; 在上面种植的作物, 生长周期为正常的 1.5 倍，浇水次数为正常的 2 倍',
         ],
     },
     {
         title: '灌溉机制',
         paragraphs: [
             '农作物会在生长的特定阶段需求浇水。如果没有浇水，则农作物停止生长。',
+            '农作物的缺水时机是 **随机的**，最佳实践是通过游戏内 API 动态判定是否需要浇水。',
             '无人机拥有储水能力，储水上限为 5, 初始为 0。',
             '获取: ',
             '当位于 *水池* 上时，无人机可执行 `CollectWater` 操作，获得 5 格水量。',
@@ -394,6 +427,21 @@ export const DOC_RULES: DocParagraphSection[] = [
             '- **单回合对多地块执行操作**。例如, `HarvestRow` 操作会收割以无人机为中心，横向 3 格的成熟作物。',
             '- **特殊操作**。例如, `Teleport` 操作允许无人机无视距离传送到指定位置',
             '合理利用能量，能 **批量种植作物以取得更高收益**'
+        ],
+    },
+    {
+        title: '施肥机制',
+        paragraphs: [
+            '**土地** 地块现在拥有 "肥力" 属性。游戏开始时，地图中的土地肥力均为 5',
+            '无人机: ',
+            '无人机可执行 `Fertilize` 等操作对土地主动施肥，该操作会消耗能量。',
+            '农作物: ',
+            '- 多数农作物会消耗土地的肥力, 如西瓜、南瓜等。',
+            '- 少数农作物会给土地增加肥力, 如紫云英、香菇等。',
+            '转化: ',
+            '土地的肥力上限为 10。',
+            '- 若土地肥力下降至 0 以下, 则土地转化为沙地。',
+            '- 若土地肥力提升至 10 以上, 则土地转化为盐碱地。',
         ],
     },
     {

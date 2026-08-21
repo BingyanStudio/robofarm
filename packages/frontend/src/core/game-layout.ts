@@ -203,6 +203,9 @@ export class GameView {
         case 'charge':
           this.cb.renderer.chargeFxOn(e.drone);
           break;
+        case 'fertilize':
+          this.cb.renderer.tileFx('fertilize', e.pos[0], e.pos[1]);
+          break;
         case 'invalid-op':
           this.cb.onLog([`[警告] 无人机 #${e.drone} 操作无效: ${e.message}`]);
           break;

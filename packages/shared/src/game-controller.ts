@@ -43,6 +43,8 @@ export interface GameControllerOptions {
   mode: GameMode;
   players: GamePlayer[];
   maxTurns: number;
+  /** 本局随机种子 (缺省随机取得; 回放时从回放文件传入以保证一致) */
+  seed?: number;
 }
 
 /**
@@ -67,7 +69,9 @@ export class GameController {
     this.mode = opts.mode;
     this.players = opts.players;
     this.world =
-      opts.mode === 'single' ? createSingleWorld(opts.maxTurns) : createCombatWorld(opts.maxTurns);
+      opts.mode === 'single'
+        ? createSingleWorld(opts.maxTurns, opts.seed)
+        : createCombatWorld(opts.maxTurns, opts.seed);
     const byPlayer: number[][] = this.players.map(() => []);
     for (const d of this.world.drones) byPlayer[d.player].push(d.id);
     this.droneIdsByPlayer = byPlayer;

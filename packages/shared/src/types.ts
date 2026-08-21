@@ -4,11 +4,12 @@
 /** 地图上的坐标, 使用 (x, y) 元组, x 轴向右, y 轴向下 */
 export type Position = [number, number];
 
-/** 地块类型。未来新增地块类型时在 registry.ts 中注册, 无需改动引擎 */
+/** 地块类型。未来新增地块类型时在 tiles/ 目录注册, 无需改动引擎 */
 export enum TileType {
   Soil = 'soil',
   Water = 'water',
   Sand = 'sand',
+  Salt = 'salt',
 }
 
 /** 作物类型。未来新增作物时在 registry.ts 中注册 */
@@ -22,6 +23,7 @@ export enum CropType {
   MilkVetch = 'milk_vetch',
   Shiitake = 'shiitake',
   Daffodil = 'daffodil',
+  Cactus = 'cactus',
 }
 
 /** 作物状态 */
@@ -66,7 +68,11 @@ export type InternalOperation =
   | { type: 'plantRow'; plants: CropType[] }
   | { type: 'plantCol'; plants: CropType[] }
   // 地块转换
-  | { type: 'changeTile'; tileType: TileType };
+  | { type: 'changeTile'; tileType: TileType }
+  // 施肥
+  | { type: 'fertilize' }
+  | { type: 'fertilizeRow' }
+  | { type: 'fertilizeCol' };
 
 /** 单个地块的信息 (玩家 API 视角) */
 export interface TileInfo {
@@ -74,6 +80,8 @@ export interface TileInfo {
   hasCrop: boolean;
   /** 地块上的作物, 无作物时为 null */
   crop: CropInfo | null;
+  /** 土地肥力 (仅土地有, 其他地块为 undefined; 初始 5, 上限 10) */
+  fertility?: number;
 }
 
 /** 单个作物的信息 (玩家 API 视角) */
@@ -137,14 +145,13 @@ export interface CropData {
   /** 距离成熟的剩余生长回合数 (Growing 时递减; Thirsty 时不推进) */
   growthRemaining: number;
   /**
-   * 总缺水次数: 种植时按该次种植的实际生长周期数 (含地块 growthFactor)
-   * 动态计算, 即 floor(实际周期 / thirstInterval); 0 表示无需浇水。
+   * 缺水触发点 (剩余回合数, 降序): 种植时按 thirstCount 次数确定性随机选取
+   * (见 rng.ts), 生长到该剩余回合数时进入 Thirsty; 空数组 = 无需浇水。
+   * 随机只改变时机、不改变次数; 对玩家隐藏 (API 不暴露)。
    */
-  thirstTotal?: number;
-  /** 已发生的缺水次数 */
+  thirstAt?: number[];
+  /** 已触发的缺水次数 (即 thirstAt 的进度下标) */
   thirstsDone?: number;
-  /** 种植时的实际生长周期数 (计算缺水触发点用) */
-  plantCycles?: number;
   /** 香菇: 成熟后还需扩散的小香菇数量 (每回合 1 个, 按上右下左顺序, 到 0 停止) */
   spreadLeft?: number;
 }
@@ -152,6 +159,8 @@ export interface CropData {
 export interface Tile {
   type: TileType;
   crop: CropData | null;
+  /** 土地肥力 (仅土地持有; 初始 INITIAL_TILE_FERTILITY, 超过 MAX_TILE_FERTILITY 盐碱化, 扣到 < 0 沙漠化) */
+  fertility?: number;
 }
 
 export interface DroneState {
@@ -184,6 +193,57 @@ export interface WorldState {
   players: PlayerState[];
   turn: number;
   maxTurns: number;
+  /**
+   * 本局游戏的随机种子: 游戏开始时随机取得 (对玩家不可预测), 用于种植时
+   * 选取作物缺水时机等随机机制; 计入回放文件, 回放时用同一种子重推演,
+   * 保证回放与游玩过程、结果完全一致。
+   */
+  rngSeed: number;
+}
+
+// ---------------------------------------------------------------------------
+// 作物特效上下文 (作物自己的文件里定义特效函数时使用)
+// ---------------------------------------------------------------------------
+
+/** 作物成熟特效 (onGrown: 作物变为 Grown 时执行) 的执行上下文 */
+export interface MaturityEffectContext {
+  world: WorldState;
+  pos: Position;
+  crop: CropData;
+  events: GameEvent[];
+}
+
+/** 作物生长特效 (growUpdate: 生长中每回合执行) 的执行上下文 */
+export interface GrowthEffectContext {
+  world: WorldState;
+  crop: CropData;
+  pos: Position;
+  events: GameEvent[];
+}
+
+/** 作物成熟后每回合特效 (grownUpdate: Grown 状态下每回合执行) 的执行上下文 */
+export interface GrownEffectContext {
+  world: WorldState;
+  pos: Position;
+  crop: CropData;
+  events: GameEvent[];
+}
+
+/** 作物收获特效 (onHarvested: 收获时执行, 如仙人掌把脚下地块转为土地) 的执行上下文 */
+export interface HarvestEffectContext {
+  world: WorldState;
+  pos: Position;
+  crop: CropData;
+  events: GameEvent[];
+}
+
+/** 地块作物事件 (onCropPlanted / onCropWatered / onCropHarvested) 的执行上下文 */
+export interface TileCropEventContext {
+  world: WorldState;
+  pos: Position;
+  /** 相关作物 (收获回调调用时该格作物已移除) */
+  crop: CropData;
+  events: GameEvent[];
 }
 
 // ---------------------------------------------------------------------------
@@ -194,6 +254,8 @@ export interface WorldState {
 export interface SnapshotTile {
   type: TileType;
   crop: CropInfo | null;
+  /** 土地肥力 (仅土地有, 供前端 Tooltip 展示) */
+  fertility?: number;
 }
 
 /** 快照中的无人机 */
@@ -248,6 +310,7 @@ export type GameEvent =
   | { type: 'harvest'; drone: number; pos: Position; value: number; stole: boolean }
   | { type: 'charge'; drone: number; pos: Position; energy: number }
   | { type: 'change-tile'; drone: number; pos: Position; tileType: TileType }
+  | { type: 'fertilize'; drone: number; pos: Position }
   | { type: 'clear'; drone: number; pos: Position }
   | { type: 'intercept'; drone: number; pos: Position; thief: number; bounty: number }
   | { type: 'stash'; drone: number; pos: Position; bounty: number }

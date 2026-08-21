@@ -101,6 +101,7 @@ async function runMatch(room: Room, codeA: string, codeB: string): Promise<void>
     ],
     maxTurns: DEFAULT_MAX_TURNS,
   });
+  recorder.seed = controller.world.rngSeed;
 
   room.status = 'running';
   broadcast(room, {

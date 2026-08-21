@@ -1,20 +1,20 @@
 // 主入口: 全部模块。具名 re-export 保证 tsc 产物静态可分析。
 export { GAME_VERSION } from './version';
-export { TIMEOUT_MS, LOAD_TIMEOUT_MS, MAX_WATER, DEFAULT_MAX_TURNS, TURN_INTERVAL_MS, TURN_INTERVALS_MS, START_MONEY, MAX_ENERGY, CHARGE_GAIN, HARVEST_ROW_COL_COST, WATER_ROW_COL_COST, INTERCEPT_ROW_COL_COST, CHANGE_TILE_COST, MAX_LOG_LINES, MAX_LOGS_PER_TURN } from './config';
+export { TIMEOUT_MS, LOAD_TIMEOUT_MS, MAX_WATER, DEFAULT_MAX_TURNS, TURN_INTERVAL_MS, TURN_INTERVALS_MS, START_MONEY, MAX_ENERGY, CHARGE_GAIN, HARVEST_ROW_COL_COST, WATER_ROW_COL_COST, INTERCEPT_ROW_COL_COST, CHANGE_TILE_COST, FERTILIZE_COST, FERTILIZE_ROW_COL_COST, FERTILIZE_GAIN, MAX_LOG_LINES, MAX_LOGS_PER_TURN, INITIAL_TILE_FERTILITY, MAX_TILE_FERTILITY } from './config';
 export type { Position, InternalOperation, TileInfo, CropInfo, DroneInfo, GameInfo, PlayerView, CropData, Tile, DroneState, PlayerState, WorldState, SnapshotTile, SnapshotDrone, SnapshotPlayer, SnapshotState, GameResult, GameEvent, GameMode, Frame } from './types';
 export { TileType, CropType, CropState } from './types';
 export { normalizeOp } from './ops';
 export type { NormalizeResult } from './ops';
-export { TILES, CROPS, isCropType, cropConfig, cropInfo } from './registry';
+export { TILES, CROPS, BaseTile, BaseCrop, isCropType, cropConfig, cropInfo, plantableTiles } from './registry';
 export type { TileTypeConfig, CropTypeConfig } from './registry';
-export { SINGLE_WIDTH, SINGLE_HEIGHT, COMBAT_WIDTH, COMBAT_HEIGHT, mirrorPosition, createSingleWorld, createCombatWorld, isOwnHalf, isOwnHalfAt, inBounds, tileAt, samePos, placeCrop, isWater } from './maps';
+export { SINGLE_WIDTH, SINGLE_HEIGHT, COMBAT_WIDTH, COMBAT_HEIGHT, mirrorPosition, createSingleWorld, createCombatWorld, isOwnHalf, isOwnHalfAt, inBounds, tileAt, samePos, orthNeighbors, placeCrop, isWater } from './maps';
 export { toLocal, fromLocal, buildPlayerView, snapshotOf, findDroneAt } from './view';
-export { playerApiFactory, DroneOperation, Move, Teleport, NewDrone, Plant, CollectWater, Water, Harvest, Clear, Intercept, Charge, HarvestRow, HarvestCol, WaterRow, WaterCol, InterceptRow, InterceptCol, PlantRow, PlantCol, ChangeTile, OPS } from './player-api';
+export { playerApiFactory, DroneOperation, Move, Teleport, NewDrone, Plant, CollectWater, Water, Harvest, Clear, Intercept, Charge, HarvestRow, HarvestCol, WaterRow, WaterCol, InterceptRow, InterceptCol, PlantRow, PlantCol, ChangeTile, Fertilize, FertilizeRow, FertilizeCol, OPS } from './player-api';
 export type { PlayerApi, PlayerConsole } from './player-api';
 export { stepTurn } from './engine';
 export type { DroneAction } from './engine';
 export { GameController } from './game-controller';
-export { ReplayRecorder, wrapProgramForReplay, replayEvents, makeScriptedPlayer } from './replay';
+export { ReplayRecorder, wrapProgramForReplay, replayEvents, makeScriptedPlayer, replayVersionMismatch } from './replay';
 export type { ReplayFile, ReplayRound, ReplayDroneOp, ReplayPlayerConfig } from './replay';
 export type { PlayerProgram, PlayerTurnResult, GamePlayer, GameControllerOptions } from './game-controller';
 export { compilePlayerCode, setWasmUrl, setWasmModule, isCompilerInitialized, compilerState, prewarmCompiler } from './compile';
