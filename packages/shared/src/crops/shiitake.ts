@@ -32,6 +32,8 @@ export class Shiitake extends BaseCrop {
   canPlant(tile: Tile): boolean {
     return tile.type === TileType.Soil;
   }
+  /** 种植条件描述 */
+  readonly canPlantDesc = '仅土地';
 
   /** 动态生长周期: 基础 20 + 2 × 场上香菇总数 (忽略地块倍率, 香菇只长在土地) */
   growCycles(_tile: Tile, world: WorldState): number {

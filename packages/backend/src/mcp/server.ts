@@ -383,6 +383,7 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
               thirstCountBase: cfg.thirstCountBase,
               fertilityCost: cfg.fertilityCost,
               habitats: plantableTiles(cfg),
+              canPlantDesc: cfg.canPlantDesc,
               // 特殊机制 (未设置则无)
               specialMechanisms: special.length > 0 ? special : undefined,
               description: cfg.description,

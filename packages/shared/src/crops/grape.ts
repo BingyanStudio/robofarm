@@ -15,4 +15,6 @@ export class Grape extends BaseCrop {
   canPlant(tile: Tile): boolean {
     return tile.type === TileType.Soil || tile.type === TileType.Sand;
   }
+  /** 种植条件描述 */
+  readonly canPlantDesc = '土地 / 沙地';
 }

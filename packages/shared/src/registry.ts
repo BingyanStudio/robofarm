@@ -75,6 +75,11 @@ export interface CropTypeConfig {
    */
   canPlant(tile: Tile): boolean;
   /**
+   * 种植条件的人类可读描述 (如 "土地 / 沙地"、"仅土地"、"土地 (肥力 < 6)"),
+   * 与 canPlant 保持一致; API 手册 (cropDocEntries) 用它拼接作物的可种描述。
+   */
+  canPlantDesc: string;
+  /**
    * 肥力消耗: 收获时若脚下是土地则扣除该值 (负数 = 为土地恢复肥力)。
    * 基类默认 0。
    */

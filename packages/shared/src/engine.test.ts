@@ -91,7 +91,7 @@ describe('engine: 各类作物 (注册表驱动)', () => {
     expect(world.players[0].money).toBe(40); // 0 + 40
   });
 
-  it('小麦: 30 成本, 30 回合生长, 缺水 2 次 (剩余 20、10 回合时), 收获 +120', () => {
+  it('小麦: 30 成本, 30 回合生长, 缺水 2 次, 收获 +180', () => {
     const world = single();
     world.players[0].money = 100; // 初始资金不够, 直接补给
     stepTurn(world, actions([0, { type: 'plant', crop: CropType.Wheat }]));
@@ -110,7 +110,7 @@ describe('engine: 各类作物 (注册表驱动)', () => {
     expect(thirstyCount).toBe(2);
     expect(world.map[3][3].crop?.state).toBe(CropState.Grown);
     stepTurn(world, actions([0, { type: 'harvest' }]));
-    expect(world.players[0].money).toBe(190); // 70 + 120
+    expect(world.players[0].money).toBe(250); // 70 + 180
   });
 
   it('荷花: 水生, 只能种在水池, 40 回合成熟, 收获 +90', () => {
@@ -131,11 +131,11 @@ describe('engine: 各类作物 (注册表驱动)', () => {
     expect(world.players[0].money).toBe(160); // 70 + 90
   });
 
-  it('南瓜: 100 成本, 100 回合生长, 缺水 5 次, 收获 +500', () => {
+  it('南瓜: 300 成本, 50 回合生长, 缺水 5 次, 收获 +700', () => {
     const world = single();
-    world.players[0].money = 100; // 初始资金不够, 直接补给
+    world.players[0].money = 400; // 初始资金不够, 直接补给
     stepTurn(world, actions([0, { type: 'plant', crop: CropType.Pumpkin }]));
-    expect(world.players[0].money).toBe(0);
+    expect(world.players[0].money).toBe(100); // 400 - 300
     let thirstyCount = 0;
     for (let i = 0; i < 200; i++) {
       if (world.map[3][3].crop?.state === CropState.Thirsty) {
@@ -150,7 +150,7 @@ describe('engine: 各类作物 (注册表驱动)', () => {
     expect(thirstyCount).toBe(5);
     expect(world.map[3][3].crop?.state).toBe(CropState.Grown);
     stepTurn(world, actions([0, { type: 'harvest' }]));
-    expect(world.players[0].money).toBe(500);
+    expect(world.players[0].money).toBe(800); // 100 + 700
   });
 });
 
@@ -494,7 +494,7 @@ describe('engine: 能量机制', () => {
     const w = single();
     w.drones[0].energy = 3;
     w.drones[0].position = [3, 3]; // 列 x=3, 中心 y=3 → 范围 y=2,3,4
-    w.players[0].money = 200;
+    w.players[0].money = 400; // 覆盖三种作物总成本 (0 + 20 + 300)
     const events = stepTurn(w, actions([0, { type: 'plantCol', plants: [CropType.Strawberry, CropType.Grape, CropType.Pumpkin] }]));
     const plants = eventsOfType(events, 'plant');
     expect(plants).toHaveLength(3);
@@ -636,17 +636,17 @@ describe('engine: 沙地', () => {
 });
 
 describe('engine: 缺水次数动态计算', () => {
-  it('沙地南瓜: 生长周期按沙地 ×3 (300 周期), 缺水次数固定为基准值 5 次', () => {
+  it('沙地小麦: 生长周期按沙地 ×3 (90 周期), 缺水次数固定为基准值 2 次', () => {
     const w = single();
     w.players[0].money = 100;
     w.drones[0].position = [0, 0]; // 沙地
-    stepTurn(w, actions([0, { type: 'plant', crop: CropType.Pumpkin }]));
+    stepTurn(w, actions([0, { type: 'plant', crop: CropType.Wheat }]));
     const crop = w.map[0][0].crop!;
-    expect(crop.growthRemaining).toBe(299); // floor(100*3)=300, 种植回合已扣 1
-    expect(crop.thirstAt!.length).toBe(5); // thirstCountBase = 5 (次数不随周期缩放)
+    expect(crop.growthRemaining).toBe(89); // floor(30*3)=90, 种植回合已扣 1
+    expect(crop.thirstAt!.length).toBe(2); // thirstCountBase = 2 (次数不随周期缩放)
     let thirstyCount = 0;
     let guard = 0;
-    while (crop.state !== CropState.Grown && guard++ < 400) {
+    while (crop.state !== CropState.Grown && guard++ < 200) {
       if (crop.state === CropState.Thirsty) {
         thirstyCount++;
         w.drones[0].water = 1;
@@ -655,7 +655,7 @@ describe('engine: 缺水次数动态计算', () => {
         stepTurn(w, actions([0, null]));
       }
     }
-    expect(thirstyCount).toBe(5);
+    expect(thirstyCount).toBe(2);
     expect(crop.state).toBe(CropState.Grown);
   });
 
@@ -699,17 +699,18 @@ describe('engine: 缺水次数动态计算', () => {
 });
 
 describe('engine: 新作物 (西瓜/紫云英/香菇)', () => {
-  it('西瓜: 沙地生长受 3 倍减速影响 (300 周期), 缺水次数固定为基准值 6 次', () => {
+  it('西瓜: 盐碱地生长 ×1.5 (120 周期), 浇水次数 ×2 (16 次)', () => {
     const w = single();
     w.players[0].money = 2000;
-    w.drones[0].position = [0, 0]; // 沙地
+    w.map[0][0] = { type: TileType.Salt, crop: null }; // 盐碱地
+    w.drones[0].position = [0, 0];
     stepTurn(w, actions([0, { type: 'plant', crop: CropType.Melon }]));
     const crop = w.map[0][0].crop!;
-    expect(crop.growthRemaining).toBe(299); // floor(100*3)=300 - 1
-    expect(crop.thirstAt!.length).toBe(6); // thirstCountBase = 6
+    expect(crop.growthRemaining).toBe(119); // floor(80*1.5)=120 - 1
+    expect(crop.thirstAt!.length).toBe(16); // thirstCountBase 8 × 盐碱地浇水倍率 2
     let thirstyCount = 0;
     let guard = 0;
-    while (crop.state !== CropState.Grown && guard++ < 400) {
+    while (crop.state !== CropState.Grown && guard++ < 200) {
       if (crop.state === CropState.Thirsty) {
         thirstyCount++;
         w.drones[0].water = 1;
@@ -718,7 +719,7 @@ describe('engine: 新作物 (西瓜/紫云英/香菇)', () => {
         stepTurn(w, actions([0, null]));
       }
     }
-    expect(thirstyCount).toBe(6);
+    expect(thirstyCount).toBe(16);
     expect(crop.state).toBe(CropState.Grown);
   });
 
@@ -815,7 +816,7 @@ describe('engine: 水仙 (autoWater) 与 ChangeTile', () => {
     expect(w.map[4][5].crop!.state).toBe(CropState.Growing);
   });
 
-  it('ChangeTile: 消耗 4 能量, 上下左右须有同类型地块, 有作物时不能转换', () => {
+  it('ChangeTile: 消耗 3 能量, 上下左右须有同类型地块, 有作物时不能转换', () => {
     const w = single();
     w.drones[0].energy = 8;
     w.drones[0].position = [3, 3]; // 四周: (2,3)沙地, 其余土地, 无水池
@@ -827,7 +828,7 @@ describe('engine: 水仙 (autoWater) 与 ChangeTile', () => {
     events = stepTurn(w, actions([0, { type: 'changeTile', tileType: TileType.Sand }]));
     expect(eventsOfType(events, 'change-tile')).toHaveLength(1);
     expect(w.map[3][3].type).toBe(TileType.Sand);
-    expect(w.drones[0].energy).toBe(4); // 8 - 4
+    expect(w.drones[0].energy).toBe(5); // 8 - 3
     // 已存在作物 → 不能转换
     placeCrop(w, [3, 3], { type: CropType.Strawberry, state: CropState.Growing, growthRemaining: 3 });
     events = stepTurn(w, actions([0, { type: 'changeTile', tileType: TileType.Soil }]));
@@ -863,11 +864,11 @@ describe('engine: 沙漠化 / 盐碱化 / 间作 / NewDrone', () => {
   it('收获后肥力仍在 [0, 上限] 内时保持土地并扣除肥力', () => {
     const w = single();
     w.drones[0].position = [6, 4];
-    placeCrop(w, [6, 4], { type: CropType.Melon, state: CropState.Grown, growthRemaining: 0 });
+    placeCrop(w, [6, 4], { type: CropType.Wheat, state: CropState.Grown, growthRemaining: 0 });
     const events = stepTurn(w, actions([0, { type: 'harvest' }]));
     expect(eventsOfType(events, 'harvest')).toHaveLength(1);
     expect(w.map[4][6].type).toBe(TileType.Soil);
-    expect(w.map[4][6].fertility).toBe(2); // 初始 5 - 西瓜耗肥 3
+    expect(w.map[4][6].fertility).toBe(4); // 初始 5 - 小麦耗肥 1
   });
 
   it('盐碱化: 收获后土地肥力被增加到超过上限时转化为盐碱地', () => {

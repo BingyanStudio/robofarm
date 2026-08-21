@@ -15,4 +15,6 @@ export class Lotus extends BaseCrop {
   canPlant(tile: Tile): boolean {
     return tile.type === TileType.Water;
   }
+  /** 种植条件描述 */
+  readonly canPlantDesc = '仅水池';
 }

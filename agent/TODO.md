@@ -81,3 +81,20 @@
      收获 140 / 40 周期 / 恢复肥力 4; 移除两个对应的加速测试, 沙地南瓜/西瓜
      缺水次数测试改为固定基准值 (5 / 6 次)。
   6. 全部 94 个测试通过, shared/backend/frontend 构建通过。
+
+- [x] Refactor: 所有作物增加 `canPlantDesc: string` 属性 (种植条件的人类可读描述),
+  API 手册用它拼接作物的可种描述
+  改动:
+  1. CropTypeConfig / BaseCrop 新增必填 `canPlantDesc: string`; 9 种作物各自填写
+     (与 canPlant 一致): 草莓/葡萄 "土地 / 沙地", 小麦 "除水池外的地块
+     (土地 / 沙地 / 盐碱地)", 荷花/水仙 "仅水池", 南瓜/西瓜 "土地 / 盐碱地",
+     紫云英 "土地 (肥力 < 6) / 沙地", 香菇 "仅土地"。
+  2. docs.ts cropDocEntries 的 "可种在" 标签改为直接使用 `cfg.canPlantDesc`
+     (不再用 plantableTiles 探测推导); MCP get_crop 同步输出 canPlantDesc。
+  3. 顺带适配你调整后的作物参数 (以代码为准): 小麦可种非水池 + 收获 180;
+     南瓜 300 成本/50 周期/700 收益/可种盐碱地; 西瓜 80 周期/2000 收益/
+     fertilityCost 6/可种盐碱地; 紫云英恢复加速 (每回合仅加速 1 株) + 收获 120/
+     30 周期/肥力 < 6 可种; CHANGE_TILE_COST 3。受影响测试同步更新
+     (沙地测试改为小麦, 西瓜改测盐碱地 ×1.5 且浇水 ×2, ChangeTile 能量断言,
+     收获肥力测试改用小麦)。
+  4. 全部 94 个测试通过, shared/backend/frontend 构建通过。

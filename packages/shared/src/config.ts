@@ -41,7 +41,7 @@ export const PLANT_ROW_COL_COST = 3;
 export const INTERCEPT_ROW_COL_COST = 6;
 
 /** ChangeTile (地块转换) 的能量消耗 */
-export const CHANGE_TILE_COST = 4;
+export const CHANGE_TILE_COST = 3;
 
 /** NewDrone 的金钱消耗 */
 export const NEW_DRONE_COST = 4000;

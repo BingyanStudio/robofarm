@@ -18,6 +18,8 @@ export class Daffodil extends BaseCrop {
   canPlant(tile: Tile): boolean {
     return tile.type === TileType.Water;
   }
+  /** 种植条件描述 */
+  readonly canPlantDesc = '仅水池';
 
   /**
    * 生长中每回合按 上→右→下→左 顺序检查周围 Tile,

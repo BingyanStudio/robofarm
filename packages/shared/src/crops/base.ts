@@ -17,6 +17,8 @@ export abstract class BaseCrop implements CropTypeConfig {
    * (如 Lotus 只种在水池) 以及需要时的肥力等条件。
    */
   abstract canPlant(tile: Tile): boolean;
+  /** 种植条件的人类可读描述 (如 "土地 / 沙地"), 与 canPlant 保持一致, API 手册展示用 */
+  abstract readonly canPlantDesc: string;
   /**
    * 肥力消耗: 收获时若脚下是土地则扣除该值 (负数 = 为土地恢复肥力)。
    * 基类默认 0, 子类按需覆盖。

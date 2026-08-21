@@ -5,15 +5,17 @@ import { BaseCrop } from './base';
 export class Pumpkin extends BaseCrop {
   readonly type = CropType.Pumpkin;
   readonly name = '南瓜';
-  readonly description = '生长周期和浇水条件都苛刻的植物，但收益率高。';
-  readonly fertilityCost = 2; // 消耗土地肥力
-  readonly plantCost = 100;
-  readonly value = 500;
-  readonly growCyclesBase = 100;
+  readonly description = '经济价值较高的作物, 需要浇水并消耗部分肥力';
+  readonly fertilityCost = 3; // 消耗土地肥力
+  readonly plantCost = 300;
+  readonly value = 700;
+  readonly growCyclesBase = 50;
   readonly thirstCountBase = 5; // 总缺水 5 次
   readonly color = '#e89a3c';
 
   canPlant(tile: Tile): boolean {
-    return tile.type === TileType.Soil || tile.type === TileType.Sand;
+    return tile.type === TileType.Soil || tile.type === TileType.Salt;
   }
+  /** 种植条件描述 */
+  readonly canPlantDesc = '土地 / 盐碱地';
 }
