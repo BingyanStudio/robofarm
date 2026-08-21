@@ -1,6 +1,15 @@
-// 地块与作物的数据注册表。新增地块/作物只需在此注册,
-// 引擎按注册表的数据驱动运行, 不需要改动 engine.ts。
-import { CropState, CropType, TileType } from './types';
+// 地块与作物的数据注册表。地块配置集中在此注册;
+// 作物配置按"每种作物一个文件"放在 crops/ 目录 (见下), 这里只做汇总。
+import { CropState, CropType, GrowthEffectContext, MaturityEffectContext, TileType, WorldState } from './types';
+import { strawberry } from './crops/strawberry';
+import { grape } from './crops/grape';
+import { wheat } from './crops/wheat';
+import { lotus } from './crops/lotus';
+import { pumpkin } from './crops/pumpkin';
+import { melon } from './crops/melon';
+import { milkVetch } from './crops/milk-vetch';
+import { shiitake } from './crops/shiitake';
+import { daffodil } from './crops/daffodil';
 
 export interface TileTypeConfig {
   type: TileType;
@@ -73,15 +82,25 @@ export interface CropTypeConfig {
    */
   growthOverride?: number;
   /**
-   * 成熟时的特效 (效果 id): 引擎按 id 在 MATURITY_EFFECTS 表注册处理器,
-   * 每种作物成熟时都会执行其挂接的特效; 多数作物不声明 (无特效)。
+   * 统计图表语义色 (饼图 / 进度条 / 图例共用, 由前端消费)。
+   * 原前端 stats.ts 的 CROP_COLORS 迁入各作物自己的文件。
    */
-  onMature?: 'selfSpread';
+  color: string;
   /**
-   * 生长中的特效 (效果 id): 引擎按 id 在 GROWTH_EFFECTS 表注册处理器,
-   * 每种作物在生长中的每个回合都会执行其挂接的特效; 多数作物不声明 (无特效)。
+   * 成熟特效: 作物成熟时执行的函数 (定义在作物自己的文件里, 引擎直接调用)。
+   * 多数作物不声明 (无特效)。
    */
-  onGrow?: 'autoWater' | 'accelerateNeighbors';
+  onMature?: (ctx: MaturityEffectContext) => void;
+  /**
+   * 生长特效: 作物生长中的每个回合都会执行的函数 (定义在作物自己的文件里, 引擎直接调用)。
+   * 多数作物不声明 (无特效)。
+   */
+  onGrow?: (ctx: GrowthEffectContext) => void;
+  /**
+   * 动态生长周期: 若提供, 种植时用此函数计算实际周期 (覆盖 growCycles 与地块倍率)。
+   * 如香菇: 实际周期 = 20 + 2 × 场上香菇总数。
+   */
+  plantCycles?: (world: WorldState) => number;
 }
 
 /**
@@ -89,99 +108,15 @@ export interface CropTypeConfig {
  * 注意: 作物代码名 (CropType) 与贴图名一致 (public/sprites/crop/<type>_<n>.avif)。
  */
 export const CROPS: Record<CropType, CropTypeConfig> = {
-  [CropType.Strawberry]: {
-    type: CropType.Strawberry,
-    name: '草莓',
-    description: '零成本的基础作物, 味道很不错。',
-    habitats: [TileType.Soil, TileType.Sand],
-    plantCost: 0,
-    value: 5,
-    growCycles: 5,
-    thirstInterval: null, // 无需浇水
-  },
-  [CropType.Grape]: {
-    type: CropType.Grape,
-    name: '葡萄',
-    description: '生长周期稍长，利率更高，味道也很不错。',
-    habitats: [TileType.Soil, TileType.Sand],
-    plantCost: 20,
-    value: 40,
-    growCycles: 15,
-    thirstInterval: null, // 无需浇水
-  },
-  [CropType.Wheat]: {
-    type: CropType.Wheat,
-    name: '小麦',
-    description: '需要浇水的作物，但收益较高。',
-    habitats: [TileType.Soil],
-    plantCost: 30,
-    value: 120,
-    growCycles: 30,
-    thirstInterval: 15, // 生长中缺水 2 次 (剩余 20、10 回合时)
-  },
-  [CropType.Lotus]: {
-    type: CropType.Lotus,
-    name: '荷花',
-    description: '水生植物，让水池也成为盈利点。',
-    habitats: [TileType.Water],
-    plantCost: 30,
-    value: 90,
-    growCycles: 40,
-    thirstInterval: null, // 无需浇水
-  },
-  [CropType.Pumpkin]: {
-    type: CropType.Pumpkin,
-    name: '南瓜',
-    description: '生长周期和浇水条件都苛刻的植物，但收益率高。',
-    habitats: [TileType.Soil, TileType.Sand],
-    plantCost: 100,
-    value: 500,
-    growCycles: 100,
-    thirstInterval: 18, // 生长中缺水 5 次 (每 18 回合一次)
-  },
-  [CropType.Melon]: {
-    type: CropType.Melon,
-    name: '西瓜',
-    description: '一种高价值作物, 需要合理规划浇水。',
-    habitats: [TileType.Soil, TileType.Sand],
-    plantCost: 1000,
-    value: 1800,
-    growCycles: 100,
-    thirstInterval: 15, // 生长中缺水 6 次 (沙地 ×1.5 时 10 次)
-  },
-  [CropType.MilkVetch]: {
-    type: CropType.MilkVetch,
-    name: '紫云英',
-    description: '绿肥植物，生长时会加速周围作物的生长。',
-    habitats: [TileType.Soil, TileType.Sand],
-    plantCost: 100,
-    value: 120,
-    growCycles: 160,
-    thirstInterval: 40, // 生长中缺水 4 次
-    onGrow: 'accelerateNeighbors',
-  },
-  [CropType.Shiitake]: {
-    type: CropType.Shiitake,
-    name: '香菇',
-    description: '成熟后, 每回合按照 [上右下左] 顺序种下新的香菇，一共四颗。但场上香菇越多，香菇生长越慢。',
-    habitats: [TileType.Soil],
-    plantCost: 80,
-    value: 40,
-    growCycles: 20,
-    thirstInterval: 20, // 实际周期按场上香菇数动态计算, 缺水次数随之增减
-    onMature: 'selfSpread',
-  },
-  [CropType.Daffodil]: {
-    type: CropType.Daffodil,
-    name: '水仙',
-    description: '功能性作物, 为周围的作物提供缓慢的浇水支持。',
-    habitats: [TileType.Water],
-    plantCost: 150,
-    value: 100,
-    growCycles: 80,
-    thirstInterval: null, // 无需浇水
-    onGrow: 'autoWater', // 生长中每回合自动给邻格缺水作物浇水一次
-  },
+  [CropType.Strawberry]: strawberry,
+  [CropType.Grape]: grape,
+  [CropType.Wheat]: wheat,
+  [CropType.Lotus]: lotus,
+  [CropType.Pumpkin]: pumpkin,
+  [CropType.Melon]: melon,
+  [CropType.MilkVetch]: milkVetch,
+  [CropType.Shiitake]: shiitake,
+  [CropType.Daffodil]: daffodil,
 };
 
 export function isCropType(v: unknown): v is CropType {

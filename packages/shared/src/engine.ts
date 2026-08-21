@@ -323,10 +323,10 @@ function tryPlantAt(world: WorldState, drone: DroneState, pos: Position, crop: C
   player.money -= cfg.plantCost;
   // 生长周期受地块类型影响 (如沙地 ×1.5, 数据在 TILES 注册表);
   // 作物可用 growthOverride 覆盖地块倍率 (特殊机制);
-  // 香菇按场上香菇总数动态计算 (20 + 2 × 场上香菇总数);
+  // 作物可用 plantCycles 自定义动态周期 (如香菇: 20 + 2 × 场上香菇总数);
   // 总缺水次数按该次种植的实际周期动态计算 (不依赖固定的剩余取模)
-  const adjusted = crop === CropType.Shiitake
-    ? shiitakeGrowCycles(world)
+  const adjusted = cfg.plantCycles
+    ? cfg.plantCycles(world)
     : Math.floor(cfg.growCycles * (cfg.growthOverride ?? TILES[tile.type].growthFactor));
   tile.crop = {
     type: crop,
@@ -339,15 +339,9 @@ function tryPlantAt(world: WorldState, drone: DroneState, pos: Position, crop: C
   return true;
 }
 
-/** 香菇实际生长周期: 基础 20 + 2 × 场上香菇总数 (种植/扩散时按当时场上数量动态计算) */
+/** 香菇实际生长周期: 委托给香菇配置里的 plantCycles (20 + 2 × 场上香菇总数) */
 function shiitakeGrowCycles(world: WorldState): number {
-  let count = 0;
-  for (const row of world.map) {
-    for (const t of row) {
-      if (t.crop?.type === CropType.Shiitake) count++;
-    }
-  }
-  return 20 + 2 * count;
+  return cropConfig(CropType.Shiitake).plantCycles!(world);
 }
 
 /**
@@ -627,15 +621,12 @@ function tickCrop(world: WorldState, crop: CropData, pos: Position, events: Game
       crop.state = CropState.Grown;
       crop.growthRemaining = 0;
       events.push({ type: 'crop-grow', pos, state: CropState.Grown, cyclesToGrown: 0 });
-      // 成熟特效: 每种作物成熟时都会执行其挂接的特效 (多数作物未声明, 无操作)
-      const effect = cfg.onMature;
-      if (effect) MATURITY_EFFECTS[effect]?.({ world, pos, crop, events });
+      // 成熟特效: 作物成熟时执行其挂接的特效 (多数作物未声明, 无操作)。
+      // 特效函数直接定义在作物自己的文件里 (crops/<type>.ts 的 onMature), 引擎直接调用。
+      cfg.onMature?.({ world, pos, crop, events });
     } else {
-      // 生长特效: 每个生长回合都会执行 (多数作物未声明, 无操作)
-      const growEffect = cfg.onGrow;
-      if (growEffect && crop.state === CropState.Growing) {
-        GROWTH_EFFECTS[growEffect]?.({ world, crop, pos, events });
-      }
+      // 生长特效: 每个生长回合都会执行 (多数作物未声明, 无操作)。
+      cfg.onGrow?.({ world, crop, pos, events });
 
       if (cfg.thirstInterval !== null) {
         // 缺水触发按种植时记录的"总缺水次数"动态计算, 缺水点在实际生长周期内均匀分布:
@@ -716,53 +707,3 @@ function spawnShiitake(world: WorldState, pos: Position, dirIndex: number, event
   events.push({ type: 'plant', drone: -1, pos: [nx, ny], crop: CropType.Shiitake });
 }
 
-/**
- * 成熟特效处理器 (按作物注册表声明的效果 id 注册, 可扩展)。
- * 新增效果 = 在这里加一个处理器 + 在 CROPS 注册表中声明。
- */
-const MATURITY_EFFECTS: Record<string, (ctx: { world: WorldState; pos: Position; crop: CropData; events: GameEvent[] }) => void> = {
-  /** 香菇: 成熟后进入扩散期, 之后每回合按上右下左顺序扩散 1 个小香菇 (共 4 次) */
-  selfSpread({ crop }) {
-    crop.spreadLeft = 4;
-  },
-};
-
-/**
- * 生长中特效处理器 (按作物注册表声明的效果 id 注册, 可扩展)。
- * 每种作物在生长中的每个回合都会执行其挂接的特效; 多数作物不声明 (无操作)。
- * 新增特效 = 在这里加一个处理器 + 在 CROPS 注册表中声明。
- */
-const GROWTH_EFFECTS: Record<string, (ctx: { world: WorldState; crop: CropData; pos: Position; events: GameEvent[] }) => void> = {
-  /**
-   * 水仙: 生长中每回合按 上→右→下→左 顺序检查周围 Tile,
-   * 若存在缺水作物则自动浇水 (每回合仅浇水一次), 成熟后无此效果。
-   * 浇水效果与普通 Water 一致 (前端渲染淡蓝色特效)。
-   */
-  autoWater({ world, pos, events }) {
-    for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
-      const nx = pos[0] + dx;
-      const ny = pos[1] + dy;
-      if (nx < 0 || nx >= world.map[0].length || ny < 0 || ny >= world.map.length) continue;
-      const nb = world.map[ny][nx].crop;
-      if (!nb || nb.state !== CropState.Thirsty) continue;
-      nb.state = CropState.Growing;
-      events.push({ type: 'water', drone: -1, pos: [nx, ny] });
-      return; // 每回合仅浇水一次
-    }
-  },
-  /**
-   * 紫云英: 生长中每回合按 上→右→下→左 顺序检查周围 Tile,
-   * 若有作物且不缺水 (Growing) 且距离成熟剩余 >= 2 周期, 则其生长时间 -1 周期。
-   */
-  accelerateNeighbors({ world, pos }) {
-    for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
-      const nx = pos[0] + dx;
-      const ny = pos[1] + dy;
-      if (nx < 0 || nx >= world.map[0].length || ny < 0 || ny >= world.map.length) continue;
-      const nb = world.map[ny][nx].crop;
-      if (!nb || nb.state !== CropState.Growing) continue; // 缺水 (Thirsty) 的作物不加速
-      if (nb.growthRemaining < 2) continue; // 距成熟不足 2 周期不加速
-      nb.growthRemaining -= 1;
-    }
-  },
-};

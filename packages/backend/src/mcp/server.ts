@@ -364,6 +364,12 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
           };
         }
         const cfg = CROPS[crop];
+        // 特效/特殊机制: 原本是字符串效果 id, 重构后是挂在配置上的函数,
+        // 无法 JSON 序列化, 因此转换为可读描述。
+        const special: string[] = [];
+        if (cfg.onMature) special.push('成熟特效');
+        if (cfg.onGrow) special.push('生长特效');
+        if (cfg.plantCycles) special.push('动态生长周期');
         return {
           content: [{
             type: 'text',
@@ -377,8 +383,7 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
               habitats: cfg.habitats,
               // 特殊机制 (未设置则无)
               growthOverride: cfg.growthOverride,
-              onMature: cfg.onMature,
-              onGrow: cfg.onGrow,
+              specialMechanisms: special.length > 0 ? special : undefined,
               description: cfg.description,
             }, null, 2),
           }],

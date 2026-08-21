@@ -187,6 +187,26 @@ export interface WorldState {
 }
 
 // ---------------------------------------------------------------------------
+// 作物特效上下文 (作物自己的文件里定义特效函数时使用)
+// ---------------------------------------------------------------------------
+
+/** 作物成熟特效 (onMature) 的执行上下文 */
+export interface MaturityEffectContext {
+  world: WorldState;
+  pos: Position;
+  crop: CropData;
+  events: GameEvent[];
+}
+
+/** 作物生长特效 (onGrow) 的执行上下文 */
+export interface GrowthEffectContext {
+  world: WorldState;
+  crop: CropData;
+  pos: Position;
+  events: GameEvent[];
+}
+
+// ---------------------------------------------------------------------------
 // 事件流 (渲染 / 回放 / 日志)
 // ---------------------------------------------------------------------------
 

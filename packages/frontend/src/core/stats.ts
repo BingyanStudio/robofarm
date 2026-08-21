@@ -1,7 +1,7 @@
 // 对局统计: 金钱曲线 + 种植构成。
 // 本地运行 (GameRunner 收集事件) 与服务器回放 (replayEvents 重建事件) 共用同一计算。
 import { el, modal } from '../ui/ui';
-import { replayEvents, ReplayFile } from '@robofarm/shared';
+import { replayEvents, ReplayFile, cropConfig, isCropType } from '@robofarm/shared';
 import type { GameEvent, SnapshotState } from '@robofarm/shared';
 import gsap from 'gsap';
 
@@ -114,43 +114,23 @@ export async function richestSnapshotFromReplay(file: unknown): Promise<Snapshot
   return richestSnapshot(events);
 }
 
-/** 作物代码名 → 中文名 */
-const CROP_NAMES: Record<string, string> = {
-  strawberry: '草莓',
-  grape: '葡萄',
-  wheat: '小麦',
-  lotus: '荷花',
-  pumpkin: '南瓜',
-  melon: '西瓜',
-  milk_vetch: '紫云英',
-  shiitake: '香菇',
-  daffodil: '水仙',
-};
+/** 作物代码名 → 中文名 (数据来自作物注册表, 与 CROP.md 一致) */
+function cropName(type: string): string {
+  if (isCropType(type)) return cropConfig(type).name;
+  return type;
+}
 
 /** 己方 (index 0) 金色, 对方 (index 1) 红色 */
 const SERIES_COLORS = ['#f2cf62', '#f3a18d'];
 
-/** 各作物在饼图/进度条中的统一稳定配色 (按作物语义选取, 而非按占比顺位) */
-const CROP_COLORS: Record<string, string> = {
-  strawberry: '#ef5a6f',
-  grape: '#9b6dd7',
-  wheat: '#e0c068',
-  lotus: '#f48fb1',
-  pumpkin: '#e89a3c',
-  melon: '#66bb6a',
-  milk_vetch: '#7e9be8',
-  shiitake: '#c0846a',
-  daffodil: '#f2d24b',
-};
-
 /**
  * 取作物配色 (饼图扇区 / 图例 / 进度条共用的唯一入口)。
- * 已知作物返回语义色; 未收录的作物按类型名哈希稳定回退到调色板 ——
+ * 已知作物返回语义色 (定义在各作物自己的 crops/<type>.ts 的 color 字段);
+ * 未收录的作物按类型名哈希稳定回退到调色板 ——
  * 与排序位置无关, 保证同一作物在饼图与进度条中永远同色。
  */
 function cropColor(type: string): string {
-  const known = CROP_COLORS[type];
-  if (known) return known;
+  if (isCropType(type)) return cropConfig(type).color;
   let h = 0;
   for (let i = 0; i < type.length; i++) h = (h * 31 + type.charCodeAt(i)) >>> 0;
   return CROP_BAR_PALETTE[h % CROP_BAR_PALETTE.length];
@@ -506,7 +486,7 @@ function drawCropPie(stats: GameStats): HTMLCanvasElement {
       .forEach(([type, value]) => {
         const end = angle + (value / total) * Math.PI * 2;
         slices.push({
-          name: CROP_NAMES[type] ?? type,
+          name: cropName(type),
           value,
           pct: Math.round((value / total) * 100),
           color: cropColor(type),
@@ -715,7 +695,7 @@ function cropSection(stats: GameStats): HTMLElement {
     const row = el('div', { class: 'stats-crop-row' }, [
       el('span', { class: 'stats-crop-name' }, [
         el('span', { class: 'stats-crop-dot', style: `background: ${color}` }),
-        el('span', { class: 'stats-crop-name__text', text: `${CROP_NAMES[r.type] ?? r.type}` }),
+        el('span', { class: 'stats-crop-name__text', text: cropName(r.type) }),
       ]),
       el('span', { class: 'stats-crop-bar' }, [
         el('span', { class: 'stats-crop-fill', style: `width: ${moneyPct}%; background: ${color}` }),

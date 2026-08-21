@@ -2,19 +2,24 @@
 
 此处放置所有待办事项
 
-## V1.0.8 Milestone
+- [x] Refactor: 当前 **农作物** 统一放在 `CROPS` 字典中，**特殊效果** 额外储存在 `GROWTH_EFFECTS`, `MATURITY_EFFECTS` 字典中；希望拆分, 一个 ts 文件仅描述一个作物，其全部属性 (包括基本属性, 特殊效果, 前端的 `CROP_COLORS` 等) 全部写在一个文件内
+  改动:
+  1. 新增 `shared/src/crops/` 目录, 每种作物一个文件 (`strawberry.ts` / `grape.ts` /
+     `wheat.ts` / `lotus.ts` / `pumpkin.ts` / `melon.ts` / `milk-vetch.ts` /
+     `shiitake.ts` / `daffodil.ts`), 导出各自的 `CropTypeConfig`。
+  2. registry.ts 只保留 `CropTypeConfig` 接口与地块 `TILES`, `CROPS` 注册表改为
+     从 crops/ 汇总 (新增作物 = 新建文件 + 在这里登记)。
+  3. **特殊效果内聚到作物文件**: `onMature` / `onGrow` 从"字符串效果 id"改为
+     **直接挂在配置上的函数** (香菇 selfSpread、水仙 autoWater、紫云英
+     accelerateNeighbors 全部迁入各自文件), 引擎 `tickCrop` 直接 `cfg.onMature?.(...)`
+     调用, 删除 engine.ts 的 `MATURITY_EFFECTS` / `GROWTH_EFFECTS` 字典。
+  4. 香菇动态周期也迁入作物文件: 新增 `CropTypeConfig.plantCycles(world)` 回调,
+     engine.ts 的 `tryPlantAt` / `spawnShiitake` 改走该回调, 移除引擎里
+     `CropType.Shiitake` 特判。
+  5. **前端 CROP_COLORS 迁移**: 新增 `CropTypeConfig.color` 字段 (沿用原配色),
+     `frontend/src/core/stats.ts` 的 `CROP_COLORS` / `CROP_NAMES` 字典删除,
+     改为 `cropConfig(type).color` / `.name` (未收录作物保留哈希回退)。
+  6. MCP `get_crop` 工具不再直接序列化函数, 改为输出 `specialMechanisms` 描述数组。
+  7. 行为零变化: 全部 100 个测试通过, 前端构建通过。
 
-- [x] Bug: 浏览器本地运行单人模式时，最后下载回放发现 rounds 数组是空的
-  修复: GameRunner 新增 `onTurn` 回合结束回调 (每回合 step 后触发, 带回合号),
-  single.ts 在回调中调用 `recorder.afterStep(events, round)` (与后端单文件
-  服务一致), 本地下载的回放现在包含完整 rounds (1..maxTurns)。
-- [x] Bug: 回合数映射问题:
-    1. 各个游戏模式运行结束时, 回合数其实是 501 而不是 500
-    2. 结果数据统计时，500 回合的金钱与最终金钱对不上 (可能因为实际最终回合是 501)
-    3. 回放时，最后一个回合也是 501
-  修复: 根因是 `snapshotOf()` 返回 `world.turn + 1`, 而 `GameController.step()`
-  在生成快照**之前**已执行 `world.turn += 1` → 快照回合号 = 已完成回合 + 1
-  (末回合 501)。改为 `snapshotOf()` 直接返回 `world.turn` (刚完成的回合号),
-  与 turn 事件 / 玩家视图回合 (view.turn) 一致; 状态栏、统计金钱曲线
-  (turns 1..maxTurns, 末点金钱 = 最终金钱)、回放末回合全部归位。
-  game-controller.test.ts 增加快照回合与 turn 事件一致的回归断言。
+- [ ] Refactor: 当前 **无人机操作** 中，阶段1 含有较多 if-else, 而非移动操作是通过查字典确定效果的, 希望重构为: 利用 Typescript 继承 + 函数重写, 将无人机操作拆解为多个文件，每个文件按 class 描述无人机操作，继承自同一个基类，通过重写基类函数来实现不同功能; engine.ts 不使用 if else, 而是直接调用函数, 函数会根据不同 class 执行不同的功能

@@ -129,18 +129,22 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
   紫云英 (成本 100/收获 120/160 周期, 生长加速邻格 onGrow) /
   香菇 (基础 20 周期, 实际周期 = 20 + 2×场上香菇数, 需水, 成熟后分 4 回合按上右下左扩散 onMature) /
   水仙 (生长自动浇水 onGrow),
-  完整属性见 agent/CROP.md, 数据在 `CROPS` 注册表 (改文档或加作物只改这一处)。
+  完整属性见 agent/CROP.md, 数据在 `shared/src/crops/` (每种作物一个文件,
+  基本属性 / 特殊效果 / 统计配色 `color` 都写在自己文件里), 由 registry.ts 汇总进 `CROPS`
+  (改文档或加作物只改这两处)。
 - **沙漠化 / 间作**: 收获作物时, 若其周围存在沙地则该格转化为沙地 (仅蚕食土地,
   不影响水池, engine.ts `maybeDesertify`); 若作物的四方向邻格有 ≥2 个不同种类作物,
   收获收益 +20% (向下取整, engine.ts `intercroppingValue`)。
 - **成熟特效 (onMature)**: 每种作物成熟时都会执行其挂接的特效 (多数作物不声明)。
-  效果按 id 在 engine.ts 的 `MATURITY_EFFECTS` 表注册 (如 selfSpread),
-  新增特效 = 加一个处理器 + 在注册表声明, 无需 if 硬编码。
+  特效是作物配置上的**函数** (`crops/<type>.ts` 的 `onMature` 字段), 引擎直接调用,
+  无需按 id 查表 (原 engine.ts 的 `MATURITY_EFFECTS` 字典已移除)。
   香菇: 成熟时设置 `spreadLeft=4`, 之后每回合在 Grown 分支按上右下左扩散 1 株
   (CropData.spreadLeft 字段, 到 0 停止)。
-- **生长特效 (onGrow)**: 与 onMature 同构, 每个生长回合执行 (如 Daffodil 的 autoWater,
-  每 3 周期按 上→右→下→左 给邻格缺水作物浇水, 一次/回合, 成熟失效), 处理器在
-  engine.ts 的 `GROWTH_EFFECTS` 表注册。
+- **生长特效 (onGrow)**: 与 onMature 同构, 每个生长回合执行 (如 Daffodil 的自动浇水,
+  每 3 周期按 上→右→下→左 给邻格缺水作物浇水, 一次/回合, 成熟失效), 处理器同样
+  定义在各作物自己的文件里 (原 engine.ts 的 `GROWTH_EFFECTS` 字典已移除)。
+- **动态生长周期 (plantCycles)**: 作物可用 `plantCycles(world)` 自定义实际生长周期
+  (覆盖 growCycles 与地块倍率), 如香菇的 20 + 2×场上香菇数。
 - **ChangeTile**: 消耗 CHANGE_TILE_COST=6, 需上下左右有同类型地块 (orthNeighbors 检查),
   有作物的地块不可转换; 按操作三处注册 (player-api + OP_SCHEMAS + OP_HANDLERS)。
 
