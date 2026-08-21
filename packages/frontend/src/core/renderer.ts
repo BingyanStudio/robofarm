@@ -1,7 +1,7 @@
 // Canvas game renderer: draws tiles/crops/drones, supports zoom (wheel) and drag-to-pan.
 // Rendering uses absolute coordinates; the mirror option renders from the opponent's view (combat mode P2).
 import type { SnapshotState, CropInfo, Position } from '@robofarm/shared';
-import { CropState, TileType, TILES, cropConfig } from '@robofarm/shared';
+import { CropState, TileType, TILES, cropConfig, MAX_TILE_FERTILITY } from '@robofarm/shared';
 import { loadSprites, cropStageIndex, growCyclesOf } from './sprites';
 import type { Sprites } from './sprites';
 import { el } from '../ui/ui';
@@ -283,10 +283,20 @@ export class Renderer {
     const rows: HTMLElement[] = [];
 
     // 1. Tile
+    // 竞技模式: 屏幕左半 (无论是否镜像视角) 即当前视角的己方半场;
+    // 土地: 附带肥力信息 (仅土地有 fertility)。
+    const tileExtras: string[] = [];
+    if (this.state.mode === 'combat') {
+      tileExtras.push(dx < this.state.map[0].length / 2 ? '己方半场' : '对方半场');
+    }
+    if (tile.fertility !== undefined) {
+      tileExtras.push(`肥力 ${tile.fertility}/${MAX_TILE_FERTILITY}`);
+    }
     rows.push(
       el('div', { class: 'tt-row' }, [
         el('span', { class: 'tt-title', text: TILES[tile.type].name }),
         el('span', { class: 'muted', text: `  (${x}, ${y})` }),
+        ...tileExtras.map((e) => el('span', { class: 'muted', text: ` · ${e}` })),
       ])
     );
 

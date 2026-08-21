@@ -46,6 +46,10 @@
     6. CropData 移除 thirstTotal / plantCycles (旧均匀公式用), 新增 thirstAt;
        engine tickCrop 改为 growthRemaining === thirstAt[thirstsDone] 触发。
 
-- [ ] Enhancement: 游戏界面 Tooltip 展示 Tile 信息时, 若是土地，则带上肥力信息
+- [x] Enhancement: 游戏界面 Tooltip 展示 Tile 信息时, 若是土地，则带上肥力信息
+  改动: renderer.ts updateTooltip — 地块行追加 `肥力 X/10` (仅土地有 fertility,
+  上限常量 MAX_TILE_FERTILITY, 快照已携带该字段)。
 
-- [ ] Enhancement: 多人竞技游戏界面 Tooltip 展示 Tile 信息时, 带上 己方/对方半场 信息
+- [x] Enhancement: 多人竞技游戏界面 Tooltip 展示 Tile 信息时, 带上 己方/对方半场 信息
+  改动: renderer.ts updateTooltip — 竞技模式下地块行追加 `己方半场 / 对方半场`
+  (屏幕左半即当前视角 (含镜像) 的己方半场, 与半场分割线一致)。
