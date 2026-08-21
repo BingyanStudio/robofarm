@@ -16,11 +16,10 @@ export class MilkVetch extends BaseCrop {
   readonly color = '#7e9be8';
 
   canPlant(tile: Tile): boolean {
-    // 只有肥力 < 6 才能种植紫云英
-    return (tile.type === TileType.Soil && tile.fertility! < 6) || tile.type === TileType.Sand;
+    return tile.type === TileType.Soil || tile.type === TileType.Sand;
   }
   /** 种植条件描述 */
-  readonly canPlantDesc = '土地 (肥力 < 6) / 沙地';
+  readonly canPlantDesc = '土地 / 沙地';
 
   /** 生长特效 (growUpdate): 生长中每回合按 上→右→下→左 加速邻格作物的生长 */
   growUpdate({ world, pos }: GrowthEffectContext): void {

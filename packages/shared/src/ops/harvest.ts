@@ -24,6 +24,8 @@ export class Harvest extends DroneOperation {
     else world.players[drone.player].money += value;
     // 地块的"作物收获"回调 (如土地: 周围有沙地则本格沙漠化)
     TILES[tile.type].onCropHarvested?.({ world, pos, crop, events });
+    // 作物的"收获特效" (如仙人掌: 把脚下地块转为土地)
+    cfg.onHarvested?.({ world, pos, crop, events });
     events.push({
       type: 'harvest',
       drone: drone.id,

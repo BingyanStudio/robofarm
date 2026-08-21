@@ -29,6 +29,7 @@ const API_KEYWORDS = [
   'run', 'getSelf', 'getGame', 'getMap', 'getTile', 'getCrop', 'getDrone',
   'CropType', 'CropState', 'TileType', 'DroneOperation',
   'DroneOperation', 'Move', 'Plant', 'CollectWater', 'Water', 'Harvest', 'Clear', 'Intercept',
+  'Fertilize', 'FertilizeRow', 'FertilizeCol',
   ...Object.keys(CROPS), // Crop code names (registry-driven, new crops auto-complete).
   'soil', 'water',
 ];

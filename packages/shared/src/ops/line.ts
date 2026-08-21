@@ -1,9 +1,11 @@
 // 行/列范围操作的抽象基类。
 // HarvestRow/HarvestCol/WaterRow/WaterCol/PlantRow/PlantCol/InterceptRow/InterceptCol
 // 共享同一套逻辑, 具体类只声明 type 与 axis, 通过继承 + 重写 apply() 复用。
-import { CropState, CropType, InternalOperation } from '../types';
+import { CropState, CropType, InternalOperation, TileType } from '../types';
 import { TILES, cropConfig } from '../registry';
 import {
+  FERTILIZE_GAIN,
+  FERTILIZE_ROW_COL_COST,
   HARVEST_ROW_COL_COST,
   INTERCEPT_ROW_COL_COST,
   PLANT_ROW_COL_COST,
@@ -38,6 +40,8 @@ export abstract class LineHarvestOp extends DroneOperation {
       tile.crop = null;
       // 地块的"作物收获"回调 (如土地: 周围有沙地则本格沙漠化)
       TILES[tile.type].onCropHarvested?.({ world, pos, crop, events });
+      // 作物的"收获特效" (如仙人掌: 把脚下地块转为土地)
+      cfg.onHarvested?.({ world, pos, crop, events });
       // 行/列收割只作用于自己半场, 收获直接入账 (不产生偷菜)
       world.players[drone.player].money += value;
       events.push({
@@ -126,5 +130,30 @@ export abstract class LineInterceptOp extends DroneOperation {
     drone.energy -= INTERCEPT_ROW_COL_COST;
     drone.interceptZone = { axis, center: [drone.position[0], drone.position[1]] };
     return { ok: true };
+  }
+}
+
+/**
+ * 行/列范围施肥: 以无人机为中心的行/列 3 格内给土地施肥 (肥力 +3),
+ * 非土地格子跳过 (不返还能量), 消耗能量。
+ */
+export abstract class LineFertilizeOp extends DroneOperation {
+  static readonly axis: 'row' | 'col';
+  static apply(ctx: OpContext, op: InternalOperation, _session: TurnSession): OpResult {
+    const axis = this.axis;
+    const { world, drone, events } = ctx;
+    if (drone.energy < FERTILIZE_ROW_COL_COST) {
+      return { ok: false, message: `能量不足: ${op.type} 需要 ${FERTILIZE_ROW_COL_COST} 点能量` };
+    }
+    drone.energy -= FERTILIZE_ROW_COL_COST;
+    let count = 0;
+    for (const pos of lineRangePositions(drone.position, axis, world)) {
+      const tile = world.map[pos[1]][pos[0]];
+      if (tile.type !== TileType.Soil) continue; // 非土地跳过 (不返还能量)
+      tile.fertility = (tile.fertility ?? 0) + FERTILIZE_GAIN;
+      events.push({ type: 'fertilize', drone: drone.id, pos: [pos[0], pos[1]] });
+      count++;
+    }
+    return { ok: true, message: count === 0 ? '范围内没有土地' : undefined };
   }
 }

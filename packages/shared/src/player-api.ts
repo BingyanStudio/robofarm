@@ -25,6 +25,9 @@ import {
   PlantCol,
   NewDrone,
   ChangeTile,
+  Fertilize,
+  FertilizeRow,
+  FertilizeCol,
 } from './ops';
 
 export {
@@ -48,6 +51,9 @@ export {
   PlantRow,
   PlantCol,
   ChangeTile,
+  Fertilize,
+  FertilizeRow,
+  FertilizeCol,
 } from './ops';
 
 /** 注入沙箱的全部操作类 (按类名供玩家代码直接引用) */
@@ -72,6 +78,9 @@ export const OPS = {
   PlantCol,
   NewDrone,
   ChangeTile,
+  Fertilize,
+  FertilizeRow,
+  FertilizeCol,
 };
 
 export interface PlayerApi {

@@ -4,7 +4,7 @@
 // (如香菇: 20 + 2 × 场上香菇总数)。
 // 种植判定 (canPlant) 与肥力消耗 (fertilityCost) 也在此声明, 由子类实现/覆盖。
 import { CropType, Tile, WorldState } from '../types';
-import type { GrownEffectContext, GrowthEffectContext, MaturityEffectContext } from '../types';
+import type { GrownEffectContext, GrowthEffectContext, HarvestEffectContext, MaturityEffectContext } from '../types';
 import type { CropTypeConfig } from '../registry';
 import { TILES } from '../registry';
 
@@ -39,6 +39,8 @@ export abstract class BaseCrop implements CropTypeConfig {
   grownUpdate?(ctx: GrownEffectContext): void;
   /** 生长特效: 生长中每个回合执行 (多数作物不声明) */
   growUpdate?(ctx: GrowthEffectContext): void;
+  /** 收获特效: 作物被收获时执行 (多数作物不声明, 如仙人掌转为土地) */
+  onHarvested?(ctx: HarvestEffectContext): void;
 
   /**
    * 实际生长周期: 返回种植在该地块上的实际回合数。

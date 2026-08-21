@@ -28,6 +28,7 @@ const FX = {
   water: { color: theme.fxWater, alpha: 0.45 }, // light blue: water
   harvest: { color: theme.fxHarvest, alpha: 0.7 }, // deep gold: harvest (starts more opaque)
   intercept: { color: theme.fxIntercept, alpha: 0.45 }, // light red: intercept
+  fertilize: { color: theme.fxFertilize, alpha: 0.5 }, // green: fertilize
 } as const;
 
 /** Effect duration (milliseconds). */
@@ -209,7 +210,7 @@ export class Renderer {
   }
 
   /** Tile effect: water (light blue) / harvest (light gold) / intercept (light red), covers the whole tile and fades over 0.2s. */
-  tileFx(type: 'water' | 'harvest' | 'intercept', x: number, y: number): void {
+  tileFx(type: 'water' | 'harvest' | 'intercept' | 'fertilize', x: number, y: number): void {
     this.fx.set(`${x},${y}`, { type, x, y, start: performance.now() });
     this.ensureLoop();
   }

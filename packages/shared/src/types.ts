@@ -23,6 +23,7 @@ export enum CropType {
   MilkVetch = 'milk_vetch',
   Shiitake = 'shiitake',
   Daffodil = 'daffodil',
+  Cactus = 'cactus',
 }
 
 /** 作物状态 */
@@ -67,7 +68,11 @@ export type InternalOperation =
   | { type: 'plantRow'; plants: CropType[] }
   | { type: 'plantCol'; plants: CropType[] }
   // 地块转换
-  | { type: 'changeTile'; tileType: TileType };
+  | { type: 'changeTile'; tileType: TileType }
+  // 施肥
+  | { type: 'fertilize' }
+  | { type: 'fertilizeRow' }
+  | { type: 'fertilizeCol' };
 
 /** 单个地块的信息 (玩家 API 视角) */
 export interface TileInfo {
@@ -224,6 +229,14 @@ export interface GrownEffectContext {
   events: GameEvent[];
 }
 
+/** 作物收获特效 (onHarvested: 收获时执行, 如仙人掌把脚下地块转为土地) 的执行上下文 */
+export interface HarvestEffectContext {
+  world: WorldState;
+  pos: Position;
+  crop: CropData;
+  events: GameEvent[];
+}
+
 /** 地块作物事件 (onCropPlanted / onCropWatered / onCropHarvested) 的执行上下文 */
 export interface TileCropEventContext {
   world: WorldState;
@@ -297,6 +310,7 @@ export type GameEvent =
   | { type: 'harvest'; drone: number; pos: Position; value: number; stole: boolean }
   | { type: 'charge'; drone: number; pos: Position; energy: number }
   | { type: 'change-tile'; drone: number; pos: Position; tileType: TileType }
+  | { type: 'fertilize'; drone: number; pos: Position }
   | { type: 'clear'; drone: number; pos: Position }
   | { type: 'intercept'; drone: number; pos: Position; thief: number; bounty: number }
   | { type: 'stash'; drone: number; pos: Position; bounty: number }

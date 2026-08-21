@@ -43,6 +43,15 @@ export const INTERCEPT_ROW_COL_COST = 6;
 /** ChangeTile (地块转换) 的能量消耗 */
 export const CHANGE_TILE_COST = 3;
 
+/** Fertilize (单格施肥) 的能量消耗 */
+export const FERTILIZE_COST = 3;
+
+/** FertilizeRow / FertilizeCol (行/列施肥) 的能量消耗 */
+export const FERTILIZE_ROW_COL_COST = 8;
+
+/** 每次施肥增加的肥力 */
+export const FERTILIZE_GAIN = 3;
+
 /** NewDrone 的金钱消耗 */
 export const NEW_DRONE_COST = 4000;
 

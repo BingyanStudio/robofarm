@@ -98,3 +98,34 @@
      (沙地测试改为小麦, 西瓜改测盐碱地 ×1.5 且浇水 ×2, ChangeTile 能量断言,
      收获肥力测试改用小麦)。
   4. 全部 94 个测试通过, shared/backend/frontend 构建通过。
+
+- [x] Feature: 增加无人机操作 "Fertilize" "FertilizeRow" "FertilizeCol"
+    1. Fertilize: 消耗 3 能量, 给脚下土地施肥, 土地肥力 + 3, 若不是土地则失败 (返还能量)
+       → ops/fertilize.ts (能量不足/非土地均失败, 非土地不扣能量; 常量 FERTILIZE_COST=3 /
+       FERTILIZE_GAIN=3)。
+    2. FertilizeRow/Col: 消耗 8 能量, 给以自己为中心的 3 格行 / 列施肥, 土地肥力 + 3,
+       若不是土地则跳过 (不返还能量)
+       → ops/line.ts 新增 LineFertilizeOp 抽象基类 + ops/fertilize-row.ts / fertilize-col.ts
+       (常量 FERTILIZE_ROW_COL_COST=8)。引擎只按 OP_CLASSES 分发, 零特判。
+    3. 注册: types.ts InternalOperation + GameEvent 新增 'fertilize' 事件; ops/index.ts
+       OP_CLASSES; player-api/index/player 导出; 前端 editor 补全、renderer 施肥绿色特效
+       (fxFertilize) 与 game-layout 事件处理; docs.ts DOC_OPERATIONS + MCP prompt。
+    4. engine.test.ts 新增 Fertilize 单格 (成功/非土地失败/能量不足) 与行/列 (跳过沙地、
+       水池) 测试。
+
+- [x] Feature: 增加作物 "仙人掌"
+        id: `cactus`
+        生长周期: 15 cycles
+        浇水: 无需
+        可种植: 沙地, 盐碱地
+        肥力: 0
+        成本: 80
+        收益: 100
+        特性: 收获时, 将脚下的地块转变为土地, 肥力为 2
+       → crops/cactus.ts: growCyclesBase 15 / thirstCountBase 0 / canPlant 沙地·盐碱地 /
+       plantCost 80 / value 100 / fertilityCost 0; 作物基类新增收获特效回调
+       `onHarvested` (types.ts HarvestEffectContext), 收获 (单格 + 行/列) 后调用,
+       仙人掌把脚下地块转为土地 (肥力 2); registry 注册 + CROP.md + MCP
+       specialMechanisms 输出"收获特效"; engine.test.ts 沙地 (45 周期) 与盐碱地
+       (22 周期) 两条收获转土地测试。
+        描述: 环境植物, 能将不适宜生长的地块转为土地

@@ -1,7 +1,7 @@
 // 地块与作物的数据注册表。地块配置按"每种地块一个文件"放在 tiles/ 目录
 // (继承 BaseTile, 见下); 作物配置按"每种作物一个文件"放在 crops/ 目录
 // (继承 BaseCrop, 见下), 这里只做汇总。
-import { CropState, CropType, GrownEffectContext, GrowthEffectContext, MaturityEffectContext, Tile, TileCropEventContext, TileType, WorldState } from './types';
+import { CropState, CropType, GrownEffectContext, GrowthEffectContext, HarvestEffectContext, MaturityEffectContext, Tile, TileCropEventContext, TileType, WorldState } from './types';
 import { INITIAL_TILE_FERTILITY } from './config';
 import { Soil } from './tiles/soil';
 import { Water } from './tiles/water';
@@ -16,6 +16,7 @@ import { Melon } from './crops/melon';
 import { MilkVetch } from './crops/milk-vetch';
 import { Shiitake } from './crops/shiitake';
 import { Daffodil } from './crops/daffodil';
+import { Cactus } from './crops/cactus';
 
 export { BaseTile } from './tiles/base';
 export { BaseCrop } from './crops/base';
@@ -127,6 +128,11 @@ export interface CropTypeConfig {
    * 多数作物不声明 (无特效)。
    */
   growUpdate?: (ctx: GrowthEffectContext) => void;
+  /**
+   * 收获特效: 作物被收获时执行的函数 (定义在作物自己的文件里, 引擎直接调用)。
+   * 如仙人掌: 收获后把脚下地块转为土地。多数作物不声明 (无特效)。
+   */
+  onHarvested?: (ctx: HarvestEffectContext) => void;
 }
 
 /**
@@ -144,6 +150,7 @@ export const CROPS: Record<CropType, CropTypeConfig> = {
   [CropType.MilkVetch]: new MilkVetch(),
   [CropType.Shiitake]: new Shiitake(),
   [CropType.Daffodil]: new Daffodil(),
+  [CropType.Cactus]: new Cactus(),
 };
 
 export function isCropType(v: unknown): v is CropType {

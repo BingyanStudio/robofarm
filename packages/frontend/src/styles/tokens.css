@@ -94,6 +94,7 @@
   --color-fx-water: #75b8c5;
   --color-fx-harvest: #80ba70;
   --color-fx-intercept: #d28d82;
+  --color-fx-fertilize: #a3c96a;
 
   /* Canvas neutral strokes / text (renderer.ts) */
   --color-half-line: rgba(255, 255, 255, 0.5);   /* combat half-field line */

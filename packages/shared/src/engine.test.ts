@@ -956,6 +956,100 @@ describe('engine: 沙漠化 / 盐碱化 / 间作 / NewDrone', () => {
   });
 });
 
+describe('engine: 施肥 (Fertilize)', () => {
+  it('Fertilize: 给脚下土地施肥 +3 肥力, 消耗 3 能量; 非土地失败且不扣能量', () => {
+    const w = single();
+    w.drones[0].energy = 4;
+    w.drones[0].position = [3, 3]; // 土地
+    expect(w.map[3][3].fertility).toBe(5);
+    let events = stepTurn(w, actions([0, { type: 'fertilize' }]));
+    expect(eventsOfType(events, 'fertilize')).toHaveLength(1);
+    expect(w.map[3][3].fertility).toBe(8);
+    expect(w.drones[0].energy).toBe(1); // 4 - 3
+    // 非土地 (水池): 失败且不扣能量
+    w.drones[0].position = [1, 1];
+    events = stepTurn(w, actions([0, { type: 'fertilize' }]));
+    expect(eventsOfType(events, 'invalid-op')).toHaveLength(1);
+    expect(w.drones[0].energy).toBe(1); // 未扣能量
+    // 能量不足
+    events = stepTurn(w, actions([0, { type: 'fertilize' }]));
+    expect(eventsOfType(events, 'invalid-op')).toHaveLength(1);
+  });
+
+  it('FertilizeRow/Col: 行/列 3 格内土地施肥 +3, 非土地跳过, 消耗 8 能量', () => {
+    // 行: (2,3) 是沙地 → 跳过, 仅 (3,3)(4,3) 施肥
+    const w = single();
+    w.drones[0].energy = 8;
+    w.drones[0].position = [3, 3];
+    let events = stepTurn(w, actions([0, { type: 'fertilizeRow' }]));
+    expect(eventsOfType(events, 'fertilize')).toHaveLength(2);
+    expect(w.map[3][2].type).toBe(TileType.Sand); // 沙地跳过
+    expect(w.map[3][3].fertility).toBe(8);
+    expect(w.map[3][4].fertility).toBe(8);
+    expect(w.drones[0].energy).toBe(0); // 8 - 8
+    // 列 x=3: (3,2)(3,3)(3,4) 均土地 → 3 格都施肥
+    const w2 = single();
+    w2.drones[0].energy = 8;
+    w2.drones[0].position = [3, 3];
+    events = stepTurn(w2, actions([0, { type: 'fertilizeCol' }]));
+    expect(eventsOfType(events, 'fertilize')).toHaveLength(3);
+    expect(w2.map[2][3].fertility).toBe(8);
+    expect(w2.map[4][3].fertility).toBe(8);
+    expect(w2.drones[0].energy).toBe(0);
+    // 竞技图水池列: (1,2) 水池 → 跳过, 仅 (1,4) 土地施肥
+    const w3 = combat();
+    w3.drones[0].energy = 8;
+    w3.drones[0].position = [1, 3]; // 列 x=1: y=2 水池, y=3 沙地, y=4 土地
+    events = stepTurn(w3, actions([0, { type: 'fertilizeCol' }]));
+    expect(eventsOfType(events, 'fertilize')).toHaveLength(1);
+    expect(w3.map[4][1].type).toBe(TileType.Soil);
+    expect(w3.map[4][1].fertility).toBe(8);
+  });
+});
+
+describe('engine: 仙人掌 (cactus)', () => {
+  it('仙人掌: 土地不能种, 沙地可种 (45 周期 = 15×3), 收获后脚下转为土地 (肥力 2)', () => {
+    const w = single();
+    w.players[0].money = 100;
+    // 土地上不能种 (初始位置 (3,3) 是土地)
+    w.drones[0].position = [3, 3];
+    let events = stepTurn(w, actions([0, { type: 'plant', crop: CropType.Cactus }]));
+    expect(eventsOfType(events, 'invalid-op')).toHaveLength(1);
+    // 沙地上可种, 周期 = 15 × 3 = 45
+    w.drones[0].position = [0, 0]; // 沙地
+    events = stepTurn(w, actions([0, { type: 'plant', crop: CropType.Cactus }]));
+    expect(eventsOfType(events, 'plant')).toHaveLength(1);
+    expect(w.map[0][0].crop!.growthRemaining).toBe(44); // 45 - 1
+    for (let i = 0; i < 43; i++) stepTurn(w, actions([0, null]));
+    expect(w.map[0][0].crop!.state).toBe(CropState.Growing);
+    stepTurn(w, actions([0, null]));
+    expect(w.map[0][0].crop!.state).toBe(CropState.Grown);
+    // 收获: 脚下变土地, 肥力 2
+    events = stepTurn(w, actions([0, { type: 'harvest' }]));
+    expect(eventsOfType(events, 'harvest')).toHaveLength(1);
+    expect(w.map[0][0].type).toBe(TileType.Soil);
+    expect(w.map[0][0].fertility).toBe(2);
+    expect(w.map[0][0].crop).toBeNull();
+    expect(w.players[0].money).toBe(120); // 100 - 80 + 100
+  });
+
+  it('仙人掌: 盐碱地上生长 ×1.5 (22 周期), 收获后转为土地 (肥力 2)', () => {
+    const w = single();
+    w.players[0].money = 100;
+    w.map[0][0] = { type: TileType.Salt, crop: null }; // 盐碱地
+    w.drones[0].position = [0, 0];
+    stepTurn(w, actions([0, { type: 'plant', crop: CropType.Cactus }]));
+    expect(w.map[0][0].crop!.growthRemaining).toBe(21); // floor(15*1.5)=22 - 1
+    for (let i = 0; i < 20; i++) stepTurn(w, actions([0, null]));
+    expect(w.map[0][0].crop!.state).toBe(CropState.Growing);
+    stepTurn(w, actions([0, null]));
+    expect(w.map[0][0].crop!.state).toBe(CropState.Grown);
+    stepTurn(w, actions([0, { type: 'harvest' }]));
+    expect(w.map[0][0].type).toBe(TileType.Soil);
+    expect(w.map[0][0].fertility).toBe(2);
+  });
+});
+
 describe('engine: 沙漠化细节', () => {
   it('沙漠化: 水池上的作物收获后不会转化为沙地', () => {
     const w = single();

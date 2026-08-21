@@ -44,6 +44,7 @@ export const theme = {
   fxWater: cssVar('--color-fx-water', '#7dd3fc'),
   fxHarvest: cssVar('--color-fx-harvest', '#f5a03b'),
   fxIntercept: cssVar('--color-fx-intercept', '#f8a5a5'),
+  fxFertilize: cssVar('--color-fx-fertilize', '#a3c96a'),
 
   // Canvas neutral strokes / shadows
   halfLine: cssVar('--color-half-line', 'rgba(255, 255, 255, 0.5)'),

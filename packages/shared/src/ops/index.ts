@@ -27,6 +27,9 @@ import { InterceptCol } from './intercept-col';
 import { PlantRow } from './plant-row';
 import { PlantCol } from './plant-col';
 import { ChangeTile } from './change-tile';
+import { Fertilize } from './fertilize';
+import { FertilizeRow } from './fertilize-row';
+import { FertilizeCol } from './fertilize-col';
 
 export { DroneOperation, isPosition } from './base';
 export type { OpClass, OpContext, OpField, OpResult, TurnSession, MoveCandidate } from './base';
@@ -50,6 +53,9 @@ export { InterceptCol } from './intercept-col';
 export { PlantRow } from './plant-row';
 export { PlantCol } from './plant-col';
 export { ChangeTile } from './change-tile';
+export { Fertilize } from './fertilize';
+export { FertilizeRow } from './fertilize-row';
+export { FertilizeCol } from './fertilize-col';
 
 /** 操作 type → 操作类。引擎与 normalizeOp 共用这一处注册表 */
 export const OP_CLASSES: Record<string, OpClass> = {
@@ -72,6 +78,9 @@ export const OP_CLASSES: Record<string, OpClass> = {
   plantRow: PlantRow,
   plantCol: PlantCol,
   changeTile: ChangeTile,
+  fertilize: Fertilize,
+  fertilizeRow: FertilizeRow,
+  fertilizeCol: FertilizeCol,
 };
 
 /** 按操作 type 取操作类 (engine 阶段 1 的分发入口, 替代 if-else 链) */
