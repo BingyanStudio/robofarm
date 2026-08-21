@@ -8,7 +8,7 @@ import { BaseCrop } from './base';
 export class Daffodil extends BaseCrop {
   readonly type = CropType.Daffodil;
   readonly name = '水仙';
-  readonly description = '功能性作物, 为周围的作物提供缓慢的浇水支持。';
+  readonly description = '功能性作物, 生长时为 [上下左右] 的作物浇水, 成熟后无此效果。';
   readonly plantCost = 150;
   readonly value = 100;
   readonly growCyclesBase = 80;
