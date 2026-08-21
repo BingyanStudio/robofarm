@@ -206,6 +206,15 @@ export interface GrowthEffectContext {
   events: GameEvent[];
 }
 
+/** 地块作物事件 (onCropPlanted / onCropWatered / onCropHarvested) 的执行上下文 */
+export interface TileCropEventContext {
+  world: WorldState;
+  pos: Position;
+  /** 相关作物 (收获回调调用时该格作物已移除) */
+  crop: CropData;
+  events: GameEvent[];
+}
+
 // ---------------------------------------------------------------------------
 // 事件流 (渲染 / 回放 / 日志)
 // ---------------------------------------------------------------------------

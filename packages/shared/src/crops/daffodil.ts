@@ -2,6 +2,7 @@
 // 特殊效果 (onGrow) 直接定义在本文件, 引擎直接调用。
 import { CropState, CropType, TileType } from '../types';
 import type { GrowthEffectContext } from '../types';
+import { TILES } from '../registry';
 import { BaseCrop } from './base';
 
 export class Daffodil extends BaseCrop {
@@ -25,9 +26,12 @@ export class Daffodil extends BaseCrop {
       const nx = pos[0] + dx;
       const ny = pos[1] + dy;
       if (nx < 0 || nx >= world.map[0].length || ny < 0 || ny >= world.map.length) continue;
-      const nb = world.map[ny][nx].crop;
+      const tile = world.map[ny][nx];
+      const nb = tile.crop;
       if (!nb || nb.state !== CropState.Thirsty) continue;
       nb.state = CropState.Growing;
+      // 自动浇水同样触发目标地块的"作物浇水"回调
+      TILES[tile.type].onCropWatered?.({ world, pos: [nx, ny], crop: nb, events });
       events.push({ type: 'water', drone: -1, pos: [nx, ny] });
       return; // 每回合仅浇水一次
     }

@@ -1,11 +1,11 @@
 // Harvest: 收获当前地块的成熟作物。
 // 竞技模式在对方半场收获 → 进入无人机 bounty (偷菜, 回己方半场入账 / 被拦截清零);
-// 收获伴随间作加成与沙漠化判定 (helpers.ts)。
+// 收获伴随间作加成; 收获后触发该地块的 onCropHarvested 回调 (如土地的沙漠化)。
 import { CropState, InternalOperation, Position } from '../types';
-import { cropConfig } from '../registry';
+import { TILES, cropConfig } from '../registry';
 import { isOwnHalf, tileAt } from '../maps';
 import { DroneOperation, OpContext, OpResult, TurnSession } from './base';
-import { intercroppingValue, maybeDesertify } from './helpers';
+import { intercroppingValue } from './helpers';
 
 export class Harvest extends DroneOperation {
   readonly type = 'harvest';
@@ -22,8 +22,8 @@ export class Harvest extends DroneOperation {
     const stole = world.mode === 'combat' && !isOwnHalf(world, drone);
     if (stole) drone.bounty += value;
     else world.players[drone.player].money += value;
-    // 沙漠化: 收获的格子周围存在沙地 → 该格转化为沙地
-    maybeDesertify(world, pos);
+    // 地块的"作物收获"回调 (如土地: 周围有沙地则本格沙漠化)
+    TILES[tile.type].onCropHarvested?.({ world, pos, crop, events });
     events.push({
       type: 'harvest',
       drone: drone.id,

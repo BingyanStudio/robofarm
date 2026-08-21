@@ -23,7 +23,7 @@ export class Plant extends DroneOperation {
     if (tile.crop) return { ok: false, message: '该地块已有作物' };
     const player = world.players[drone.player];
     if (player.money < cfg.plantCost) return { ok: false, message: '金钱不足' };
-    tryPlantAt(world, drone, drone.position, crop);
+    tryPlantAt(world, drone, drone.position, crop, events);
     events.push({ type: 'plant', drone: drone.id, pos: [drone.position[0], drone.position[1]], crop });
     return { ok: true };
   }

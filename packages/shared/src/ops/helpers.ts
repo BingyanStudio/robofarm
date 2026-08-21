@@ -1,20 +1,7 @@
 // 操作语义共用的辅助函数 (从 engine.ts 迁出, 供各操作类使用)。
-import { CropState, CropType, DroneState, Position, TileType, WorldState } from '../types';
-import { cropConfig } from '../registry';
-import { inBounds } from '../maps';
-
-/** 上下左右四个正交邻格 (越界跳过) */
-export function orthNeighbors(pos: Position, world: WorldState): Position[] {
-  const out: Position[] = [];
-  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
-    const nx = pos[0] + dx;
-    const ny = pos[1] + dy;
-    if (nx >= 0 && nx < world.map[0].length && ny >= 0 && ny < world.map.length) {
-      out.push([nx, ny]);
-    }
-  }
-  return out;
-}
+import { CropState, CropType, DroneState, GameEvent, Position, WorldState } from '../types';
+import { TILES, cropConfig } from '../registry';
+import { inBounds, orthNeighbors } from '../maps';
 
 /** 以无人机为中心的行/列 3 格范围 (越界跳过) */
 export function lineRangePositions(center: Position, axis: 'row' | 'col', world: WorldState): Position[] {
@@ -40,27 +27,19 @@ export function intercroppingValue(world: WorldState, pos: Position, cropType: C
 }
 
 /**
- * 沙漠化: 收获作物时, 若该格的上下左右存在沙地, 则该格也转化为沙地。
- * 仅蚕食土地 (soil) 地块, 不影响水 (water) 等地块。
- * (调用前该格作物已移除)
- */
-export function maybeDesertify(world: WorldState, pos: Position): void {
-  if (world.map[pos[1]][pos[0]].type !== TileType.Soil) return;
-  for (const [nx, ny] of orthNeighbors(pos, world)) {
-    if (world.map[ny][nx].type === TileType.Sand) {
-      world.map[pos[1]][pos[0]] = { type: TileType.Sand, crop: null };
-      return;
-    }
-  }
-}
-
-/**
  * 尝试在指定格种植作物 (与单格 Plant 相同的判定: 地块适配 / 无作物 / 金钱足够)。
  * 成功时扣除成本并写入作物数据, 返回 true; 任一条件不满足则不改动任何状态, 返回 false。
  * 实际生长周期由作物自己的 growCycles(tile, world) 计算 (基类默认按地块倍率,
  * 特殊作物重写, 如香菇按场上数量)。
+ * 种下后触发该地块的 onCropPlanted 回调。
  */
-export function tryPlantAt(world: WorldState, drone: DroneState, pos: Position, crop: CropType): boolean {
+export function tryPlantAt(
+  world: WorldState,
+  drone: DroneState,
+  pos: Position,
+  crop: CropType,
+  events: GameEvent[]
+): boolean {
   const cfg = cropConfig(crop);
   const tile = world.map[pos[1]][pos[0]];
   if (!cfg.habitats.includes(tile.type)) return false;
@@ -79,5 +58,7 @@ export function tryPlantAt(world: WorldState, drone: DroneState, pos: Position, 
     thirstsDone: 0,
     plantCycles: adjusted,
   };
+  // 地块的"作物种下"回调
+  TILES[tile.type].onCropPlanted?.({ world, pos, crop: tile.crop, events });
   return true;
 }

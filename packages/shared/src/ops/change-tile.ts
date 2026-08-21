@@ -3,9 +3,8 @@
 import { InternalOperation, TileType } from '../types';
 import { TILES } from '../registry';
 import { CHANGE_TILE_COST } from '../config';
-import { tileAt } from '../maps';
+import { orthNeighbors, tileAt } from '../maps';
 import { DroneOperation, OpContext, OpField, OpResult, TurnSession } from './base';
-import { orthNeighbors } from './helpers';
 
 export class ChangeTile extends DroneOperation {
   static readonly fields: OpField[] = [{ name: 'tileType', kind: 'string' }];

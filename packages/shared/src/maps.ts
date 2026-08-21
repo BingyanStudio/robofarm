@@ -166,6 +166,19 @@ export function samePos(a: Position, b: Position): boolean {
   return a[0] === b[0] && a[1] === b[1];
 }
 
+/** 上下左右四个正交邻格 (越界跳过) */
+export function orthNeighbors(pos: Position, world: WorldState): Position[] {
+  const out: Position[] = [];
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+    const nx = pos[0] + dx;
+    const ny = pos[1] + dy;
+    if (nx >= 0 && nx < world.map[0].length && ny >= 0 && ny < world.map.length) {
+      out.push([nx, ny]);
+    }
+  }
+  return out;
+}
+
 /** 供测试/调试使用的辅助: 在当前地块种植作物 */
 export function placeCrop(world: WorldState, pos: Position, crop: CropData): void {
   world.map[pos[1]][pos[0]].crop = crop;

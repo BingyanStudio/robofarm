@@ -19,7 +19,7 @@ import {
   TileType,
   WorldState,
 } from './types';
-import { cropConfig } from './registry';
+import { TILES, cropConfig } from './registry';
 import { inBounds, isOwnHalf, samePos } from './maps';
 import { opClassOf } from './ops';
 import type { MoveCandidate, TurnSession } from './ops';
@@ -266,5 +266,7 @@ function spawnShiitake(world: WorldState, pos: Position, dirIndex: number, event
     thirstsDone: 0,
     plantCycles: cycles,
   };
+  // 扩散种下同样触发地块的"作物种下"回调
+  TILES[tile.type].onCropPlanted?.({ world, pos: [nx, ny], crop: tile.crop, events });
   events.push({ type: 'plant', drone: -1, pos: [nx, ny], crop: CropType.Shiitake });
 }

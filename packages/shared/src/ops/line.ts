@@ -2,7 +2,7 @@
 // HarvestRow/HarvestCol/WaterRow/WaterCol/PlantRow/PlantCol/InterceptRow/InterceptCol
 // 共享同一套逻辑, 具体类只声明 type 与 axis, 通过继承 + 重写 apply() 复用。
 import { CropState, CropType, InternalOperation } from '../types';
-import { cropConfig } from '../registry';
+import { TILES, cropConfig } from '../registry';
 import {
   HARVEST_ROW_COL_COST,
   INTERCEPT_ROW_COL_COST,
@@ -11,7 +11,7 @@ import {
 } from '../config';
 import { isOwnHalfAt } from '../maps';
 import { DroneOperation, OpContext, OpResult, TurnSession } from './base';
-import { intercroppingValue, lineRangePositions, maybeDesertify, tryPlantAt } from './helpers';
+import { intercroppingValue, lineRangePositions, tryPlantAt } from './helpers';
 
 /**
  * 行/列范围收获: 一次性收获以无人机为中心的行/列 3 格内全部成熟作物, 消耗能量。
@@ -36,8 +36,8 @@ export abstract class LineHarvestOp extends DroneOperation {
       // 间作: 四方向至少 2 个不同种类作物 → 收益 +20%
       const value = intercroppingValue(world, pos, crop.type, cfg.value);
       tile.crop = null;
-      // 沙漠化: 收获的格子周围存在沙地 → 该格转化为沙地
-      maybeDesertify(world, pos);
+      // 地块的"作物收获"回调 (如土地: 周围有沙地则本格沙漠化)
+      TILES[tile.type].onCropHarvested?.({ world, pos, crop, events });
       // 行/列收割只作用于自己半场, 收获直接入账 (不产生偷菜)
       world.players[drone.player].money += value;
       events.push({
@@ -68,11 +68,14 @@ export abstract class LineWaterOp extends DroneOperation {
     drone.energy -= WATER_ROW_COL_COST;
     let count = 0;
     for (const pos of lineRangePositions(drone.position, axis, world)) {
-      const crop = world.map[pos[1]][pos[0]].crop;
+      const tile = world.map[pos[1]][pos[0]];
+      const crop = tile.crop;
       if (!crop || crop.state !== CropState.Thirsty) continue; // 跳过不需要浇水的作物
       if (drone.water < 1) break; // 水耗尽即停止
       drone.water -= 1;
       crop.state = CropState.Growing;
+      // 地块的"作物浇水"回调
+      TILES[tile.type].onCropWatered?.({ world, pos, crop, events });
       events.push({ type: 'water', drone: drone.id, pos: [pos[0], pos[1]] });
       count++;
     }
@@ -98,7 +101,7 @@ export abstract class LinePlantOp extends DroneOperation {
     let plantIdx = 0;
     for (const pos of lineRangePositions(drone.position, axis, world)) {
       if (plantIdx >= plants.length) break;
-      if (!tryPlantAt(world, drone, pos, plants[plantIdx])) continue;
+      if (!tryPlantAt(world, drone, pos, plants[plantIdx], events)) continue;
       events.push({ type: 'plant', drone: drone.id, pos: [pos[0], pos[1]], crop: plants[plantIdx] });
       plantIdx++;
       count++;

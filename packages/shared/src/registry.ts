@@ -1,7 +1,7 @@
 // 地块与作物的数据注册表。地块配置按"每种地块一个文件"放在 tiles/ 目录
 // (继承 BaseTile, 见下); 作物配置按"每种作物一个文件"放在 crops/ 目录
 // (继承 BaseCrop, 见下), 这里只做汇总。
-import { CropState, CropType, GrowthEffectContext, MaturityEffectContext, Tile, TileType, WorldState } from './types';
+import { CropState, CropType, GrowthEffectContext, MaturityEffectContext, Tile, TileCropEventContext, TileType, WorldState } from './types';
 import { Soil } from './tiles/soil';
 import { Water } from './tiles/water';
 import { Sand } from './tiles/sand';
@@ -31,6 +31,21 @@ export interface TileTypeConfig {
   spriteWithCrop: string;
   /** 无贴图时程序化绘制的底色 */
   color: string;
+  /**
+   * 作物种下时执行: 引擎在作物种到该地块上后调用 (包括范围种植与香菇扩散)。
+   * 多数地块不声明 (无特效)。
+   */
+  onCropPlanted?: (ctx: TileCropEventContext) => void;
+  /**
+   * 作物浇水时执行: 引擎在给该地块上的缺水作物浇水后调用 (包括行/列浇水与
+   * 水仙的自动浇水)。多数地块不声明 (无特效)。
+   */
+  onCropWatered?: (ctx: TileCropEventContext) => void;
+  /**
+   * 作物收获时执行: 引擎在收获该地块上的作物后调用 (包括行/列收割)。
+   * 如土地的沙漠化 (tiles/soil.ts)。多数地块不声明 (无特效)。
+   */
+  onCropHarvested?: (ctx: TileCropEventContext) => void;
 }
 
 /**
