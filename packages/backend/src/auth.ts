@@ -299,14 +299,33 @@ async function fetchGithubLogin(code: string, req: Request): Promise<{ login: st
     console.warn(`[auth] GitHub OAuth 令牌交换网络错误: ${err instanceof Error ? err.message : String(err)}`);
     throw err;
   }
+  if (!tokenRes.ok) {
+    // 非 2xx (如 400 code 无效 / 401 配置错误 / 5xx GitHub 故障)
+    const text = await tokenRes.text().catch(() => '(无法读取响应体)');
+    console.warn(`[auth] GitHub OAuth 令牌交换 HTTP ${tokenRes.status}: ${text.slice(0, 200)}`);
+    throw new Error(`GitHub OAuth 令牌交换失败 (HTTP ${tokenRes.status})`);
+  }
   const tokenData = (await tokenRes.json()) as { access_token?: string; error?: string; error_description?: string };
   if (!tokenData.access_token) {
     console.warn(`[auth] GitHub OAuth 令牌交换失败: error=${tokenData.error ?? '(无)'} desc=${tokenData.error_description ?? '(无)'}`);
     throw new Error(tokenData.error ?? '无法获取 access_token');
   }
-  const userRes = await fetch('https://api.github.com/user', {
-    headers: { Authorization: `Bearer ${tokenData.access_token}`, Accept: 'application/json' },
-  });
+  let userRes: Awaited<ReturnType<typeof fetch>>;
+  try {
+    userRes = await fetch('https://api.github.com/user', {
+      headers: { Authorization: `Bearer ${tokenData.access_token}`, Accept: 'application/json' },
+    });
+  } catch (err) {
+    // 网络层错误 (GitHub 不可达 / DNS / 超时): 明确输出日志便于排查
+    console.warn(`[auth] GitHub 用户信息接口访问错误: ${err instanceof Error ? err.message : String(err)}`);
+    throw err;
+  }
+  if (!userRes.ok) {
+    // 非 2xx (如 401 token 失效 / 403 限流 / 5xx GitHub 故障)
+    const text = await userRes.text().catch(() => '(无法读取响应体)');
+    console.warn(`[auth] GitHub 用户信息接口 HTTP ${userRes.status}: ${text.slice(0, 200)}`);
+    throw new Error(`GitHub 用户信息获取失败 (HTTP ${userRes.status})`);
+  }
   const userData = (await userRes.json()) as { login?: string; id?: number; message?: string };
   if (!userData.login || !userData.id) {
     console.warn(`[auth] GitHub 用户信息获取失败: ${userData.message ?? '(无 message)'}`);

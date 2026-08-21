@@ -140,3 +140,11 @@
   3. 播放入口接入: 回放页 normalizeReplay (本地导入 + 竞技历史回放), 单人
      "我的成绩 → 统计" (重放前检查)。
   4. replay.test.ts 断言 buildFile 携带版本号、replayVersionMismatch 三种情况。
+
+- [x] Feature: 登录后端查询 GitHub 出错时输出日志说明
+  改动: auth.ts `fetchGithubLogin` 增强错误日志:
+  1. 令牌交换 (access_token): 网络错误 / 非 2xx (含 HTTP 状态码与响应体前 200 字符) /
+     响应缺 access_token 均 console.warn;
+  2. 用户信息接口 (api.github.com/user): 新增网络错误 try/catch 日志, 非 2xx
+     (401 token 失效 / 403 限流 / 5xx) 输出 HTTP 状态码与响应体;
+  3. 回调侧原有日志保留 (回调带 error / state 校验失败 / 登录失败兜底)。
