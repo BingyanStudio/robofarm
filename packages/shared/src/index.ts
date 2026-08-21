@@ -5,7 +5,7 @@ export type { Position, InternalOperation, TileInfo, CropInfo, DroneInfo, GameIn
 export { TileType, CropType, CropState } from './types';
 export { normalizeOp } from './ops';
 export type { NormalizeResult } from './ops';
-export { TILES, CROPS, BaseCrop, isCropType, cropConfig, cropInfo } from './registry';
+export { TILES, CROPS, BaseTile, BaseCrop, isCropType, cropConfig, cropInfo } from './registry';
 export type { TileTypeConfig, CropTypeConfig } from './registry';
 export { SINGLE_WIDTH, SINGLE_HEIGHT, COMBAT_WIDTH, COMBAT_HEIGHT, mirrorPosition, createSingleWorld, createCombatWorld, isOwnHalf, isOwnHalfAt, inBounds, tileAt, samePos, placeCrop, isWater } from './maps';
 export { toLocal, fromLocal, buildPlayerView, snapshotOf, findDroneAt } from './view';

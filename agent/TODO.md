@@ -68,3 +68,18 @@
   6. 注意: `CropData.plantCycles` (种植时记录的实际周期, 缺水触发用) 是**数据字段**,
      与配置函数无关, 保留不动。
   7. 行为零变化: 全部 100 个测试通过, shared/backend/frontend 构建通过。
+
+- [x] Refactor: 对 **地块 (Tile)** 做与作物同构的重构 —— 每种地块一个文件、继承基类,
+  通用字段带默认值, 特殊地块重写
+  改动:
+  1. 新增 `shared/src/tiles/` 目录: 抽象基类 `BaseTile` (implements TileTypeConfig)
+     + `soil.ts` / `water.ts` / `sand.ts` 三个地块 class。
+  2. **默认值下沉到基类**: `canCollectWater = false` (水池重写为 true)、
+     `growthFactor = 1` (沙地重写为 1.5); 其余字段 (type/name/sprite/
+     spriteWithCrop/color) 为抽象属性由各地块填写。
+  3. registry.ts 的 `TILES` 改为统一 `new Soil()/new Water()/new Sand()` 实例化
+     (新增地块 = 新建 tiles/ 文件 + registry 登记, 与作物一致)。
+  4. `TileTypeConfig` 接口保留 (仍由 `TILES` 导出给消费方), `BaseTile` 从 shared
+     导出; 所有消费方 (`renderer` / `sprites` / `docs` / ops 校验与提示语 /
+     `BaseCrop.growCycles`) 读的都是实例属性, 零改动。
+  5. 行为零变化: 全部 100 个测试通过, shared/backend/frontend 构建通过。

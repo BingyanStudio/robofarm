@@ -94,9 +94,11 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
 ## 核心设计: 扩展机制 (禁止 if 硬编码特例)
 
 - 地块/作物: `shared/src/registry.ts` 数据注册表 (`TILES` / `CROPS`)。
-  地块配置: name、canCollectWater、**growthFactor** (沙地 1.5, 作物基类
-  `BaseCrop.growCycles()` 默认按它计算实际周期并向下取整)、sprite/spriteWithCrop
-  (前端贴图名, 有作物时用 _field 变体)、color (程序化绘制兜底)。
+  地块配置: 每种地块一个 class (继承 `tiles/base.ts` 的 `BaseTile`), 字段:
+  name、canCollectWater (基类默认 false, 水池重写为 true)、
+  **growthFactor** (基类默认 1, 沙地重写 1.5, 作物基类 `BaseCrop.growCycles()`
+  默认按它计算实际周期并向下取整)、sprite/spriteWithCrop (前端贴图名,
+  有作物时用 _field 变体)、color (程序化绘制兜底)。
   作物配置: 每种作物一个 class (继承 `crops/base.ts` 的 `BaseCrop`), 字段:
   habitats(可种地块)、plantCost、value、`growCyclesBase` (基准周期, 前端贴图进度也用)、
   **`growCycles(tile, world)`** (实际周期: 基类默认按地块 growthFactor, 沙地 ×1.5;
@@ -136,7 +138,7 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
   水仙 (生长自动浇水 onGrow),
   完整属性见 agent/CROP.md, 数据在 `shared/src/crops/` (每种作物一个文件,
   基本属性 / 特殊效果 / 统计配色 `color` 都写在自己文件里), 由 registry.ts 汇总进 `CROPS`
-  (改文档或加作物只改这两处)。
+  (改文档或加地块/作物 = 新建 tiles/ 或 crops/ 文件 + registry.ts 登记, 只改这两处)。
 - **沙漠化 / 间作**: 收获作物时, 若其周围存在沙地则该格转化为沙地 (仅蚕食土地,
   不影响水池, ops/helpers.ts `maybeDesertify`); 若作物的四方向邻格有 ≥2 个不同种类作物,
   收获收益 +20% (向下取整, ops/helpers.ts `intercroppingValue`)。

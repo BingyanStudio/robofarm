@@ -1,6 +1,10 @@
-// 地块与作物的数据注册表。地块配置集中在此注册;
-// 作物配置按"每种作物一个文件"放在 crops/ 目录 (继承 BaseCrop, 见下), 这里只做汇总。
+// 地块与作物的数据注册表。地块配置按"每种地块一个文件"放在 tiles/ 目录
+// (继承 BaseTile, 见下); 作物配置按"每种作物一个文件"放在 crops/ 目录
+// (继承 BaseCrop, 见下), 这里只做汇总。
 import { CropState, CropType, GrowthEffectContext, MaturityEffectContext, Tile, TileType, WorldState } from './types';
+import { Soil } from './tiles/soil';
+import { Water } from './tiles/water';
+import { Sand } from './tiles/sand';
 import { Strawberry } from './crops/strawberry';
 import { Grape } from './crops/grape';
 import { Wheat } from './crops/wheat';
@@ -11,6 +15,7 @@ import { MilkVetch } from './crops/milk-vetch';
 import { Shiitake } from './crops/shiitake';
 import { Daffodil } from './crops/daffodil';
 
+export { BaseTile } from './tiles/base';
 export { BaseCrop } from './crops/base';
 
 export interface TileTypeConfig {
@@ -18,7 +23,7 @@ export interface TileTypeConfig {
   name: string;
   /** 无人机能否在该地块取水 */
   canCollectWater: boolean;
-  /** 种植在该地块上时生长周期倍率 (如沙地 1.5) */
+  /** 种植在该地块上时的生长周期倍率 (如沙地 1.5, 由 BaseCrop.growCycles() 消费) */
   growthFactor: number;
   /** 无作物时的地块贴图名 (public/sprites/<name>.svg) */
   sprite: string;
@@ -28,34 +33,15 @@ export interface TileTypeConfig {
   color: string;
 }
 
+/**
+ * 地块注册表。每种地块是 tiles/<type>.ts 里的一个类 (继承 BaseTile),
+ * 这里统一实例化; 通用默认值 (canCollectWater=false, growthFactor=1)
+ * 放在基类, 特殊地块重写 (水池取水 / 沙地 ×1.5)。
+ */
 export const TILES: Record<TileType, TileTypeConfig> = {
-  [TileType.Soil]: {
-    type: TileType.Soil,
-    name: '土地',
-    canCollectWater: false,
-    growthFactor: 1,
-    sprite: 'grass',
-    spriteWithCrop: 'field',
-    color: '#b08d57',
-  },
-  [TileType.Water]: {
-    type: TileType.Water,
-    name: '水池',
-    canCollectWater: true,
-    growthFactor: 1,
-    sprite: 'water',
-    spriteWithCrop: 'water',
-    color: '#6fb7dd',
-  },
-  [TileType.Sand]: {
-    type: TileType.Sand,
-    name: '沙地',
-    canCollectWater: false,
-    growthFactor: 1.5,
-    sprite: 'sand',
-    spriteWithCrop: 'sand_field',
-    color: '#d8c07c',
-  },
+  [TileType.Soil]: new Soil(),
+  [TileType.Water]: new Water(),
+  [TileType.Sand]: new Sand(),
 };
 
 export interface CropTypeConfig {
