@@ -1,7 +1,7 @@
 // 地块与作物的数据注册表。地块配置按"每种地块一个文件"放在 tiles/ 目录
 // (继承 BaseTile, 见下); 作物配置按"每种作物一个文件"放在 crops/ 目录
 // (继承 BaseCrop, 见下), 这里只做汇总。
-import { CropState, CropType, GrowthEffectContext, MaturityEffectContext, Tile, TileCropEventContext, TileType, WorldState } from './types';
+import { CropState, CropType, GrownEffectContext, GrowthEffectContext, MaturityEffectContext, Tile, TileCropEventContext, TileType, WorldState } from './types';
 import { Soil } from './tiles/soil';
 import { Water } from './tiles/water';
 import { Sand } from './tiles/sand';
@@ -95,6 +95,12 @@ export interface CropTypeConfig {
    * 多数作物不声明 (无特效)。
    */
   onMature?: (ctx: MaturityEffectContext) => void;
+  /**
+   * 成熟后每回合特效: 作物处于 Grown 状态时每个回合都会执行的函数
+   * (定义在作物自己的文件里, 引擎直接调用)。如香菇的扩散。
+   * 多数作物不声明 (无特效)。
+   */
+  onGrown?: (ctx: GrownEffectContext) => void;
   /**
    * 生长特效: 作物生长中的每个回合都会执行的函数 (定义在作物自己的文件里, 引擎直接调用)。
    * 多数作物不声明 (无特效)。

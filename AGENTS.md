@@ -150,8 +150,10 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
 - **成熟特效 (onMature)**: 每种作物成熟时都会执行其挂接的特效 (多数作物不声明)。
   特效是作物配置上的**函数** (`crops/<type>.ts` 的 `onMature` 字段), 引擎直接调用,
   无需按 id 查表 (原 engine.ts 的 `MATURITY_EFFECTS` 字典已移除)。
-  香菇: 成熟时设置 `spreadLeft=4`, 之后每回合在 Grown 分支按上右下左扩散 1 株
-  (CropData.spreadLeft 字段, 到 0 停止)。
+- **成熟后每回合特效 (onGrown)**: 作物处于 Grown 状态时每个回合都会执行
+  (多数作物不声明)。香菇的扩散整体在 crops/shiitake.ts 实现: `onMature` 设置
+  `spreadLeft=4`, `onGrown` 每回合按上右下左扩散 1 株 (私有 spawnShiitake 在邻格
+  种下新香菇, CropData.spreadLeft 字段到 0 停止)。
 - **生长特效 (onGrow)**: 与 onMature 同构, 每个生长回合执行 (如 Daffodil 的自动浇水,
   每 3 周期按 上→右→下→左 给邻格缺水作物浇水, 一次/回合, 成熟失效), 处理器同样
   定义在各作物自己的文件里 (原 engine.ts 的 `GROWTH_EFFECTS` 字典已移除)。

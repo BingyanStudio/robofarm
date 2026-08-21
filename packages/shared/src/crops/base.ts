@@ -3,7 +3,7 @@
 // 沙地 1.5 → 周期 ×1.5 向下取整), 需要特殊周期计算的作物重写 growCycles()
 // (如香菇: 20 + 2 × 场上香菇总数)。
 import { CropType, Tile, TileType, WorldState } from '../types';
-import type { GrowthEffectContext, MaturityEffectContext } from '../types';
+import type { GrownEffectContext, GrowthEffectContext, MaturityEffectContext } from '../types';
 import type { CropTypeConfig } from '../registry';
 import { TILES } from '../registry';
 
@@ -22,6 +22,8 @@ export abstract class BaseCrop implements CropTypeConfig {
 
   /** 成熟特效: 作物成熟时执行 (多数作物不声明) */
   onMature?(ctx: MaturityEffectContext): void;
+  /** 成熟后每回合特效: 作物处于 Grown 状态时每个回合执行 (多数作物不声明, 如香菇扩散) */
+  onGrown?(ctx: GrownEffectContext): void;
   /** 生长特效: 生长中每个回合执行 (多数作物不声明) */
   onGrow?(ctx: GrowthEffectContext): void;
 

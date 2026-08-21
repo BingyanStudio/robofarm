@@ -206,6 +206,14 @@ export interface GrowthEffectContext {
   events: GameEvent[];
 }
 
+/** 作物成熟后每回合特效 (onGrown) 的执行上下文 */
+export interface GrownEffectContext {
+  world: WorldState;
+  pos: Position;
+  crop: CropData;
+  events: GameEvent[];
+}
+
 /** 地块作物事件 (onCropPlanted / onCropWatered / onCropHarvested) 的执行上下文 */
 export interface TileCropEventContext {
   world: WorldState;

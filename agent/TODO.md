@@ -20,3 +20,17 @@
      共用, 避免 tiles 依赖 ops 目录), 并从 shared 导出。
   5. 行为零变化: 沙漠化测试原样通过 (收获/行收割两条路径), 全部 100 个测试通过,
      shared/backend/frontend 构建通过。
+
+- [x] Refactor: 将香菇扩散 (成熟后每回合扩散) 的逻辑整体移入 crops/shiitake.ts,
+  作物基类增加成熟后每回合回调
+  改动:
+  1. `types.ts` 新增 `GrownEffectContext`; `CropTypeConfig` 与 `BaseCrop` 新增可选回调
+     **`onGrown`** (作物处于 Grown 状态时每回合执行, 与 onGrow/onMature 同构)。
+  2. engine.ts 的 Grown 分支改为通用分发 `cfg.onGrown?.(...)`, 删除 `spawnShiitake`
+     函数与相关特判 (CropType/TileType/TILES 导入随之移除)。
+  3. 香菇全部机制内聚到 crops/shiitake.ts: `onMature` 设 `spreadLeft=4`,
+     `onGrown` 每回合按上右下左扩散 1 株 (spreadLeft 到 0 停止), 私有方法
+     `spawnShiitake` 负责在邻格种下新香菇 (走本类重写的 growCycles 动态周期,
+     并触发地块的 onCropPlanted 回调)。
+  4. 行为零变化: 香菇扩散测试原样通过 (4 回合方向顺序 / 越界放弃 / 已有作物放弃 /
+     场上数量动态周期), 全部 100 个测试通过, shared/backend/frontend 构建通过。

@@ -12,14 +12,12 @@
 import {
   CropData,
   CropState,
-  CropType,
   GameEvent,
   InternalOperation,
   Position,
-  TileType,
   WorldState,
 } from './types';
-import { TILES, cropConfig } from './registry';
+import { cropConfig } from './registry';
 import { inBounds, isOwnHalf, samePos } from './maps';
 import { opClassOf } from './ops';
 import type { MoveCandidate, TurnSession } from './ops';
@@ -236,37 +234,12 @@ function tickCrop(world: WorldState, crop: CropData, pos: Position, events: Game
   } else if (crop.state === CropState.Thirsty) {
     // 缺水: 长期保持 Thirsty, 不枯萎; 生长不推进, 等待浇水后恢复
     events.push({ type: 'crop-grow', pos, state: CropState.Thirsty, cyclesToGrown: 0 });
-  } else if (crop.state === CropState.Grown && crop.spreadLeft && crop.spreadLeft > 0) {
-    // 香菇: 成熟后每回合按 上→右→下→左 顺序扩散 1 个小香菇 (成熟当回合后共 4 回合)
-    spawnShiitake(world, pos, 4 - crop.spreadLeft, events);
-    crop.spreadLeft -= 1;
+  } else if (crop.state === CropState.Grown) {
+    // 成熟后每回合特效: 每个作物成熟后每个回合都会执行其挂接的特效
+    // (多数作物不声明, 无操作)。特效函数直接定义在作物自己的文件里
+    // (crops/<type>.ts 的 onGrown), 引擎直接调用。
+    // 如香菇: 按上右下左顺序扩散 1 株小香菇 (CropData.spreadLeft, 到 0 停止)。
+    cfg.onGrown?.({ world, pos, crop, events });
   }
 }
 
-/**
- * 香菇扩散: 按方向序号 (0=上, 1=右, 2=下, 3=左) 在邻格种下一株新的香菇
- * (地块需为空且为土地; 越界或不可种植则放弃该方向)。
- */
-function spawnShiitake(world: WorldState, pos: Position, dirIndex: number, events: GameEvent[]): void {
-  const dirs = [[0, -1], [1, 0], [0, 1], [-1, 0]] as const;
-  const [dx, dy] = dirs[dirIndex] ?? [0, 0];
-  const nx = pos[0] + dx;
-  const ny = pos[1] + dy;
-  if (nx < 0 || nx >= world.map[0].length || ny < 0 || ny >= world.map.length) return;
-  const tile = world.map[ny][nx];
-  if (tile.crop || tile.type !== TileType.Soil) return;
-  // 扩散出的香菇同样按场上香菇总数动态计算生长周期 (growCycles 重写)
-  const cfg = cropConfig(CropType.Shiitake);
-  const cycles = cfg.growCycles(tile, world);
-  tile.crop = {
-    type: CropType.Shiitake,
-    state: CropState.Growing,
-    growthRemaining: cycles,
-    thirstTotal: cfg.thirstInterval === null ? 0 : Math.floor(cycles / cfg.thirstInterval),
-    thirstsDone: 0,
-    plantCycles: cycles,
-  };
-  // 扩散种下同样触发地块的"作物种下"回调
-  TILES[tile.type].onCropPlanted?.({ world, pos: [nx, ny], crop: tile.crop, events });
-  events.push({ type: 'plant', drone: -1, pos: [nx, ny], crop: CropType.Shiitake });
-}
