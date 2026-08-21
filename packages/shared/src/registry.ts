@@ -23,7 +23,7 @@ export interface TileTypeConfig {
   name: string;
   /** 无人机能否在该地块取水 */
   canCollectWater: boolean;
-  /** 种植在该地块上时的生长周期倍率 (如沙地 1.5, 由 BaseCrop.growCycles() 消费) */
+  /** 种植在该地块上时的生长周期倍率 (如沙地 ×3, 由 BaseCrop.growCycles() 消费) */
   growthFactor: number;
   /** 无作物时的地块贴图名 (public/sprites/<name>.svg) */
   sprite: string;
@@ -51,7 +51,7 @@ export interface TileTypeConfig {
 /**
  * 地块注册表。每种地块是 tiles/<type>.ts 里的一个类 (继承 BaseTile),
  * 这里统一实例化; 通用默认值 (canCollectWater=false, growthFactor=1)
- * 放在基类, 特殊地块重写 (水池取水 / 沙地 ×1.5)。
+ * 放在基类, 特殊地块重写 (水池取水 / 沙地 ×3)。
  */
 export const TILES: Record<TileType, TileTypeConfig> = {
   [TileType.Soil]: new Soil(),
@@ -74,13 +74,13 @@ export interface CropTypeConfig {
   growCyclesBase: number;
   /**
    * 实际生长周期: 返回种植在指定地块上的实际生长回合数。
-   * 默认实现 (BaseCrop) 按地块 growthFactor 计算 (沙地 1.5 → ×1.5 向下取整),
+   * 默认实现 (BaseCrop) 按地块 growthFactor 计算 (沙地 ×3 向下取整),
    * 需要特殊周期计算的作物重写 (如香菇: 20 + 2 × 场上香菇总数)。
    */
   growCycles(tile: Tile, world: WorldState): number;
   /**
    * 缺水的触发间隔 (回合数): 作物总缺水次数 = floor(实际生长周期 / thirstInterval),
-   * 实际周期在种植时按 growCycles() 动态计算 (如沙地 ×1.5);
+   * 实际周期在种植时按 growCycles() 动态计算 (如沙地 ×3);
    * 缺水均匀分布在生长过程中 (每约 thirstInterval 回合一次)。
    * null 表示无需浇水。
    */

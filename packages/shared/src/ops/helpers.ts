@@ -47,7 +47,7 @@ export function tryPlantAt(
   const player = world.players[drone.player];
   if (player.money < cfg.plantCost) return false;
   player.money -= cfg.plantCost;
-  // 实际周期 = 作物 growCycles(tile, world) (基类默认沙地 ×1.5 向下取整);
+  // 实际周期 = 作物 growCycles(tile, world) (基类默认按地块倍率 (沙地 ×3) 向下取整);
   // 总缺水次数按该次种植的实际周期动态计算 (不依赖固定的剩余取模)
   const adjusted = cfg.growCycles(tile, world);
   tile.crop = {

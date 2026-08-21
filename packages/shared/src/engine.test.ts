@@ -610,13 +610,13 @@ describe('engine: 能量机制', () => {
 });
 
 describe('engine: 沙地', () => {
-  it('草莓可种在沙地, 生长周期 ×1.5 向下取整 (5 → 7)', () => {
+  it('草莓可种在沙地, 生长周期 ×3 向下取整 (5 → 15)', () => {
     const w = single();
     w.drones[0].position = [0, 0]; // 沙地
     const events = stepTurn(w, actions([0, { type: 'plant', crop: CropType.Strawberry }]));
     expect(eventsOfType(events, 'plant')).toHaveLength(1);
-    expect(w.map[0][0].crop!.growthRemaining).toBe(6); // 种植回合即算第 1 个生长周期: floor(5*1.5)=7, 已扣 1
-    for (let i = 0; i < 5; i++) stepTurn(w, actions([0, null]));
+    expect(w.map[0][0].crop!.growthRemaining).toBe(14); // 种植回合即算第 1 个生长周期: floor(5*3)=15, 已扣 1
+    for (let i = 0; i < 13; i++) stepTurn(w, actions([0, null]));
     expect(w.map[0][0].crop!.state).toBe(CropState.Growing);
     stepTurn(w, actions([0, null]));
     expect(w.map[0][0].crop!.state).toBe(CropState.Grown);
@@ -636,17 +636,17 @@ describe('engine: 沙地', () => {
 });
 
 describe('engine: 缺水次数动态计算', () => {
-  it('沙地南瓜: 按种植时实际周期动态计算缺水次数 (150 周期 → 8 次)', () => {
+  it('沙地南瓜: 按种植时实际周期动态计算缺水次数 (300 周期 → 16 次)', () => {
     const w = single();
     w.players[0].money = 100;
     w.drones[0].position = [0, 0]; // 沙地
     stepTurn(w, actions([0, { type: 'plant', crop: CropType.Pumpkin }]));
     const crop = w.map[0][0].crop!;
-    expect(crop.growthRemaining).toBe(149); // floor(100*1.5)=150, 种植回合已扣 1
-    expect(crop.thirstTotal).toBe(8); // floor(150 / 18)
+    expect(crop.growthRemaining).toBe(299); // floor(100*3)=300, 种植回合已扣 1
+    expect(crop.thirstTotal).toBe(16); // floor(300 / 18)
     let thirstyCount = 0;
     let guard = 0;
-    while (crop.state !== CropState.Grown && guard++ < 300) {
+    while (crop.state !== CropState.Grown && guard++ < 400) {
       if (crop.state === CropState.Thirsty) {
         thirstyCount++;
         w.drones[0].water = 1;
@@ -655,7 +655,7 @@ describe('engine: 缺水次数动态计算', () => {
         stepTurn(w, actions([0, null]));
       }
     }
-    expect(thirstyCount).toBe(8);
+    expect(thirstyCount).toBe(16);
     expect(crop.state).toBe(CropState.Grown);
   });
 
@@ -682,17 +682,17 @@ describe('engine: 缺水次数动态计算', () => {
 });
 
 describe('engine: 新作物 (西瓜/紫云英/香菇)', () => {
-  it('西瓜: 沙地生长受 1.5 倍减速影响, 缺水 10 次', () => {
+  it('西瓜: 沙地生长受 3 倍减速影响, 缺水 20 次', () => {
     const w = single();
     w.players[0].money = 2000;
     w.drones[0].position = [0, 0]; // 沙地
     stepTurn(w, actions([0, { type: 'plant', crop: CropType.Melon }]));
     const crop = w.map[0][0].crop!;
-    expect(crop.growthRemaining).toBe(149); // floor(100*1.5)=150 - 1 (沙地不再免疫)
-    expect(crop.thirstTotal).toBe(10);
+    expect(crop.growthRemaining).toBe(299); // floor(100*3)=300 - 1
+    expect(crop.thirstTotal).toBe(20);
     let thirstyCount = 0;
     let guard = 0;
-    while (crop.state !== CropState.Grown && guard++ < 250) {
+    while (crop.state !== CropState.Grown && guard++ < 400) {
       if (crop.state === CropState.Thirsty) {
         thirstyCount++;
         w.drones[0].water = 1;
@@ -701,7 +701,7 @@ describe('engine: 新作物 (西瓜/紫云英/香菇)', () => {
         stepTurn(w, actions([0, null]));
       }
     }
-    expect(thirstyCount).toBe(10);
+    expect(thirstyCount).toBe(20);
     expect(crop.state).toBe(CropState.Grown);
   });
 

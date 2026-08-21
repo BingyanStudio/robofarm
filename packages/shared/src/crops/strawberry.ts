@@ -1,5 +1,5 @@
 // 草莓: 零成本的基础作物。
-// 每种作物一个文件, 继承 BaseCrop; 生长周期用基类默认实现 (沙地 ×1.5)。
+// 每种作物一个文件, 继承 BaseCrop; 生长周期用基类默认实现 (沙地 ×3)。
 import { CropType, TileType } from '../types';
 import { BaseCrop } from './base';
 

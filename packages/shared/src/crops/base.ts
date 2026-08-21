@@ -1,6 +1,6 @@
 // 作物基类: 每种作物一个文件, 继承 BaseCrop 并填写自己的属性。
 // 实际生长周期默认由基类的 growCycles() 计算 (按种植地块的 growthFactor,
-// 沙地 1.5 → 周期 ×1.5 向下取整), 需要特殊周期计算的作物重写 growCycles()
+// 沙地 ×3 向下取整), 需要特殊周期计算的作物重写 growCycles()
 // (如香菇: 20 + 2 × 场上香菇总数)。
 import { CropType, Tile, TileType, WorldState } from '../types';
 import type { GrownEffectContext, GrowthEffectContext, MaturityEffectContext } from '../types';
@@ -29,7 +29,7 @@ export abstract class BaseCrop implements CropTypeConfig {
 
   /**
    * 实际生长周期: 返回种植在该地块上的实际回合数。
-   * 默认按种植地块的 growthFactor 计算 (沙地 1.5 → ×1.5 向下取整)。
+   * 默认按种植地块的 growthFactor 计算 (沙地 ×3 向下取整)。
    * 需要特殊周期计算的作物重写此函数 (如香菇按场上数量)。
    */
   growCycles(tile: Tile, _world: WorldState): number {

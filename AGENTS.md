@@ -96,7 +96,7 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
 - 地块/作物: `shared/src/registry.ts` 数据注册表 (`TILES` / `CROPS`)。
   地块配置: 每种地块一个 class (继承 `tiles/base.ts` 的 `BaseTile`), 字段:
   name、canCollectWater (基类默认 false, 水池重写为 true)、
-  **growthFactor** (基类默认 1, 沙地重写 1.5, 作物基类 `BaseCrop.growCycles()`
+  **growthFactor** (基类默认 1, 沙地重写 3, 作物基类 `BaseCrop.growCycles()`
   默认按它计算实际周期并向下取整)、sprite/spriteWithCrop (前端贴图名,
   有作物时用 _field 变体)、color (程序化绘制兜底)、
   作物生命周期回调 (可选, 引擎在对应时机直接调用, 不 if 硬编码):
@@ -105,14 +105,14 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
   如土地的沙漠化)。
   作物配置: 每种作物一个 class (继承 `crops/base.ts` 的 `BaseCrop`), 字段:
   habitats(可种地块)、plantCost、value、`growCyclesBase` (基准周期, 前端贴图进度也用)、
-  **`growCycles(tile, world)`** (实际周期: 基类默认按地块 growthFactor, 沙地 ×1.5;
+  **`growCycles(tile, world)`** (实际周期: 基类默认按地块 growthFactor, 沙地 ×3;
   特殊作物重写, 如香菇 = growCyclesBase + 2×场上香菇数)、
   `thirstInterval` (**null = 无需浇水**, 如草莓)。
   **缺水机制**: 作物进入 Thirsty 后长期保持该状态、生长不推进,
   **不枯萎** (GAME.md 已取消枯萎设定), 浇水后从剩余进度继续生长。
   缺水次数在种植时按实际生长周期动态计算 (CropData.thirstTotal =
   floor(实际周期 / thirstInterval)), 触发点 = ceil((剩余次数)·thirstInterval),
-  **不依赖固定的剩余取模**, 因此沙地 (周期 ×1.5) 等调整过周期的作物缺水次数同步增加。
+  **不依赖固定的剩余取模**, 因此沙地 (周期 ×3) 等调整过周期的作物缺水次数同步增加。
   当前地块: 土地 / 水池 / 沙地 (可种草莓/葡萄/南瓜)。
 - 无人机操作: 玩家侧为**操作类** API (`Move` / `Teleport` / `Plant` / `CollectWater` /
   `Water` / `Harvest` / `Clear` / `Intercept` / `Charge` / `HarvestRow` / `HarvestCol` /
@@ -158,7 +158,7 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
   每 3 周期按 上→右→下→左 给邻格缺水作物浇水, 一次/回合, 成熟失效), 处理器同样
   定义在各作物自己的文件里 (原 engine.ts 的 `GROWTH_EFFECTS` 字典已移除)。
 - **动态生长周期**: 作物在 `growCycles(tile, world)` 里重写即可自定义实际周期
-  (基类默认按地块 growthFactor, 沙地 ×1.5; 覆盖则忽略地块倍率), 如香菇的
+  (基类默认按地块 growthFactor, 沙地 ×3; 覆盖则忽略地块倍率), 如香菇的
   growCyclesBase + 2×场上香菇数 (engine/helpers 的 `tryPlantAt` 与香菇扩散都走它)。
 - **ChangeTile**: 消耗 CHANGE_TILE_COST=6, 需上下左右有同类型地块 (orthNeighbors 检查),
   有作物的地块不可转换; 按操作类方式注册 (ops/change-tile.ts + ops/index.ts)。
