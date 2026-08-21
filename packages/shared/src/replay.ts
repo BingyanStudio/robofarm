@@ -29,6 +29,11 @@ export interface ReplayFile {
   mode: GameMode;
   maxTurns: number;
   players: string[];
+  /**
+   * 本局随机种子: 游戏开始时随机取得, 回放时用同一种子重推演,
+   * 保证缺水时机等随机机制与游玩时完全一致。旧回放文件可能缺失。
+   */
+  seed?: number;
   result: { type: 'finished' | 'error'; money?: number[]; message?: string } | null;
   rounds: ReplayRound[];
 }
@@ -64,6 +69,8 @@ export function wrapProgramForReplay(
 export class ReplayRecorder {
   private readonly rounds: ReplayRound[] = [];
   private pending: ReplayDroneOp[] = [];
+  /** 本局随机种子 (来自 controller.world.rngSeed, 随回放文件保存) */
+  seed: number = 0;
 
   /** 包装玩家程序 (每个玩家各包装一次) */
   wrap(program: PlayerProgram): PlayerProgram {
@@ -88,13 +95,14 @@ export class ReplayRecorder {
       mode: meta.mode,
       maxTurns: meta.maxTurns,
       players: meta.players,
+      seed: this.seed,
       result: meta.result,
       rounds: this.rounds,
     };
   }
 }
 
-/** 从回放文件重新推演 (脚本化操作, 确定性), 返回完整事件流 (含 snapshot / end) */
+/** 从回放文件重新推演 (脚本化操作, 用回放文件里的随机种子, 确定性), 返回完整事件流 (含 snapshot / end) */
 export async function replayEvents(file: ReplayFile): Promise<GameEvent[]> {
   const players = file.players.map((name, pi) => ({
     name,
@@ -106,6 +114,8 @@ export async function replayEvents(file: ReplayFile): Promise<GameEvent[]> {
     mode: file.mode,
     players,
     maxTurns: file.maxTurns,
+    // 旧回放文件可能没有 seed, 退化为随机 (新文件一定携带)
+    seed: file.seed,
   });
   const all: GameEvent[] = [];
   while (!controller.over) {

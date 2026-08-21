@@ -683,11 +683,18 @@ describe('engine: 缺水次数动态计算', () => {
       if (w.map[3][3].crop!.state === CropState.Grown) break;
     }
     expect(thirstyAt).toEqual(points);
-    // 确定性: 相同输入重跑一遍, 缺水时机完全一致 (回放一致性)
+    // 确定性: 相同随机种子重跑一遍, 缺水时机完全一致 (回放用文件里的种子重推演)
     const w2 = single();
+    w2.rngSeed = w.rngSeed;
     w2.players[0].money = 100;
     stepTurn(w2, actions([0, { type: 'plant', crop: CropType.Wheat }]));
     expect(w2.map[3][3].crop!.thirstAt).toEqual(points);
+    // 不同种子 → 时机不同 (种子对玩家不可预测, 防止硬编码浇水时机)
+    const w3 = single();
+    w3.rngSeed = w.rngSeed ^ 0x1234;
+    w3.players[0].money = 100;
+    stepTurn(w3, actions([0, { type: 'plant', crop: CropType.Wheat }]));
+    expect(w3.map[3][3].crop!.thirstAt).not.toEqual(points);
   });
 });
 

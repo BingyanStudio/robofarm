@@ -1,6 +1,7 @@
 // 确定性伪随机工具: 用于种植时随机选取作物缺水时机。
-// 种子由稳定输入 (玩家/位置/作物/回合) 派生, 因此回放重推演时会产生与游玩
-// 完全相同的缺水时机, 无需把时机写入回放文件即可保证过程与结果一致。
+// 基础随机性来自**游戏开始时随机取得的种子** (WorldState.rngSeed, 对玩家不可预测,
+// 避免把随机机制硬编码进代码), 再叠加 (玩家/位置/作物/回合) 使同一局内各次种植
+// 互不相同; 该种子计入回放文件, 回放时用同一种子重推演, 保证过程与结果一致。
 import { CropType, Position, WorldState } from './types';
 
 /** mulberry32: 轻量确定性 PRNG, 相同种子产生相同序列 */
@@ -15,9 +16,9 @@ export function mulberry32(seed: number): () => number {
   };
 }
 
-/** 种植用随机种子: 由 (玩家, 位置, 作物, 当前回合) 稳定派生 (FNV-1a 哈希) */
+/** 种植用随机种子: 由 (本局随机种子, 玩家, 位置, 作物, 回合) 稳定派生 (FNV-1a 哈希) */
 export function plantingSeed(world: WorldState, pos: Position, crop: CropType, player: number): number {
-  const s = `${player}|${pos[0]}|${pos[1]}|${crop}|${world.turn}`;
+  const s = `${world.rngSeed}|${player}|${pos[0]}|${pos[1]}|${crop}|${world.turn}`;
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) {
     h ^= s.charCodeAt(i);

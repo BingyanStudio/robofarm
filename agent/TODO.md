@@ -40,9 +40,12 @@
     4. 游戏 Tooltip 删除 "作物还有多少周期缺水" 的显示
        → 当前 Tooltip 本就未显示该信息 (仅有 需定期浇水 提示), 无需改动; 后续不得新增。
     5. 游戏回放需要保存每个作物的缺水时机, 以保证回放与游玩的过程和结果相同
-       → 采用**确定性种子**方案: 种子由 (玩家, 位置, 作物, 回合) 派生, 回放重推演
-       时生成与游玩完全相同的触发点, 无需把时机写入回放文件; engine.test.ts 增加
-       小麦缺水时机与实际触发、重跑一致性断言。
+       → **游戏开始时随机取得种子** (WorldState.rngSeed, 对玩家不可预测, 避免把
+       随机机制硬编码进玩家代码), 种植时由该种子叠加 (玩家, 位置, 作物, 回合)
+       派生各次种植的缺水时机; 种子计入回放文件 (ReplayFile.seed, 由
+       ReplayRecorder.seed 从 controller.world.rngSeed 采集, 单人前后端与竞技
+       共 3 处录制点), 回放 (replayEvents) 用同一种子重推演, 结果与游玩一致。
+       engine.test.ts 增加: 同种子重跑时机一致 / 不同种子时机不同 断言。
     6. CropData 移除 thirstTotal / plantCycles (旧均匀公式用), 新增 thirstAt;
        engine tickCrop 改为 growthRemaining === thirstAt[thirstsDone] 触发。
 

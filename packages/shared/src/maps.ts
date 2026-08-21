@@ -89,7 +89,15 @@ function applyLandscape(map: Tile[][]): void {
   }
 }
 
-export function createSingleWorld(maxTurns: number): WorldState {
+/**
+ * 本局随机种子: 未显式传入时随机取得。种子对玩家不可预测 (避免把随机机制
+ * 硬编码进代码), 且计入回放文件, 回放时用同一种子重推演。
+ */
+function drawSeed(seed?: number): number {
+  return seed ?? Math.floor(Math.random() * 0xffffffff) >>> 0;
+}
+
+export function createSingleWorld(maxTurns: number, rngSeed?: number): WorldState {
   const map = buildMap(SINGLE_WIDTH, SINGLE_HEIGHT);
   applyLandscape(map);
   const spawn = SINGLE_SPAWNS[0];
@@ -104,10 +112,10 @@ export function createSingleWorld(maxTurns: number): WorldState {
     interceptZone: null,
   };
   const players: PlayerState[] = [{ id: 0, money: START_MONEY, alive: true }];
-  return { mode: 'single', map, drones: [drone], players, turn: 0, maxTurns };
+  return { mode: 'single', map, drones: [drone], players, turn: 0, maxTurns, rngSeed: drawSeed(rngSeed) };
 }
 
-export function createCombatWorld(maxTurns: number): WorldState {
+export function createCombatWorld(maxTurns: number, rngSeed?: number): WorldState {
   const map = buildMap(COMBAT_WIDTH, COMBAT_HEIGHT);
   // 左半与单人地图相同 (含沙地)
   applyLandscape(map);
@@ -137,7 +145,7 @@ export function createCombatWorld(maxTurns: number): WorldState {
     { id: 0, money: START_MONEY, alive: true },
     { id: 1, money: START_MONEY, alive: true },
   ];
-  return { mode: 'combat', map, drones, players, turn: 0, maxTurns };
+  return { mode: 'combat', map, drones, players, turn: 0, maxTurns, rngSeed: drawSeed(rngSeed) };
 }
 
 /**

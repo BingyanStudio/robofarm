@@ -80,6 +80,7 @@ async function runValidation(userId: number, code: string): Promise<void> {
       players: [{ name: '玩家', frame: 'normal', program: recorder.wrap(program) }],
       maxTurns: DEFAULT_MAX_TURNS,
     });
+    recorder.seed = controller.world.rngSeed;
     console.log(`[${stamp()}] [single] user=${userId} 开始验证 (${DEFAULT_MAX_TURNS} 回合)`);
     let endResult: { type: string; message?: string; money?: number[] } | null = null;
     while (!controller.over) {

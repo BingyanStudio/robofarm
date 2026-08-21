@@ -66,6 +66,7 @@ export function singleScreen(root: HTMLElement): void {
         players: [{ name: '玩家', frame: 'normal', program: recorder.wrap(program) }],
         maxTurns: DEFAULT_MAX_TURNS,
       });
+      recorder.seed = controller.world.rngSeed;
       return { controller, programs: [program] };
     },
     setEditorLocked: (locked) => {
