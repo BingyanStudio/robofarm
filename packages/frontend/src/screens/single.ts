@@ -152,14 +152,21 @@ export function singleScreen(root: HTMLElement): void {
   }
 
   /** Poll /single/validate until busy=false, returning the validation result (up to 120 seconds) */
-  async function pollValidationOnce(): Promise<{ score: number | null; error: string | null; timeout: boolean }> {
+  async function pollValidationOnce(): Promise<{ score: number | null; error: string | null; runs: number[]; timeout: boolean }> {
     for (let i = 0; i < 120; i++) {
       await sleep(1000);
       const { data } = await api.get('/single/validate');
       if (!data) continue;
-      if (!data.busy) return { score: data.score ?? null, error: data.error ?? null, timeout: false };
+      if (!data.busy) {
+        return {
+          score: data.score ?? null,
+          error: data.error ?? null,
+          runs: Array.isArray(data.runs) ? (data.runs as number[]) : [],
+          timeout: false,
+        };
+      }
     }
-    return { score: null, error: null, timeout: true };
+    return { score: null, error: null, runs: [], timeout: true };
   }
 
   /** Poll and show the result via toast (used when there is no modal context) */
@@ -167,6 +174,7 @@ export function singleScreen(root: HTMLElement): void {
     const r = await pollValidationOnce();
     if (r.timeout) toast('验证超时, 请稍后查询');
     else if (r.error) toast(`验证失败: ${r.error}`);
+    else if (r.runs.length > 1) toast(`验证完成, 得分: ${r.score} (各局: ${r.runs.join(', ')})`);
     else toast(`验证完成, 得分: ${r.score}`);
   }
 
@@ -382,17 +390,21 @@ export function singleScreen(root: HTMLElement): void {
         toast('请先登录');
         return;
       }
-      const rows = (data?.entries ?? []) as { id: number; score: number | null; error: string | null; replay: string | null; created_at: number }[];
+      const rows = (data?.entries ?? []) as { id: number; score: number | null; error: string | null; runs: number[] | null; has_replay: boolean; created_at: number }[];
       const list = el('div', { class: 'list' });
       if (rows.length === 0) list.append(el('p', { class: 'hint', text: '暂无成绩记录' }));
       rows.forEach((r) => {
+        const runsText = r.runs && r.runs.length > 1 ? r.runs.join('/') : null;
         const row = el('div', { class: 'list-row' }, [
           el('span', {}, r.error
             ? [icon('x', 14), document.createTextNode(` ${r.error}`)]
-            : [document.createTextNode(`得分 ${r.score}`)]),
+            : [
+                document.createTextNode(`得分 ${r.score}`),
+                ...(runsText ? [el('span', { class: 'muted', text: ` ${runsText}` })] : []),
+              ]),
           el('span', { class: 'muted', text: new Date(r.created_at).toLocaleString() }),
         ]);
-        if (r.replay) {
+        if (r.has_replay) {
           const actions = el('div', { class: 'row-actions' }, [
             button('统计', () => {
               void (async () => {
@@ -407,6 +419,30 @@ export function singleScreen(root: HTMLElement): void {
             }, { class: 'btn btn-small' }),
             button('下载回放', () => {
               void (async () => {
+                const runs = r.runs ?? [];
+                // 多局验证: 弹窗让玩家选择下载哪一局的回放
+                if (runs.length > 1) {
+                  const body = el('div', {}, [
+                    el('p', { text: '该次提交在固定的 5 个随机种子下各验证一局, 请选择要下载哪一局的回放:' }),
+                    el('div', { class: 'list' }, runs.map((s, i) =>
+                      el('div', { class: 'list-row' }, [
+                        el('span', { text: `第 ${i + 1} 局 (得分 ${s})` }),
+                        el('span', { class: 'row-actions' }, [
+                          button('下载', () => {
+                            void (async () => {
+                              m.close();
+                              const res = await api.get(`/single/replay/${r.id}?run=${i}`);
+                              if (res.status === 200) downloadJson(res.data, `robofarm-replay-single-${r.id}-run${i + 1}.json`);
+                              else toast(res.data?.error ?? '回放下载失败');
+                            })();
+                          }, { class: 'btn btn-small' }),
+                        ]),
+                      ])
+                    )),
+                  ]);
+                  const m = modal('下载回放', body);
+                  return;
+                }
                 const res = await api.get(`/single/replay/${r.id}`);
                 if (res.status === 200) downloadJson(res.data, `robofarm-replay-single-${r.id}.json`);
                 else toast(res.data?.error ?? '回放下载失败');
@@ -472,6 +508,7 @@ export function singleScreen(root: HTMLElement): void {
       const body = el('div', {}, [
         el('p', { text: '确认将代码提交到服务器验证?' }),
         el('p', { class: 'hint', text: '服务器将运行你的代码并记录成绩, 代码在提交后仍可继续修改。' }),
+        el('p', { class: 'hint', text: '注意: 作物缺水具有随机性, 服务器验证结果可能与本地不同。服务器端使用固定的 5 个随机种子验证, 取平均分作为成绩。' }),
         el('div', { class: 'row' }, [
           button('确认提交', () => {
             m.close();

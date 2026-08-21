@@ -94,7 +94,8 @@ export function createApp(): express.Express {
 
   // ---- 单人种植 ----
   app.get('/single/replay/:id', requireUser, (req: Request, res: Response) => {
-    send(res, api.apiSingleReplay(userOf(req).id, Number(req.params.id)));
+    const run = req.query.run === undefined ? undefined : Number(req.query.run);
+    send(res, api.apiSingleReplay(userOf(req).id, Number(req.params.id), run));
   });
 
   app.get('/single/history', requireUser, (req: Request, res: Response) => {

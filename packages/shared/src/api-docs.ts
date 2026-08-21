@@ -92,7 +92,7 @@ export const API_DOC_GROUPS: ApiDocGroup[] = [
         path: '/single/validate',
         auth: true,
         title: '提交代码验证',
-        description: '提交玩家代码, 启动服务器端验证执行 (同一用户同时只能运行一个; 全局并发受限时返回 409 繁忙; 可通过 env SINGLE_SUBMIT_LIMIT_PER_MIN 开启每用户每分钟提交限流, 超限返回 429)。',
+        description: '提交玩家代码, 启动服务器端验证执行: 对固定 5 个随机种子各完整执行一局 (最多 500 回合), 平均分 (向上取整) 为最终成绩, 5 份回放均入库 (下载时用 ?run=N 选择)。同一用户同时只能运行一个; 全局并发受限时返回 409 繁忙; 可通过 env SINGLE_SUBMIT_LIMIT_PER_MIN 开启每用户每分钟提交限流, 超限返回 429。',
         headers: ['Content-Type: application/json'],
         request: '{ "code": "function run(droneId) { ... }" }',
         responses: [
@@ -107,17 +107,17 @@ export const API_DOC_GROUPS: ApiDocGroup[] = [
         path: '/single/validate',
         auth: true,
         title: '查询验证状态',
-        description: '查询当前用户的验证进度与结果。',
-        responses: [{ code: '200', body: '{ "busy": false, "progress": 1, "score": 25, "error": null }' }],
+        description: '查询当前用户的验证进度与结果: score 为 5 局平均分 (向上取整), runs 为各局单独得分。',
+        responses: [{ code: '200', body: '{ "busy": false, "progress": 1, "score": 25, "runs": [22, 28, 25, 26, 24], "error": null }' }],
       },
       {
         method: 'GET',
         path: '/single/history',
         auth: true,
         title: '提交历史',
-        description: '当前用户的提交历史 (含回放字段, 下载见 /single/replay/:id)。',
+        description: '当前用户的提交历史: 总得分 score (多次验证平均值向上取整) 与各局得分 runs, has_replay 标记是否有回放可下载。',
         responses: [
-          { code: '200', body: '{ "entries": [ { "id": 1, "score": 25, "error": null, "replay": "json", "created_at": 1720000000000 } ] }' },
+          { code: '200', body: '{ "entries": [ { "id": 1, "score": 25, "error": null, "runs": [22, 28, 25, 26, 24], "has_replay": true, "created_at": 1720000000000 } ] }' },
         ],
       },
       {
@@ -135,9 +135,9 @@ export const API_DOC_GROUPS: ApiDocGroup[] = [
         path: '/single/replay/:id',
         auth: true,
         title: '下载回放',
-        description: '下载某条提交的回放文件 (仅本人)。回放格式见 llms.txt 附录或前端回放导入。',
+        description: '下载某条提交的回放文件 (仅本人)。服务器对固定 5 个随机种子各验证一局, 每次提交保存 5 份回放; 携带 ?run=N 取第 N 局 (0 起, 缺省 0)。回放格式见 llms.txt 附录或前端回放导入。',
         responses: [
-          { code: '200', body: '回放文件 (JSON, ReplayFile 格式)', note: 'id: 提交记录 id' },
+          { code: '200', body: '回放文件 (JSON, ReplayFile 格式)', note: 'id: 提交记录 id, run: 局序号 (0-4)' },
           { code: '404', body: '{ "error": "记录不存在" }' },
         ],
       },

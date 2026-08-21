@@ -278,10 +278,13 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
 ## 后端 API 速览
 
 - `GET /auth/me`, `GET /auth/github[/callback]` (OAuth, 未配置时 dev 模式)
-- 单人: `GET/POST /single/validate` (busy/progress/score/error; 全局并发上限
+- 单人: `GET/POST /single/validate` (busy/progress/score/error/runs; 服务器对
+  **固定的 5 个随机种子**各完整执行一局, score = 平均分 (向上取整), runs 为各局得分,
+  回放每局一份入库; 全局并发上限
   `SINGLE_MAX_CONCURRENT` 默认按 CPU 核心数 (上限 32, 可用 env 覆盖), 超限 409"服务器繁忙"; 每用户限流预留:
-  `SINGLE_SUBMIT_LIMIT_PER_MIN` 默认 0 不限流, 超限 429), `GET /single/history`,
-  `GET /single/leaderboard` (无参数返回前 50 名 (登录用户带 me 标记);
+  `SINGLE_SUBMIT_LIMIT_PER_MIN` 默认 0 不限流, 超限 429), `GET /single/history`
+  (id/score/error/runs/has_replay/created_at, 不携带完整回放), `GET /single/replay/:id?run=N`
+  (取第 N 局回放, 0 起, 旧单局记录兼容), `GET /single/leaderboard` (无参数返回前 50 名 (登录用户带 me 标记);
   `?user=<用户名>` 查询个人最高分与全榜名次)
 - 竞技: `GET /combat/state`, `POST /combat/upload` (清空胜败),
   `GET /combat/list`, `POST /combat/start {id}` → roomId,

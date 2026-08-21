@@ -164,7 +164,7 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
       },
       {
         name: 'single_history',
-        description: '当前用户的单人提交历史 (id / score / error / replay / created_at)。',
+        description: '当前用户的单人提交历史 (id / score 总得分 / error / runs 各局得分 / has_replay / created_at)。',
         inputSchema: {
           type: 'object',
           properties: { token: { type: 'string', description: '登录凭证 (login_finish 返回)' } },
@@ -181,11 +181,12 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
       },
       {
         name: 'single_replay',
-        description: '下载某条单人提交的完整回放文件 (ReplayFile JSON, 仅本人可见)。',
+        description: '下载某条单人提交的回放文件 (ReplayFile JSON, 仅本人可见)。每次提交包含固定 5 个随机种子的 5 局回放, 传 run 参数取第几局 (0-4, 缺省 0)。',
         inputSchema: {
           type: 'object',
           properties: {
             id: { type: 'number', description: '提交记录 id (见 single_history)' },
+            run: { type: 'number', description: '局序号 0-4 (缺省 0)' },
             token: { type: 'string', description: '登录凭证 (login_finish 返回)' },
           },
           required: ['id', 'token'],
@@ -296,7 +297,10 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
     }
     if (m === 'GET' && seg === '/single/history') return api.apiSingleHistory(userId);
     const replayM = /^\/single\/replay\/(\d+)$/.exec(seg ?? '');
-    if (m === 'GET' && replayM) return api.apiSingleReplay(userId, Number(replayM[1]));
+    if (m === 'GET' && replayM) {
+      const run = q.get('run') === null ? undefined : Number(q.get('run'));
+      return api.apiSingleReplay(userId, Number(replayM[1]), run);
+    }
 
     if (m === 'GET' && seg === '/combat/state') return api.apiCombatState(userId);
     if (m === 'POST' && seg === '/combat/upload') return api.apiCombatUpload(userId, body);
@@ -480,7 +484,8 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
         if (!Number.isInteger(id)) {
           return { content: [{ type: 'text', text: '缺少 id 参数 (提交记录 id)' }], isError: true };
         }
-        return await apiToolResult('GET', `/single/replay/${id}`, undefined, args?.token);
+        const run = args && Number.isInteger(args.run) ? args.run : 0;
+        return await apiToolResult('GET', `/single/replay/${id}?run=${run}`, undefined, args?.token);
       }
       // ---- 竞技模式 ----
       case 'combat_state':
@@ -567,6 +572,8 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
               '- 可用 API: `getSelf()` (含 water/energy) / `getGame()` (含 money) / `getMap()` / `getTile(p)` (含 fertility) / `getCrop(p)` / `getDrone(p)`, 坐标越界返回 null。\n' +
               '- 作物列表 (代码名, 成本/收获/成熟回合/需水/可种地块):\n' + cropSummary() + '\n' +
               '- 机制: 土地有肥力 (初始 5, 上限 10): 收获扣除作物肥力消耗, 肥力 < 0 → 沙漠化 (转沙地), 肥力 > 上限 → 盐碱化 (转盐碱地, 生长 ×1.5 且浇水 ×2); 间作 (四方向 ≥2 个不同作物, 收获 +20%); 香菇总周期 = 20 + 2×场上香菇数\n' +
+              '- 缺水机制: 作物缺水次数固定, 但缺水时机是**随机的** (非固定回合, 约均匀分布 + 2 回合内随机偏移), 不要硬编码浇水回合, 应通过 API 动态判断作物是否缺水。\n' +
+              '- 服务器验证: 使用固定的 5 个随机种子各完整执行一局并取平均分; 缺水时机随机, 服务器得分可能与本地试玩略有不同, 但服务器端结果可复现。\n' +
               '- 竞技模式: 自己半场在左侧 (14×7), 对方半场收获进入临时资金池, 返回己方半场入账; 种植不受半场限制 (可到对方半场占位), 铲除仅限己方半场。沙地上生长周期 ×3。\n' +
               '- 限制: 单次 run() 400ms 超时即判负; 禁止网络/异步 API。\n' +
               '- 完整文档可用 get_doc / robofarm://docs/* 获取。\n\n' +

@@ -67,10 +67,10 @@ export function apiSingleHistory(userId: number | null): ApiResult {
   return ok({ entries: single.singleHistory(userId) });
 }
 
-export function apiSingleReplay(userId: number | null, id: number): ApiResult {
+export function apiSingleReplay(userId: number | null, id: number, run?: number): ApiResult {
   if (userId == null) return unauth();
   if (!Number.isInteger(id)) return bad(400, '缺少 id 参数');
-  const result = single.singleReplay(id, userId);
+  const result = single.singleReplay(id, userId, run ?? 0);
   if ('error' in result) return bad(404, result.error);
   return ok(result.file);
 }
