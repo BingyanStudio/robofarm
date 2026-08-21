@@ -28,12 +28,23 @@
     5. 增加机制 "盐碱化": 若土地肥力被增加到 > 上限(当前是10), 则土地转化为盐碱地
        → tiles/soil.ts onCropHarvested: 肥力 > MAX_TILE_FERTILITY → 盐碱地。
 
-- [ ] Balance: 作物的浇水时机改为非均匀分布, 在种植时随机选取
+- [x] Balance: 作物的浇水时机改为非均匀分布, 在种植时随机选取
     1. 先计算生长周期和浇水次数, 然后随机选择 n(n=浇水次数) 个位置, 当生长到该周期时缺水
+       → 新增 shared/src/rng.ts: mulberry32 PRNG + plantingSeed (由玩家/位置/作物/回合
+       FNV-1a 派生种子) + pickThirstPoints (从 [1, 周期-1] 洗牌取 n 个点, 降序);
+       tryPlantAt 与香菇扩散种植时生成 CropData.thirstAt。
     2. 随机仅改变缺水时机, 不改变缺水次数
+       → 次数仍由 thirstCount(tile, world) 决定, 随机只洗牌选点; 触发点用完即不再缺水。
     3. 该属性对玩家隐藏，无法通过无人机 API 获取
+       → thirstAt 只在 CropData (引擎内部), CropInfo/TileInfo/快照均不暴露。
     4. 游戏 Tooltip 删除 "作物还有多少周期缺水" 的显示
+       → 当前 Tooltip 本就未显示该信息 (仅有 需定期浇水 提示), 无需改动; 后续不得新增。
     5. 游戏回放需要保存每个作物的缺水时机, 以保证回放与游玩的过程和结果相同
+       → 采用**确定性种子**方案: 种子由 (玩家, 位置, 作物, 回合) 派生, 回放重推演
+       时生成与游玩完全相同的触发点, 无需把时机写入回放文件; engine.test.ts 增加
+       小麦缺水时机与实际触发、重跑一致性断言。
+    6. CropData 移除 thirstTotal / plantCycles (旧均匀公式用), 新增 thirstAt;
+       engine tickCrop 改为 growthRemaining === thirstAt[thirstsDone] 触发。
 
 - [ ] Enhancement: 游戏界面 Tooltip 展示 Tile 信息时, 若是土地，则带上肥力信息
 

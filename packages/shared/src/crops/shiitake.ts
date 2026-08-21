@@ -4,6 +4,7 @@
 import { CropState, CropType, Position, Tile, TileType, WorldState } from '../types';
 import type { GameEvent, GrownEffectContext, MaturityEffectContext } from '../types';
 import { TILES } from '../registry';
+import { pickThirstPoints, plantingSeed } from '../rng';
 import { BaseCrop } from './base';
 
 /** 场上香菇总数 (用于动态生长周期, 种植/扩散时按当时场上数量计算) */
@@ -60,15 +61,19 @@ export class Shiitake extends BaseCrop {
     if (nx < 0 || nx >= world.map[0].length || ny < 0 || ny >= world.map.length) return;
     const tile = world.map[ny][nx];
     if (tile.crop || tile.type !== TileType.Soil) return;
-    // 扩散出的香菇同样按场上香菇总数动态计算生长周期 (本类重写的 growCycles)
+    // 扩散出的香菇同样按场上香菇总数动态计算生长周期 (本类重写的 growCycles),
+    // 缺水时机同样确定性随机 (种子含位置/回合)
     const cycles = this.growCycles(tile, world);
     tile.crop = {
       type: CropType.Shiitake,
       state: CropState.Growing,
       growthRemaining: cycles,
-      thirstTotal: this.thirstCount(tile, world),
+      thirstAt: pickThirstPoints(
+        plantingSeed(world, [nx, ny], CropType.Shiitake, -1),
+        cycles,
+        this.thirstCount(tile, world)
+      ),
       thirstsDone: 0,
-      plantCycles: cycles,
     };
     // 扩散种下同样触发地块的"作物种下"回调
     TILES[tile.type].onCropPlanted?.({ world, pos: [nx, ny], crop: tile.crop, events });

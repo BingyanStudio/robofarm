@@ -2,6 +2,7 @@
 import { CropState, CropType, DroneState, GameEvent, Position, WorldState } from '../types';
 import { TILES, cropConfig } from '../registry';
 import { inBounds, orthNeighbors } from '../maps';
+import { pickThirstPoints, plantingSeed } from '../rng';
 
 /** 以无人机为中心的行/列 3 格范围 (越界跳过) */
 export function lineRangePositions(center: Position, axis: 'row' | 'col', world: WorldState): Position[] {
@@ -48,15 +49,19 @@ export function tryPlantAt(
   if (player.money < cfg.plantCost) return false;
   player.money -= cfg.plantCost;
   // 实际周期 = 作物 growCycles(tile, world) (基类默认按地块倍率 (沙地 ×3) 向下取整);
-  // 总缺水次数 = 作物 thirstCount(tile, world) (基类默认按周期/间隔 × 地块浇水倍率)
+  // 缺水次数 = 作物 thirstCount(tile, world) (基类默认按周期/间隔 × 地块浇水倍率);
+  // 缺水时机 = 种植时确定性随机选取 (thirstAt, 保证回放一致)
   const adjusted = cfg.growCycles(tile, world);
   tile.crop = {
     type: crop,
     state: CropState.Growing,
     growthRemaining: adjusted,
-    thirstTotal: cfg.thirstCount(tile, world),
+    thirstAt: pickThirstPoints(
+      plantingSeed(world, pos, crop, drone.player),
+      adjusted,
+      cfg.thirstCount(tile, world)
+    ),
     thirstsDone: 0,
-    plantCycles: adjusted,
   };
   // 地块的"作物种下"回调
   TILES[tile.type].onCropPlanted?.({ world, pos, crop: tile.crop, events });

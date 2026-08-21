@@ -200,28 +200,14 @@ function tickCrop(world: WorldState, crop: CropData, pos: Position, events: Game
       // 生长特效 (growUpdate): 每个生长回合都会执行 (多数作物未声明, 无操作)。
       cfg.growUpdate?.({ world, crop, pos, events });
 
-      if (cfg.thirstInterval !== null) {
-        // 缺水触发按种植时记录的"总缺水次数"动态计算, 缺水点在实际生长周期内均匀分布:
-        // 第 (thirstsDone+1) 次缺水发生在剩余回合数降到 ceil((剩余次数)·实际周期/(总次数+1)) 时。
-        const total = crop.thirstTotal ?? 0;
-        const done = crop.thirstsDone ?? 0;
-        const cycles = crop.plantCycles ?? cfg.growCyclesBase;
-        if (
-          total > 0 &&
-          done < total &&
-          crop.growthRemaining === Math.ceil(((total - done) * cycles) / (total + 1))
-        ) {
-          crop.state = CropState.Thirsty;
-          crop.thirstsDone = done + 1;
-          events.push({ type: 'crop-grow', pos, state: CropState.Thirsty, cyclesToGrown: 0 });
-        } else {
-          events.push({
-            type: 'crop-grow',
-            pos,
-            state: CropState.Growing,
-            cyclesToGrown: crop.growthRemaining,
-          });
-        }
+      // 缺水触发: 种植时随机选取的触发点 (thirstAt, 降序), 生长到该剩余回合数时缺水。
+      // 随机只改变时机、不改变次数, 且对玩家隐藏 (API 不暴露); 回放因种子确定而一致。
+      const thirstAt = crop.thirstAt ?? [];
+      const done = crop.thirstsDone ?? 0;
+      if (done < thirstAt.length && crop.growthRemaining === thirstAt[done]) {
+        crop.state = CropState.Thirsty;
+        crop.thirstsDone = done + 1;
+        events.push({ type: 'crop-grow', pos, state: CropState.Thirsty, cyclesToGrown: 0 });
       } else {
         events.push({
           type: 'crop-grow',

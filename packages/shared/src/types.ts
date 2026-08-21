@@ -140,14 +140,13 @@ export interface CropData {
   /** 距离成熟的剩余生长回合数 (Growing 时递减; Thirsty 时不推进) */
   growthRemaining: number;
   /**
-   * 总缺水次数: 种植时按该次种植的实际生长周期数 (含地块 growthFactor)
-   * 动态计算, 即 floor(实际周期 / thirstInterval); 0 表示无需浇水。
+   * 缺水触发点 (剩余回合数, 降序): 种植时按 thirstCount 次数确定性随机选取
+   * (见 rng.ts), 生长到该剩余回合数时进入 Thirsty; 空数组 = 无需浇水。
+   * 随机只改变时机、不改变次数; 对玩家隐藏 (API 不暴露)。
    */
-  thirstTotal?: number;
-  /** 已发生的缺水次数 */
+  thirstAt?: number[];
+  /** 已触发的缺水次数 (即 thirstAt 的进度下标) */
   thirstsDone?: number;
-  /** 种植时的实际生长周期数 (计算缺水触发点用) */
-  plantCycles?: number;
   /** 香菇: 成熟后还需扩散的小香菇数量 (每回合 1 个, 按上右下左顺序, 到 0 停止) */
   spreadLeft?: number;
 }

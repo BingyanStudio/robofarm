@@ -643,7 +643,7 @@ describe('engine: 缺水次数动态计算', () => {
     stepTurn(w, actions([0, { type: 'plant', crop: CropType.Pumpkin }]));
     const crop = w.map[0][0].crop!;
     expect(crop.growthRemaining).toBe(299); // floor(100*3)=300, 种植回合已扣 1
-    expect(crop.thirstTotal).toBe(16); // floor(300 / 18)
+    expect(crop.thirstAt!.length).toBe(16); // floor(300 / 18)
     let thirstyCount = 0;
     let guard = 0;
     while (crop.state !== CropState.Grown && guard++ < 400) {
@@ -659,11 +659,16 @@ describe('engine: 缺水次数动态计算', () => {
     expect(crop.state).toBe(CropState.Grown);
   });
 
-  it('土地作物缺水位置与原来一致: 小麦在剩余 20、10 回合时缺水', () => {
+  it('小麦: 缺水 2 次, 时机在种植时确定性随机选取 (回放可复现)', () => {
     const w = single();
     w.players[0].money = 100;
     stepTurn(w, actions([0, { type: 'plant', crop: CropType.Wheat }]));
-    // 记录每次缺水时的剩余回合数
+    const crop = w.map[3][3].crop!;
+    expect(crop.thirstAt).toHaveLength(2); // floor(30 / 15)
+    const points = [...(crop.thirstAt ?? [])];
+    // 触发点降序且在生长范围内
+    expect(points[0]).toBeGreaterThan(points[1]);
+    // 实际缺水时的剩余回合数应与种植时选取的触发点逐一吻合
     const thirstyAt: number[] = [];
     let guard = 0;
     while (guard++ < 100) {
@@ -677,7 +682,12 @@ describe('engine: 缺水次数动态计算', () => {
       }
       if (w.map[3][3].crop!.state === CropState.Grown) break;
     }
-    expect(thirstyAt).toEqual([20, 10]);
+    expect(thirstyAt).toEqual(points);
+    // 确定性: 相同输入重跑一遍, 缺水时机完全一致 (回放一致性)
+    const w2 = single();
+    w2.players[0].money = 100;
+    stepTurn(w2, actions([0, { type: 'plant', crop: CropType.Wheat }]));
+    expect(w2.map[3][3].crop!.thirstAt).toEqual(points);
   });
 });
 
@@ -689,7 +699,7 @@ describe('engine: 新作物 (西瓜/紫云英/香菇)', () => {
     stepTurn(w, actions([0, { type: 'plant', crop: CropType.Melon }]));
     const crop = w.map[0][0].crop!;
     expect(crop.growthRemaining).toBe(299); // floor(100*3)=300 - 1
-    expect(crop.thirstTotal).toBe(20);
+    expect(crop.thirstAt!.length).toBe(20);
     let thirstyCount = 0;
     let guard = 0;
     while (crop.state !== CropState.Grown && guard++ < 400) {
@@ -773,12 +783,12 @@ describe('engine: 新作物 (西瓜/紫云英/香菇)', () => {
     stepTurn(w, actions([0, { type: 'plant', crop: CropType.Shiitake }]));
     const crop = w.map[3][3].crop!;
     expect(crop.growthRemaining).toBe(23); // 24 - 1 (种植回合算 1 个生长周期)
-    expect(crop.plantCycles).toBe(24);
+    expect(crop.thirstAt!.length).toBe(1); // floor(24 / 20)
     // 场上 3 株后再种 1 株 → 20 + 2*3 = 26
     w.drones[0].position = [4, 3];
     stepTurn(w, actions([0, { type: 'plant', crop: CropType.Shiitake }]));
     expect(w.map[3][4].crop!.growthRemaining).toBe(25); // 26 - 1
-    expect(w.map[3][4].crop!.plantCycles).toBe(26);
+    expect(w.map[3][4].crop!.thirstAt!.length).toBe(1); // floor(26 / 20)
   });
 
   it('香菇: 扩散出的新香菇同样按场上总数动态计算生长周期', () => {
@@ -790,7 +800,7 @@ describe('engine: 新作物 (西瓜/紫云英/香菇)', () => {
     // 扩散时场上共 2 株 (含母体) → 新香菇周期 = 20 + 2*2 = 24
     const spawned = w.map[2][3].crop!;
     expect(spawned.type).toBe(CropType.Shiitake);
-    expect(spawned.plantCycles).toBe(24);
+    expect(spawned.thirstAt!.length).toBe(1); // floor(24 / 20)
   });
 
   it('香菇可多轮繁殖并收获 (自行生长 20 回合成熟)', () => {
