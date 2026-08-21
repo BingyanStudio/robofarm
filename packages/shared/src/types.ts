@@ -4,11 +4,12 @@
 /** 地图上的坐标, 使用 (x, y) 元组, x 轴向右, y 轴向下 */
 export type Position = [number, number];
 
-/** 地块类型。未来新增地块类型时在 registry.ts 中注册, 无需改动引擎 */
+/** 地块类型。未来新增地块类型时在 tiles/ 目录注册, 无需改动引擎 */
 export enum TileType {
   Soil = 'soil',
   Water = 'water',
   Sand = 'sand',
+  Salt = 'salt',
 }
 
 /** 作物类型。未来新增作物时在 registry.ts 中注册 */
@@ -74,6 +75,8 @@ export interface TileInfo {
   hasCrop: boolean;
   /** 地块上的作物, 无作物时为 null */
   crop: CropInfo | null;
+  /** 土地肥力 (仅土地有, 其他地块为 undefined; 初始 5, 上限 10) */
+  fertility?: number;
 }
 
 /** 单个作物的信息 (玩家 API 视角) */
@@ -152,6 +155,8 @@ export interface CropData {
 export interface Tile {
   type: TileType;
   crop: CropData | null;
+  /** 土地肥力 (仅土地持有; 初始 INITIAL_TILE_FERTILITY, 超过 MAX_TILE_FERTILITY 盐碱化, 扣到 < 0 沙漠化) */
+  fertility?: number;
 }
 
 export interface DroneState {
@@ -231,6 +236,8 @@ export interface TileCropEventContext {
 export interface SnapshotTile {
   type: TileType;
   crop: CropInfo | null;
+  /** 土地肥力 (仅土地有, 供前端 Tooltip 展示) */
+  fertility?: number;
 }
 
 /** 快照中的无人机 */

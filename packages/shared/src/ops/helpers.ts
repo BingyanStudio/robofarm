@@ -42,19 +42,19 @@ export function tryPlantAt(
 ): boolean {
   const cfg = cropConfig(crop);
   const tile = world.map[pos[1]][pos[0]];
-  if (!cfg.habitats.includes(tile.type)) return false;
+  if (!cfg.canPlant(tile)) return false;
   if (tile.crop) return false;
   const player = world.players[drone.player];
   if (player.money < cfg.plantCost) return false;
   player.money -= cfg.plantCost;
   // 实际周期 = 作物 growCycles(tile, world) (基类默认按地块倍率 (沙地 ×3) 向下取整);
-  // 总缺水次数按该次种植的实际周期动态计算 (不依赖固定的剩余取模)
+  // 总缺水次数 = 作物 thirstCount(tile, world) (基类默认按周期/间隔 × 地块浇水倍率)
   const adjusted = cfg.growCycles(tile, world);
   tile.crop = {
     type: crop,
     state: CropState.Growing,
     growthRemaining: adjusted,
-    thirstTotal: cfg.thirstInterval === null ? 0 : Math.floor(adjusted / cfg.thirstInterval),
+    thirstTotal: cfg.thirstCount(tile, world),
     thirstsDone: 0,
     plantCycles: adjusted,
   };

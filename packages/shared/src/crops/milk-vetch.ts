@@ -1,6 +1,6 @@
 // 紫云英: 绿肥植物, 生长时加速周围作物的生长。
 // 特殊效果 (growUpdate) 直接定义在本文件, 引擎直接调用。
-import { CropState, CropType, Position, TileType, WorldState } from '../types';
+import { CropState, CropType, Position, Tile, TileType, WorldState } from '../types';
 import type { GrowthEffectContext } from '../types';
 import { BaseCrop } from './base';
 
@@ -8,12 +8,16 @@ export class MilkVetch extends BaseCrop {
   readonly type = CropType.MilkVetch;
   readonly name = '紫云英';
   readonly description = '绿肥植物，生长时会加速周围作物的生长。';
-  readonly habitats = [TileType.Soil, TileType.Sand];
+  readonly fertilityCost = -2; // 绿肥: 收获时恢复土地肥力
   readonly plantCost = 100;
   readonly value = 120;
   readonly growCyclesBase = 160;
   readonly thirstInterval = 40; // 生长中缺水 4 次
   readonly color = '#7e9be8';
+
+  canPlant(tile: Tile): boolean {
+    return tile.type === TileType.Soil || tile.type === TileType.Sand;
+  }
 
   /** 生长特效 (growUpdate): 生长中每回合按 上→右→下→左 加速邻格作物的生长 */
   growUpdate({ world, pos }: GrowthEffectContext): void {

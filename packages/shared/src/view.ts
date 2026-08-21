@@ -47,6 +47,7 @@ export function buildPlayerView(
       row.push({
         type: tile.type,
         hasCrop: tile.crop !== null,
+        fertility: tile.fertility,
         crop: tile.crop
           ? cropInfo(tile.crop.type, tile.crop.state, tile.crop.growthRemaining)
           : null,
@@ -113,6 +114,7 @@ export function snapshotOf(world: WorldState) {
     map: world.map.map((row) =>
       row.map((tile) => ({
         type: tile.type,
+        fertility: tile.fertility,
         crop: tile.crop
           ? cropInfo(tile.crop.type, tile.crop.state, tile.crop.growthRemaining)
           : null,

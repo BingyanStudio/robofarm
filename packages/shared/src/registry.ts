@@ -2,9 +2,11 @@
 // (继承 BaseTile, 见下); 作物配置按"每种作物一个文件"放在 crops/ 目录
 // (继承 BaseCrop, 见下), 这里只做汇总。
 import { CropState, CropType, GrownEffectContext, GrowthEffectContext, MaturityEffectContext, Tile, TileCropEventContext, TileType, WorldState } from './types';
+import { INITIAL_TILE_FERTILITY } from './config';
 import { Soil } from './tiles/soil';
 import { Water } from './tiles/water';
 import { Sand } from './tiles/sand';
+import { Salt } from './tiles/salt';
 import { Strawberry } from './crops/strawberry';
 import { Grape } from './crops/grape';
 import { Wheat } from './crops/wheat';
@@ -23,8 +25,10 @@ export interface TileTypeConfig {
   name: string;
   /** 无人机能否在该地块取水 */
   canCollectWater: boolean;
-  /** 种植在该地块上时的生长周期倍率 (如沙地 ×3, 由 BaseCrop.growCycles() 消费) */
+  /** 种植在该地块上时的生长周期倍率 (沙地 ×3 / 盐碱地 ×1.5, 由 BaseCrop.growCycles() 消费) */
   growthFactor: number;
+  /** 种植在该地块上时的浇水次数倍率 (盐碱地 ×2, 由 BaseCrop.thirstCount() 消费) */
+  thirstFactor: number;
   /** 无作物时的地块贴图名 (public/sprites/<name>.svg) */
   sprite: string;
   /** 有作物时的地块贴图名; 无则与 sprite 相同 */
@@ -50,13 +54,14 @@ export interface TileTypeConfig {
 
 /**
  * 地块注册表。每种地块是 tiles/<type>.ts 里的一个类 (继承 BaseTile),
- * 这里统一实例化; 通用默认值 (canCollectWater=false, growthFactor=1)
- * 放在基类, 特殊地块重写 (水池取水 / 沙地 ×3)。
+ * 这里统一实例化; 通用默认值 (canCollectWater=false, growthFactor=1, thirstFactor=1)
+ * 放在基类, 特殊地块重写 (水池取水 / 沙地 ×3 / 盐碱地 ×1.5 且浇水 ×2)。
  */
 export const TILES: Record<TileType, TileTypeConfig> = {
   [TileType.Soil]: new Soil(),
   [TileType.Water]: new Water(),
   [TileType.Sand]: new Sand(),
+  [TileType.Salt]: new Salt(),
 };
 
 export interface CropTypeConfig {
@@ -64,8 +69,16 @@ export interface CropTypeConfig {
   name: string;
   /** 作物简介 (API 手册展示用) */
   description: string;
-  /** 可种植的地块类型 (陆生 / 水生) */
-  habitats: TileType[];
+  /**
+   * 是否可以种植在指定地块上 (替代原 habitats): 由子类实现, 检查 Tile 类型
+   * (如 Lotus 只种在水池) 以及需要时的肥力等条件, 基类不判断。
+   */
+  canPlant(tile: Tile): boolean;
+  /**
+   * 肥力消耗: 收获时若脚下是土地则扣除该值 (负数 = 为土地恢复肥力)。
+   * 基类默认 0。
+   */
+  fertilityCost: number;
   /** 种植成本 */
   plantCost: number;
   /** 成熟后收获所得 */
@@ -78,6 +91,11 @@ export interface CropTypeConfig {
    * 需要特殊周期计算的作物重写 (如香菇: 20 + 2 × 场上香菇总数)。
    */
   growCycles(tile: Tile, world: WorldState): number;
+  /**
+   * 总缺水次数: 默认 floor(实际生长周期 / thirstInterval) × 地块浇水倍率
+   * (盐碱地 ×2), 由 BaseCrop 实现, 子类可按需重写。
+   */
+  thirstCount(tile: Tile, world: WorldState): number;
   /**
    * 缺水的触发间隔 (回合数): 作物总缺水次数 = floor(实际生长周期 / thirstInterval),
    * 实际周期在种植时按 growCycles() 动态计算 (如沙地 ×3);
@@ -131,6 +149,20 @@ export function isCropType(v: unknown): v is CropType {
 
 export function cropConfig(type: CropType): CropTypeConfig {
   return CROPS[type];
+}
+
+/**
+ * 作物可种植的地块类型 (由 canPlant 对每种地块逐一探测得出, 供文档/MCP 展示)。
+ * 探测时土地按初始肥力计算。
+ */
+export function plantableTiles(cfg: CropTypeConfig): TileType[] {
+  return Object.values(TileType).filter((tt) =>
+    cfg.canPlant({
+      type: tt,
+      crop: null,
+      fertility: tt === TileType.Soil ? INITIAL_TILE_FERTILITY : undefined,
+    })
+  );
 }
 
 /** 作物在某一时刻对外暴露的计数 (Grown 为 0, Growing/Thirsty 为剩余回合数) */

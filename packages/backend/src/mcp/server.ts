@@ -13,7 +13,7 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import { CROPS, DOC_SECTIONS, isCropType, sectionMarkdown, cropDocEntries, createSingleWorld, createCombatWorld, GAME_VERSION, BaseCrop } from '@robofarm/shared';
+import { CROPS, DOC_SECTIONS, isCropType, sectionMarkdown, cropDocEntries, createSingleWorld, createCombatWorld, GAME_VERSION, BaseCrop, plantableTiles } from '@robofarm/shared';
 import { mcpLoginStart, mcpLoginFinish, userFromToken, AuthUser } from '../auth';
 import * as api from '../services/api';
 
@@ -381,7 +381,8 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
               value: cfg.value,
               growCyclesBase: cfg.growCyclesBase,
               thirstInterval: cfg.thirstInterval,
-              habitats: cfg.habitats,
+              fertilityCost: cfg.fertilityCost,
+              habitats: plantableTiles(cfg),
               // 特殊机制 (未设置则无)
               specialMechanisms: special.length > 0 ? special : undefined,
               description: cfg.description,

@@ -21,12 +21,15 @@ export class Shiitake extends BaseCrop {
   readonly type = CropType.Shiitake;
   readonly name = '香菇';
   readonly description = '成熟后, 每回合按照 [上右下左] 顺序种下新的香菇，一共四颗。但场上香菇越多，香菇生长越慢。';
-  readonly habitats = [TileType.Soil];
   readonly plantCost = 80;
   readonly value = 40;
   readonly growCyclesBase = 20;
   readonly thirstInterval = 20; // 实际周期按场上香菇数动态计算, 缺水次数随之增减
   readonly color = '#c0846a';
+
+  canPlant(tile: Tile): boolean {
+    return tile.type === TileType.Soil;
+  }
 
   /** 成熟特效: 进入扩散期, 之后每回合按上右下左顺序扩散 1 株 (共 4 次) */
   onGrown({ crop }: MaturityEffectContext): void {
@@ -63,7 +66,7 @@ export class Shiitake extends BaseCrop {
       type: CropType.Shiitake,
       state: CropState.Growing,
       growthRemaining: cycles,
-      thirstTotal: this.thirstInterval === null ? 0 : Math.floor(cycles / this.thirstInterval),
+      thirstTotal: this.thirstCount(tile, world),
       thirstsDone: 0,
       plantCycles: cycles,
     };

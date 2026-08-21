@@ -17,7 +17,7 @@ export class Plant extends DroneOperation {
     const crop = (op as { crop: CropType }).crop;
     const cfg = cropConfig(crop);
     const tile = tileAt(world, drone.position);
-    if (!cfg.habitats.includes(tile.type)) {
+    if (!cfg.canPlant(tile)) {
       return { ok: false, message: `${cfg.name} 不能种植在 ${TILES[tile.type].name} 上` };
     }
     if (tile.crop) return { ok: false, message: '该地块已有作物' };

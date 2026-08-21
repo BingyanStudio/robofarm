@@ -2,7 +2,8 @@
 // 实际生长周期默认由基类的 growCycles() 计算 (按种植地块的 growthFactor,
 // 沙地 ×3 向下取整), 需要特殊周期计算的作物重写 growCycles()
 // (如香菇: 20 + 2 × 场上香菇总数)。
-import { CropType, Tile, TileType, WorldState } from '../types';
+// 种植判定 (canPlant) 与肥力消耗 (fertilityCost) 也在此声明, 由子类实现/覆盖。
+import { CropType, Tile, WorldState } from '../types';
 import type { GrownEffectContext, GrowthEffectContext, MaturityEffectContext } from '../types';
 import type { CropTypeConfig } from '../registry';
 import { TILES } from '../registry';
@@ -11,7 +12,16 @@ export abstract class BaseCrop implements CropTypeConfig {
   abstract readonly type: CropType;
   abstract readonly name: string;
   abstract readonly description: string;
-  abstract readonly habitats: TileType[];
+  /**
+   * 是否可以种植在指定地块上: 由子类实现 (基类不判断), 检查 Tile 类型
+   * (如 Lotus 只种在水池) 以及需要时的肥力等条件。
+   */
+  abstract canPlant(tile: Tile): boolean;
+  /**
+   * 肥力消耗: 收获时若脚下是土地则扣除该值 (负数 = 为土地恢复肥力)。
+   * 基类默认 0, 子类按需覆盖。
+   */
+  readonly fertilityCost: number = 0;
   abstract readonly plantCost: number;
   abstract readonly value: number;
   /** 基准生长周期 (土地上的回合数; 前端贴图进度也用它) */
@@ -34,5 +44,14 @@ export abstract class BaseCrop implements CropTypeConfig {
    */
   growCycles(tile: Tile, _world: WorldState): number {
     return Math.floor(this.growCyclesBase * TILES[tile.type].growthFactor);
+  }
+
+  /**
+   * 总缺水次数: 默认 floor(实际生长周期 / thirstInterval) × 地块浇水倍率
+   * (盐碱地 ×2)。子类可按需重写。
+   */
+  thirstCount(tile: Tile, world: WorldState): number {
+    if (this.thirstInterval === null) return 0;
+    return Math.floor(this.growCycles(tile, world) / this.thirstInterval) * TILES[tile.type].thirstFactor;
   }
 }

@@ -1,6 +1,6 @@
 // 游戏 API 文档的单一事实来源 (shared)。
 // 前端右侧手册与后端 MCP 服务器都从这里生成内容, 保证两边一致。
-import { CROPS, TILES } from './registry';
+import { CROPS, TILES, plantableTiles } from './registry';
 
 export interface DocEntry {
     /** 条目锚点 id (供前端文档内跳转) */
@@ -318,8 +318,14 @@ export function cropDocEntries(): DocEntry[] {
             `收获: ${cfg.value}`,
             `成熟: ${cfg.growCyclesBase} 回合`,
             cfg.thirstInterval === null ? '需水: 无需浇水' : `需水: 每 ${cfg.thirstInterval} 回合`,
-            `可种在: ${cfg.habitats.map((t) => TILES[t].name).join(' / ')}`,
-        ],
+            `可种在: ${plantableTiles(cfg).map((t) => TILES[t].name).join(' / ')}`,
+            // 肥力消耗: 0 不显示; 负数 = 恢复肥力
+            cfg.fertilityCost === 0
+                ? null
+                : cfg.fertilityCost < 0
+                    ? `肥力: 恢复 ${-cfg.fertilityCost}`
+                    : `肥力: 消耗 ${cfg.fertilityCost}`,
+        ].filter((p): p is string => p !== null),
     }));
 }
 

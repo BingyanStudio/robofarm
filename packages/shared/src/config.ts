@@ -49,6 +49,12 @@ export const NEW_DRONE_COST = 4000;
 /** 每名玩家的无人机数量上限 (按游戏模式) */
 export const DRONE_LIMIT: Record<'single' | 'combat', number> = { single: 2, combat: 3 };
 
+/** 土地初始肥力 */
+export const INITIAL_TILE_FERTILITY = 5;
+
+/** 土地肥力上限 (肥力被增加到超过该值 → 盐碱化) */
+export const MAX_TILE_FERTILITY = 10;
+
 /** 每个玩家程序最多保留的日志行数 */
 export const MAX_LOG_LINES = 200;
 

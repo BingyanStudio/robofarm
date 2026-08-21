@@ -622,7 +622,7 @@ describe('engine: 沙地', () => {
     expect(w.map[0][0].crop!.state).toBe(CropState.Grown);
   });
 
-  it('小麦不能种在沙地 (habitats 不含沙地)', () => {
+  it('小麦不能种在沙地 (canPlant 不含沙地)', () => {
     const w = single();
     w.drones[0].position = [0, 0];
     const events = stepTurn(w, actions([0, { type: 'plant', crop: CropType.Wheat }]));
@@ -850,26 +850,40 @@ describe('engine: 水仙 (autoWater) 与 ChangeTile', () => {
   });
 });
 
-describe('engine: 沙漠化 / 间作 / NewDrone', () => {
-  it('沙漠化: 收获的格子相邻有沙地时转化为沙地', () => {
+describe('engine: 沙漠化 / 盐碱化 / 间作 / NewDrone', () => {
+  it('沙漠化: 收获后土地肥力被扣到 < 0 时转化为沙地', () => {
     const w = single();
-    placeCrop(w, [3, 3], { type: CropType.Strawberry, state: CropState.Grown, growthRemaining: 0 });
-    // (3,3) 四周: (2,3) 沙地 → 收获后 (3,3) 变沙地
+    placeCrop(w, [3, 3], { type: CropType.Melon, state: CropState.Grown, growthRemaining: 0 });
+    w.map[3][3].fertility = 2; // 西瓜耗肥 3 → 2-3 = -1 < 0
     w.drones[0].position = [3, 3];
     w.drones[0].energy = 6;
     const events = stepTurn(w, actions([0, { type: 'harvest' }]));
     expect(eventsOfType(events, 'harvest')).toHaveLength(1);
     expect(w.map[3][3].type).toBe(TileType.Sand);
     expect(w.map[3][3].crop).toBeNull();
+    expect(w.map[3][3].fertility).toBeUndefined();
   });
 
-  it('沙漠化: 相邻无沙地时保持原地块类型', () => {
+  it('收获后肥力仍在 [0, 上限] 内时保持土地并扣除肥力', () => {
     const w = single();
-    w.drones[0].position = [6, 4]; // 四周: (5,4) 水池, 其余土地, 无沙地
-    placeCrop(w, [6, 4], { type: CropType.Strawberry, state: CropState.Grown, growthRemaining: 0 });
+    w.drones[0].position = [6, 4];
+    placeCrop(w, [6, 4], { type: CropType.Melon, state: CropState.Grown, growthRemaining: 0 });
     const events = stepTurn(w, actions([0, { type: 'harvest' }]));
     expect(eventsOfType(events, 'harvest')).toHaveLength(1);
     expect(w.map[4][6].type).toBe(TileType.Soil);
+    expect(w.map[4][6].fertility).toBe(2); // 初始 5 - 西瓜耗肥 3
+  });
+
+  it('盐碱化: 收获后土地肥力被增加到超过上限时转化为盐碱地', () => {
+    const w = single();
+    placeCrop(w, [3, 3], { type: CropType.MilkVetch, state: CropState.Grown, growthRemaining: 0 });
+    w.map[3][3].fertility = 9; // 紫云英恢复 2 → 9+2 = 11 > 10
+    w.drones[0].position = [3, 3];
+    w.drones[0].energy = 6;
+    const events = stepTurn(w, actions([0, { type: 'harvest' }]));
+    expect(eventsOfType(events, 'harvest')).toHaveLength(1);
+    expect(w.map[3][3].type).toBe(TileType.Salt);
+    expect(w.map[3][3].crop).toBeNull();
   });
 
   it('间作: 四方向至少 2 个不同作物 → 收获收益 +20%', () => {

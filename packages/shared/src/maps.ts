@@ -13,7 +13,7 @@ import {
   TileType,
   WorldState,
 } from './types';
-import { START_MONEY } from './config';
+import { START_MONEY, INITIAL_TILE_FERTILITY } from './config';
 
 export const SINGLE_WIDTH = 7;
 export const SINGLE_HEIGHT = 7;
@@ -55,7 +55,12 @@ export function mirrorPosition(pos: Position, width: number): Position {
 }
 
 function emptyTile(type: TileType): Tile {
-  return { type, crop: null };
+  // 仅土地持有肥力属性 (初始 INITIAL_TILE_FERTILITY)
+  return {
+    type,
+    crop: null,
+    ...(type === TileType.Soil ? { fertility: INITIAL_TILE_FERTILITY } : {}),
+  };
 }
 
 function buildMap(width: number, height: number): Tile[][] {
