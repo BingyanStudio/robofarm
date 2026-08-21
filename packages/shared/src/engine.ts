@@ -4,33 +4,25 @@
 // 设计约定:
 // - 所有操作效果视为"回合结束瞬间同时发生", 冲突 (同一格子多个无人机)
 //   按"代码执行时间短者优先"仲裁。
-// - 操作处理器按类型注册在 OP_HANDLERS 表 (而非 if 链), 新增操作类型时
-//   只需新增 handler + ops.ts schema + types.ts 联合类型。
+// - 每种操作是一个 class (ops/<type>.ts), 继承 DroneOperation 并通过重写
+//   静态方法 apply() 实现自己的语义; 引擎阶段 1 只按 type 查 OP_CLASSES
+//   注册表 (ops/index.ts) 并调用 cls.apply(), 不再有 if-else / 处理器字典。
+// - 移动/传送在 apply() 里登记移动候选, NewDrone 登记回合末延迟创建请求,
+//   其余操作直接修改世界。
 import {
   CropData,
   CropState,
   CropType,
-  InternalOperation,
-  DroneState,
   GameEvent,
+  InternalOperation,
   Position,
   TileType,
   WorldState,
 } from './types';
-import { TILES, cropConfig } from './registry';
-import {
-  CHANGE_TILE_COST,
-  CHARGE_GAIN,
-  DRONE_LIMIT,
-  HARVEST_ROW_COL_COST,
-  INTERCEPT_ROW_COL_COST,
-  MAX_ENERGY,
-  MAX_WATER,
-  NEW_DRONE_COST,
-  PLANT_ROW_COL_COST,
-  WATER_ROW_COL_COST,
-} from './config';
-import { inBounds, isOwnHalf, isOwnHalfAt, samePos, tileAt } from './maps';
+import { cropConfig } from './registry';
+import { inBounds, isOwnHalf, samePos } from './maps';
+import { opClassOf } from './ops';
+import type { MoveCandidate, TurnSession } from './ops';
 
 /** 某架无人机本回合的动作 */
 export interface DroneAction {
@@ -39,354 +31,9 @@ export interface DroneAction {
   durationMs: number;
 }
 
-interface OpContext {
-  world: WorldState;
-  drone: DroneState;
-  events: GameEvent[];
-}
-
-type OpHandler = (ctx: OpContext, op: InternalOperation) => { ok: boolean; message?: string };
-
-const OP_HANDLERS: Record<string, OpHandler> = {
-  plant(ctx, op) {
-    const { world, drone, events } = ctx;
-    if (op.type !== 'plant') return { ok: false };
-    const cfg = cropConfig(op.crop);
-    const tile = tileAt(world, drone.position);
-    if (!cfg.habitats.includes(tile.type)) {
-      return { ok: false, message: `${cfg.name} 不能种植在 ${TILES[tile.type].name} 上` };
-    }
-    if (tile.crop) return { ok: false, message: '该地块已有作物' };
-    const player = world.players[drone.player];
-    if (player.money < cfg.plantCost) return { ok: false, message: '金钱不足' };
-    tryPlantAt(world, drone, drone.position, op.crop);
-    events.push({ type: 'plant', drone: drone.id, pos: [drone.position[0], drone.position[1]], crop: op.crop });
-    return { ok: true };
-  },
-
-  collectWater(ctx, op) {
-    if (op.type !== 'collectWater') return { ok: false };
-    const { world, drone, events } = ctx;
-    const tile = tileAt(world, drone.position);
-    if (!TILES[tile.type].canCollectWater) return { ok: false, message: '只能在池塘上取水' };
-    if (drone.water >= MAX_WATER) return { ok: false, message: `水量已满 (最多 ${MAX_WATER} 格)` };
-    // 一次取满 (上限 5 格)
-    drone.water = MAX_WATER;
-    events.push({
-      type: 'collect-water',
-      drone: drone.id,
-      pos: [drone.position[0], drone.position[1]],
-      water: drone.water,
-    });
-    return { ok: true };
-  },
-
-  water(ctx, op) {
-    if (op.type !== 'water') return { ok: false };
-    const { world, drone, events } = ctx;
-    const crop = tileAt(world, drone.position).crop;
-    if (!crop || crop.state !== CropState.Thirsty) {
-      return { ok: false, message: '当前地块没有需要浇水的作物' };
-    }
-    if (drone.water < 1) return { ok: false, message: '没有水了, 请先到池塘取水' };
-    drone.water -= 1;
-    crop.state = CropState.Growing; // 恢复生长, 从缺水时剩余的生长进度继续
-    events.push({ type: 'water', drone: drone.id, pos: [drone.position[0], drone.position[1]] });
-    return { ok: true };
-  },
-
-  harvest(ctx, op) {
-    if (op.type !== 'harvest') return { ok: false };
-    const { world, drone, events } = ctx;
-    const tile = tileAt(world, drone.position);
-    const crop = tile.crop;
-    if (!crop || crop.state !== CropState.Grown) return { ok: false, message: '作物尚未成熟' };
-    const cfg = cropConfig(crop.type);
-    const pos: Position = [drone.position[0], drone.position[1]];
-    // 间作: 四方向至少 2 个不同种类作物 → 收益 +20%
-    const value = intercroppingValue(world, pos, crop.type, cfg.value);
-    tile.crop = null;
-    const stole = world.mode === 'combat' && !isOwnHalf(world, drone);
-    if (stole) drone.bounty += value;
-    else world.players[drone.player].money += value;
-    // 沙漠化: 收获的格子周围存在沙地 → 该格转化为沙地
-    maybeDesertify(world, pos);
-    events.push({
-      type: 'harvest',
-      drone: drone.id,
-      pos,
-      value,
-      stole,
-    });
-    return { ok: true };
-  },
-
-  clear(ctx, op) {
-    if (op.type !== 'clear') return { ok: false };
-    const { world, drone, events } = ctx;
-    const tile = tileAt(world, drone.position);
-    if (!tile.crop) return { ok: false, message: '当前地块没有作物' };
-    if (world.mode === 'combat' && !isOwnHalf(world, drone)) {
-      return { ok: false, message: '只能在己方半场铲除' };
-    }
-    tile.crop = null;
-    events.push({ type: 'clear', drone: drone.id, pos: [drone.position[0], drone.position[1]] });
-    return { ok: true };
-  },
-
-  intercept(ctx, op) {
-    if (op.type !== 'intercept') return { ok: false };
-    const { world, drone } = ctx;
-    if (world.mode !== 'combat') return { ok: false, message: '拦截仅在竞技模式可用' };
-    if (!inBounds(world, op.at)) return { ok: false, message: '拦截目标越界' };
-    drone.interceptTarget = [op.at[0], op.at[1]];
-    return { ok: true };
-  },
-
-  charge(ctx, op) {
-    if (op.type !== 'charge') return { ok: false };
-    const { drone, events } = ctx;
-    const gained = Math.min(MAX_ENERGY - drone.energy, CHARGE_GAIN);
-    drone.energy += gained;
-    events.push({
-      type: 'charge',
-      drone: drone.id,
-      pos: [drone.position[0], drone.position[1]],
-      energy: drone.energy,
-    });
-    return { ok: true };
-  },
-
-  harvestRow: (ctx, op) => harvestLine(ctx, op, 'row'),
-  harvestCol: (ctx, op) => harvestLine(ctx, op, 'col'),
-  waterRow: (ctx, op) => waterLine(ctx, op, 'row'),
-  waterCol: (ctx, op) => waterLine(ctx, op, 'col'),
-  plantRow: (ctx, op) => plantLine(ctx, op, 'row'),
-  plantCol: (ctx, op) => plantLine(ctx, op, 'col'),
-
-  interceptRow(ctx, op) {
-    if (op.type !== 'interceptRow') return { ok: false };
-    return setInterceptZone(ctx, 'row');
-  },
-  interceptCol(ctx, op) {
-    if (op.type !== 'interceptCol') return { ok: false };
-    return setInterceptZone(ctx, 'col');
-  },
-
-  changeTile(ctx, op) {
-    if (op.type !== 'changeTile') return { ok: false };
-    const { world, drone, events } = ctx;
-    if (drone.energy < CHANGE_TILE_COST) {
-      return { ok: false, message: `能量不足: ChangeTile 需要 ${CHANGE_TILE_COST} 点能量` };
-    }
-    const target = op.tileType;
-    const tile = tileAt(world, drone.position);
-    if (tile.type === target) return { ok: false, message: '目标类型与当前地块相同' };
-    if (tile.crop) return { ok: false, message: '该地块有作物, 不能转换地块类型' };
-    // 前提: 上下左右必须有至少一个与目标类型相同的地块, 不允许凭空创造
-    const hasNeighbor = orthNeighbors(drone.position, world).some(
-      ([nx, ny]) => world.map[ny][nx].type === target
-    );
-    if (!hasNeighbor) {
-      return { ok: false, message: `周围没有 ${TILES[target].name} 地块, 不能凭空创造` };
-    }
-    drone.energy -= CHANGE_TILE_COST;
-    world.map[drone.position[1]][drone.position[0]] = { type: target, crop: null };
-    events.push({
-      type: 'change-tile',
-      drone: drone.id,
-      pos: [drone.position[0], drone.position[1]],
-      tileType: target,
-    });
-    return { ok: true };
-  },
-};
-
-/**
- * 行/列范围收获: 一次性收获以无人机为中心的行/列 3 格内全部成熟作物, 消耗能量。
- * 竞技模式仅收割自己半场的作物 (对方半场的作物不能由此收割)。
- */
-function harvestLine(
-  ctx: OpContext,
-  op: InternalOperation,
-  axis: 'row' | 'col'
-): { ok: boolean; message?: string } {
-  if (op.type !== 'harvestRow' && op.type !== 'harvestCol') return { ok: false };
-  const { world, drone, events } = ctx;
-  if (drone.energy < HARVEST_ROW_COL_COST) {
-    return { ok: false, message: `能量不足: ${op.type} 需要 ${HARVEST_ROW_COL_COST} 点能量` };
-  }
-  drone.energy -= HARVEST_ROW_COL_COST;
-  let count = 0;
-  for (const pos of lineRangePositions(drone.position, axis, world)) {
-    const tile = world.map[pos[1]][pos[0]];
-    const crop = tile.crop;
-    if (!crop || crop.state !== CropState.Grown) continue;
-    if (world.mode === 'combat' && !isOwnHalfAt(world, drone.player, pos)) continue;
-    const cfg = cropConfig(crop.type);
-    // 间作: 四方向至少 2 个不同种类作物 → 收益 +20%
-    const value = intercroppingValue(world, pos, crop.type, cfg.value);
-    tile.crop = null;
-    // 沙漠化: 收获的格子周围存在沙地 → 该格转化为沙地
-    maybeDesertify(world, pos);
-    // 行/列收割只作用于自己半场, 收获直接入账 (不产生偷菜)
-    world.players[drone.player].money += value;
-    events.push({
-      type: 'harvest',
-      drone: drone.id,
-      pos: [pos[0], pos[1]],
-      value,
-      stole: false,
-    });
-    count++;
-  }
-  return { ok: true, message: count === 0 ? '范围内没有可收获的作物' : undefined };
-}
-
-/**
- * 行/列范围浇水: 以无人机为中心的行/列 3 格内给缺水作物浇水直到水耗尽,
- * 跳过不需要浇水的作物, 消耗能量。
- */
-function waterLine(
-  ctx: OpContext,
-  op: InternalOperation,
-  axis: 'row' | 'col'
-): { ok: boolean; message?: string } {
-  if (op.type !== 'waterRow' && op.type !== 'waterCol') return { ok: false };
-  const { world, drone, events } = ctx;
-  if (drone.energy < WATER_ROW_COL_COST) {
-    return { ok: false, message: `能量不足: ${op.type} 需要 ${WATER_ROW_COL_COST} 点能量` };
-  }
-  drone.energy -= WATER_ROW_COL_COST;
-  let count = 0;
-  for (const pos of lineRangePositions(drone.position, axis, world)) {
-    const crop = world.map[pos[1]][pos[0]].crop;
-    if (!crop || crop.state !== CropState.Thirsty) continue; // 跳过不需要浇水的作物
-    if (drone.water < 1) break; // 水耗尽即停止
-    drone.water -= 1;
-    crop.state = CropState.Growing;
-    events.push({ type: 'water', drone: drone.id, pos: [pos[0], pos[1]] });
-    count++;
-  }
-  return { ok: true, message: count === 0 ? '没有浇到任何作物 (水耗尽或范围内无缺水作物)' : undefined };
-}
-
-/** 以无人机为中心的行/列 3 格范围 (越界跳过) */
-function lineRangePositions(center: Position, axis: 'row' | 'col', world: WorldState): Position[] {
-  const out: Position[] = [];
-  const c = center[axis === 'row' ? 0 : 1];
-  for (let i = c - 1; i <= c + 1; i++) {
-    const pos: Position = axis === 'row' ? [i, center[1]] : [center[0], i];
-    if (inBounds(world, pos)) out.push(pos);
-  }
-  return out;
-}
-
-/**
- * 间作: 若作物的四方向邻格至少有 2 个不同于自己种类的作物, 收获收益 +20% (向下取整)。
- */
-function intercroppingValue(world: WorldState, pos: Position, cropType: CropType, base: number): number {
-  let diff = 0;
-  for (const [nx, ny] of orthNeighbors(pos, world)) {
-    const nb = world.map[ny][nx].crop;
-    if (nb && nb.type !== cropType) diff++;
-  }
-  return diff >= 2 ? Math.floor(base * 1.2) : base;
-}
-
-/**
- * 沙漠化: 收获作物时, 若该格的上下左右存在沙地, 则该格也转化为沙地。
- * 仅蚕食土地 (soil) 地块, 不影响水 (water) 等地块。
- * (调用前该格作物已移除)
- */
-function maybeDesertify(world: WorldState, pos: Position): void {
-  if (world.map[pos[1]][pos[0]].type !== TileType.Soil) return;
-  for (const [nx, ny] of orthNeighbors(pos, world)) {
-    if (world.map[ny][nx].type === TileType.Sand) {
-      world.map[pos[1]][pos[0]] = { type: TileType.Sand, crop: null };
-      return;
-    }
-  }
-}
-
-/**
- * 尝试在指定格种植作物 (与单格 Plant 相同的判定: 地块适配 / 无作物 / 金钱足够)。
- * 成功时扣除成本并写入作物数据, 返回 true; 任一条件不满足则不改动任何状态, 返回 false。
- */
-function tryPlantAt(world: WorldState, drone: DroneState, pos: Position, crop: CropType): boolean {
-  const cfg = cropConfig(crop);
-  const tile = world.map[pos[1]][pos[0]];
-  if (!cfg.habitats.includes(tile.type)) return false;
-  if (tile.crop) return false;
-  const player = world.players[drone.player];
-  if (player.money < cfg.plantCost) return false;
-  player.money -= cfg.plantCost;
-  // 生长周期受地块类型影响 (如沙地 ×1.5, 数据在 TILES 注册表);
-  // 作物可用 growthOverride 覆盖地块倍率 (特殊机制);
-  // 作物可用 plantCycles 自定义动态周期 (如香菇: 20 + 2 × 场上香菇总数);
-  // 总缺水次数按该次种植的实际周期动态计算 (不依赖固定的剩余取模)
-  const adjusted = cfg.plantCycles
-    ? cfg.plantCycles(world)
-    : Math.floor(cfg.growCycles * (cfg.growthOverride ?? TILES[tile.type].growthFactor));
-  tile.crop = {
-    type: crop,
-    state: CropState.Growing,
-    growthRemaining: adjusted,
-    thirstTotal: cfg.thirstInterval === null ? 0 : Math.floor(adjusted / cfg.thirstInterval),
-    thirstsDone: 0,
-    plantCycles: adjusted,
-  };
-  return true;
-}
-
 /** 香菇实际生长周期: 委托给香菇配置里的 plantCycles (20 + 2 × 场上香菇总数) */
 function shiitakeGrowCycles(world: WorldState): number {
   return cropConfig(CropType.Shiitake).plantCycles!(world);
-}
-
-/**
- * 行/列范围种植: 以无人机为中心的行/列 3 格内按 plants 数组顺序种植,
- * 跳过无法种植的格子 (地块不适配 / 已有作物 / 金钱不足), 消耗能量。
- */
-function plantLine(
-  ctx: OpContext,
-  op: InternalOperation,
-  axis: 'row' | 'col'
-): { ok: boolean; message?: string } {
-  if (op.type !== 'plantRow' && op.type !== 'plantCol') return { ok: false };
-  const { world, drone, events } = ctx;
-  if (drone.energy < PLANT_ROW_COL_COST) {
-    return { ok: false, message: `能量不足: ${op.type} 需要 ${PLANT_ROW_COL_COST} 点能量` };
-  }
-  drone.energy -= PLANT_ROW_COL_COST;
-  let count = 0;
-  let plantIdx = 0;
-  for (const pos of lineRangePositions(drone.position, axis, world)) {
-    if (plantIdx >= op.plants.length) break;
-    if (!tryPlantAt(world, drone, pos, op.plants[plantIdx])) continue;
-    events.push({ type: 'plant', drone: drone.id, pos: [pos[0], pos[1]], crop: op.plants[plantIdx] });
-    plantIdx++;
-    count++;
-  }
-  return { ok: true, message: count === 0 ? '范围内没有可种植的位置 (或已全部种下)' : undefined };
-}
-
-/** 行/列范围拦截: 以施法点 (无人机释放时的位置) 为中心的行/列 3 格范围, 回合结束时结算 */
-function setInterceptZone(ctx: OpContext, axis: 'row' | 'col'): { ok: boolean; message?: string } {
-  const { world, drone } = ctx;
-  if (world.mode !== 'combat') return { ok: false, message: '拦截仅在竞技模式可用' };
-  if (drone.energy < INTERCEPT_ROW_COL_COST) {
-    return { ok: false, message: `能量不足: 范围拦截需要 ${INTERCEPT_ROW_COL_COST} 点能量` };
-  }
-  drone.energy -= INTERCEPT_ROW_COL_COST;
-  drone.interceptZone = { axis, center: [drone.position[0], drone.position[1]] };
-  return { ok: true };
-}
-
-interface MoveCandidate {
-  drone: DroneState;
-  to: Position;
-  durationMs: number;
 }
 
 /**
@@ -399,88 +46,20 @@ export function stepTurn(world: WorldState, actions: Record<number, DroneAction>
   const moveCandidates: MoveCandidate[] = [];
   /** NewDrone 待创建请求 (回合结束统一创建, 避免遍历中修改无人机列表) */
   const newDroneRequests: { player: number; pos: Position }[] = [];
+  const session: TurnSession = { moveCandidates, newDroneRequests };
 
-  // 阶段 1: 语义校验并执行非移动操作, 收集移动候选
+  // 阶段 1: 语义校验并执行非移动操作, 收集移动候选。
+  // 每个操作类实现自己的 apply(): 移动/传送登记移动候选, NewDrone 登记延迟创建,
+  // 其余直接修改世界。这里只做注册表分发, 无 if-else。
   for (const drone of world.drones) {
     const act = actions[drone.id];
     if (!act || !act.op) continue;
-    const { op } = act;
-    if (op.type === 'newDrone') {
-      // 创建新无人机: 花费 4000 金钱, 指定位置必须为空; 数量受模式上限约束
-      const limit = DRONE_LIMIT[world.mode];
-      const ownCount = world.drones.filter((d) => d.player === drone.player).length;
-      const player = world.players[drone.player];
-      if (player.money < NEW_DRONE_COST) {
-        events.push({ type: 'invalid-op', drone: drone.id, message: `金钱不足: NewDrone 需要 ${NEW_DRONE_COST} 金钱` });
-        continue;
-      }
-      if (ownCount >= limit) {
-        events.push({ type: 'invalid-op', drone: drone.id, message: `无人机数量已达上限 (${limit} 架)` });
-        continue;
-      }
-      if (!inBounds(world, op.at)) {
-        events.push({ type: 'invalid-op', drone: drone.id, message: `NewDrone 目标位置 ${JSON.stringify(op.at)} 越界` });
-        continue;
-      }
-      if (world.drones.some((d) => samePos(d.position, op.at))) {
-        events.push({ type: 'invalid-op', drone: drone.id, message: '该位置已有无人机' });
-        continue;
-      }
-      player.money -= NEW_DRONE_COST;
-      newDroneRequests.push({ player: drone.player, pos: op.at });
+    const cls = opClassOf(act.op.type);
+    if (!cls) {
+      events.push({ type: 'invalid-op', drone: drone.id, message: `未知操作类型: ${String(act.op.type)}` });
       continue;
     }
-    if (op.type === 'teleport') {
-      // 传送: 任意距离, 能量 = ceil(欧氏距离); 竞技模式只能从我方半场传送到我方半场
-      if (!inBounds(world, op.to)) {
-        events.push({ type: 'invalid-op', drone: drone.id, message: `传送目标 ${JSON.stringify(op.to)} 越界` });
-        continue;
-      }
-      if (world.mode === 'combat' && (!isOwnHalfAt(world, drone.player, drone.position) || !isOwnHalfAt(world, drone.player, op.to))) {
-        events.push({ type: 'invalid-op', drone: drone.id, message: '传送仅限竞技模式在我方半场内进行 (起点与终点都必须在己方半场)' });
-        continue;
-      }
-      const dx = op.to[0] - drone.position[0];
-      const dy = op.to[1] - drone.position[1];
-      const cost = Math.ceil(Math.sqrt(dx * dx + dy * dy));
-      if (cost === 0) {
-        events.push({ type: 'invalid-op', drone: drone.id, message: '传送目标与当前位置相同' });
-        continue;
-      }
-      if (drone.energy < cost) {
-        events.push({ type: 'invalid-op', drone: drone.id, message: `能量不足: Teleport 需要 ${cost} 点能量` });
-        continue;
-      }
-      drone.energy -= cost;
-      // 与移动同走仲裁: 目标格被最终位置占据则失败 (能量已消耗)
-      moveCandidates.push({ drone, to: op.to, durationMs: act.durationMs });
-      continue;
-    }
-    if (op.type === 'move') {
-      // 移动限制: 只能移动到周围 8 格 (相邻格), 超出则操作无效并给出错误信息
-      const dx = Math.abs(op.to[0] - drone.position[0]);
-      const dy = Math.abs(op.to[1] - drone.position[1]);
-      if (dx > 1 || dy > 1) {
-        events.push({
-          type: 'invalid-op',
-          drone: drone.id,
-          message: `移动目标 ${JSON.stringify(op.to)} 超出周围 8 格范围, 只能移动到相邻格`,
-        });
-        continue;
-      }
-      if (dx === 0 && dy === 0) {
-        events.push({ type: 'invalid-op', drone: drone.id, message: '移动目标与当前位置相同' });
-        continue;
-      }
-      moveCandidates.push({ drone, to: op.to, durationMs: act.durationMs });
-      continue;
-    }
-    const handler = OP_HANDLERS[op.type];
-    if (!handler) {
-      events.push({ type: 'invalid-op', drone: drone.id, message: `未知操作类型: ${String(op.type)}` });
-      continue;
-    }
-    const result = handler({ world, drone, events }, op);
+    const result = cls.apply({ world, drone, events, durationMs: act.durationMs }, act.op, session);
     if (!result.ok) {
       events.push({ type: 'invalid-op', drone: drone.id, message: result.message ?? '操作无效' });
     }
@@ -669,19 +248,6 @@ function tickCrop(world: WorldState, crop: CropData, pos: Position, events: Game
   }
 }
 
-/** 上下左右四个正交邻格 (越界跳过) */
-function orthNeighbors(pos: Position, world: WorldState): Position[] {
-  const out: Position[] = [];
-  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
-    const nx = pos[0] + dx;
-    const ny = pos[1] + dy;
-    if (nx >= 0 && nx < world.map[0].length && ny >= 0 && ny < world.map.length) {
-      out.push([nx, ny]);
-    }
-  }
-  return out;
-}
-
 /**
  * 香菇扩散: 按方向序号 (0=上, 1=右, 2=下, 3=左) 在邻格种下一株新的香菇
  * (地块需为空且为土地; 越界或不可种植则放弃该方向)。
@@ -706,4 +272,3 @@ function spawnShiitake(world: WorldState, pos: Position, dirIndex: number, event
   };
   events.push({ type: 'plant', drone: -1, pos: [nx, ny], crop: CropType.Shiitake });
 }
-

@@ -105,15 +105,16 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
   floor(实际周期 / thirstInterval)), 触发点 = ceil((剩余次数)·thirstInterval),
   **不依赖固定的剩余取模**, 因此沙地 (周期 ×1.5) 等调整过周期的作物缺水次数同步增加。
   当前地块: 土地 / 水池 / 沙地 (可种草莓/葡萄/南瓜)。
-- 无人机操作: 玩家侧为**操作类** API (`shared/src/player-api.ts` 的 `Move` /
-  `Teleport` / `Plant` / `CollectWater` / `Water` / `Harvest` / `Clear` / `Intercept` /
-  `Charge` / `HarvestRow` / `HarvestCol` / `WaterRow` / `WaterCol` /
-  `InterceptRow` / `InterceptCol` / `PlantRow` / `PlantCol`, 均继承 `DroneOperation`,
-  参数经构造函数传入),
-  引擎按**构造类名**识别操作; 内部传输/引擎仍用判别联合 `DroneOperation`
-  (`types.ts`), 由 `ops.ts` 的 `normalizeOp` 把类实例统一转换为纯对象
-  (同时兼容 `{ type: ... }` 旧写法)。新增操作 = 添加操作类 + OP_SCHEMAS +
-  OP_HANDLERS 三处。
+- 无人机操作: 玩家侧为**操作类** API (`Move` / `Teleport` / `Plant` / `CollectWater` /
+  `Water` / `Harvest` / `Clear` / `Intercept` / `Charge` / `HarvestRow` / `HarvestCol` /
+  `WaterRow` / `WaterCol` / `InterceptRow` / `InterceptCol` / `PlantRow` / `PlantCol`,
+  均继承 `DroneOperation`, 参数经构造函数传入),
+  每个操作一个文件在 `shared/src/ops/` (继承 + 重写静态 `apply()` 实现语义),
+  引擎按实例的 **`type` 字段**识别操作; 内部传输/引擎仍用判别联合 `InternalOperation`
+  (`types.ts`), 由 `ops/index.ts` 的 `normalizeOp` 把类实例统一转换为纯对象
+  (同时兼容 `{ type: ... }` 旧写法)。
+  新增操作 = 在 `ops/` 新建操作类 (声明 `type` + 静态 `fields` + 重写静态 `apply`)
+  + 在 `ops/index.ts` 的 `OP_CLASSES` 登记, 共两处, 引擎零改动。
 - **能量机制**: DroneState.energy (上限 MAX_ENERGY=10, 初始 0), Charge 原地 +5;
   行/列范围操作消耗能量 (收割 4 / 浇灌 3 / 种植 3 / 拦截 6, 常量在 config.ts);
   Teleport 消耗 ceil(欧氏距离) 能量 (尝试时即扣除, 仲裁失败不退还; 竞技模式只能
@@ -123,7 +124,8 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
   行/列范围操作覆盖以无人机为中心的 3 格 (interceptZone 记录施法点 center);
   行/列收割仅限己方半场; 行/列拦截在回合结束结算。
   行/列种植 (PlantRow/PlantCol) 按 plants 数组顺序在 3 格内种植,
-  跳过无法种植的格子 (地块不适配/已有作物/金钱不足) (ops.ts 的 `crops` 字段 kind 校验)。
+  跳过无法种植的格子 (地块不适配/已有作物/金钱不足) (PlantRow/PlantCol 静态
+  `fields` 的 `crops` 字段 kind 校验)。
 - 当前作物: 草莓 / 葡萄 / 小麦 (需水) / 荷花 (水生) / 南瓜 (需水) /
   西瓜 (成本 1000/收获 1800/100 周期) /
   紫云英 (成本 100/收获 120/160 周期, 生长加速邻格 onGrow) /
@@ -146,7 +148,7 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
 - **动态生长周期 (plantCycles)**: 作物可用 `plantCycles(world)` 自定义实际生长周期
   (覆盖 growCycles 与地块倍率), 如香菇的 20 + 2×场上香菇数。
 - **ChangeTile**: 消耗 CHANGE_TILE_COST=6, 需上下左右有同类型地块 (orthNeighbors 检查),
-  有作物的地块不可转换; 按操作三处注册 (player-api + OP_SCHEMAS + OP_HANDLERS)。
+  有作物的地块不可转换; 按操作类方式注册 (ops/change-tile.ts + ops/index.ts)。
 
 ## 引擎语义 (shared/src/engine.ts, 改前必读)
 
