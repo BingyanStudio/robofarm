@@ -730,7 +730,7 @@ describe('engine: 新作物 (西瓜/紫云英/香菇)', () => {
     placeCrop(w, [3, 3], { type: CropType.MilkVetch, state: CropState.Thirsty, growthRemaining: 10 });
     placeCrop(w, [2, 3], { type: CropType.Pumpkin, state: CropState.Growing, growthRemaining: 95 }); // 左邻格
     stepTurn(w, actions([0, null]));
-    // 紫云英缺水: onGrow 不执行, 邻格仅自身生长 -1 (无加速)
+    // 紫云英缺水: growUpdate 不执行, 邻格仅自身生长 -1 (无加速)
     expect(w.map[3][2].crop!.growthRemaining).toBe(94);
   });
 

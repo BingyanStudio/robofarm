@@ -364,11 +364,11 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
           };
         }
         const cfg = CROPS[crop];
-        // 特效/特殊机制: 原本是字符串效果 id, 重构后是挂在配置上的函数,
-        // 无法 JSON 序列化, 因此转换为可读描述。
+        // 特效/特殊机制: 特效是挂在配置上的函数, 无法 JSON 序列化, 因此转换为可读描述。
         const special: string[] = [];
-        if (cfg.onMature) special.push('成熟特效');
-        if (cfg.onGrow) special.push('生长特效');
+        if (cfg.onGrown) special.push('成熟特效');
+        if (cfg.grownUpdate) special.push('成熟后每回合特效');
+        if (cfg.growUpdate) special.push('生长特效');
         // 重写了 growCycles() (如香菇) → 动态生长周期
         if (cfg.growCycles !== BaseCrop.prototype.growCycles) special.push('动态生长周期');
         return {

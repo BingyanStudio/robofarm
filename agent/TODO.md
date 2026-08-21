@@ -1,36 +1,27 @@
 # TODO
 
 此处放置所有待办事项
-- [x] Refactor: Tile 类型增加 "作物种下" / "作物浇水" / "作物收获" 三个回调,
-  分别在对应时机执行; "沙漠化" 机制移动到土地的 "作物收获" 回调中, 不再单独实现
-  改动:
-  1. `types.ts` 新增 `TileCropEventContext` (world / pos / crop / events);
-     `TileTypeConfig` 与 `BaseTile` 新增可选回调: `onCropPlanted` / `onCropWatered` /
-     `onCropHarvested`, 与作物的 onGrow/onMature 同构, 引擎直接调用、不 if 硬编码。
-  2. **触发时机**:
-     - 种下: `tryPlantAt` (单格 + 行/列种植) 与香菇扩散 `spawnShiitake` 种下后;
-     - 浇水: 单格 Water、行/列浇水 (LineWaterOp)、水仙自动浇水 (daffodil onGrow) 后;
-     - 收获: 单格 Harvest 与行/列收割 (LineHarvestOp) 收获后 (此时该格作物已移除,
-       tile.type 仍是原地块, 回调按原地块分发)。
-  3. **沙漠化迁入土地**: 删除 ops/helpers.ts 的 `maybeDesertify`, 逻辑改写为
-     tiles/soil.ts 的 `onCropHarvested` (收获后若上下左右有沙地则本格转沙地;
-     土壤守卫由"回调只在土地自身触发时执行"天然满足); ops/harvest.ts 与
-     ops/line.ts 改为调用 `TILES[tile.type].onCropHarvested?.(...)`。
-  4. `orthNeighbors` 从 ops/helpers.ts 上移到 maps.ts (通用地图工具, 供 tiles 与 ops
-     共用, 避免 tiles 依赖 ops 目录), 并从 shared 导出。
-  5. 行为零变化: 沙漠化测试原样通过 (收获/行收割两条路径), 全部 100 个测试通过,
-     shared/backend/frontend 构建通过。
 
-- [x] Refactor: 将香菇扩散 (成熟后每回合扩散) 的逻辑整体移入 crops/shiitake.ts,
-  作物基类增加成熟后每回合回调
-  改动:
-  1. `types.ts` 新增 `GrownEffectContext`; `CropTypeConfig` 与 `BaseCrop` 新增可选回调
-     **`onGrown`** (作物处于 Grown 状态时每回合执行, 与 onGrow/onMature 同构)。
-  2. engine.ts 的 Grown 分支改为通用分发 `cfg.onGrown?.(...)`, 删除 `spawnShiitake`
-     函数与相关特判 (CropType/TileType/TILES 导入随之移除)。
-  3. 香菇全部机制内聚到 crops/shiitake.ts: `onMature` 设 `spreadLeft=4`,
-     `onGrown` 每回合按上右下左扩散 1 株 (spreadLeft 到 0 停止), 私有方法
-     `spawnShiitake` 负责在邻格种下新香菇 (走本类重写的 growCycles 动态周期,
-     并触发地块的 onCropPlanted 回调)。
-  4. 行为零变化: 香菇扩散测试原样通过 (4 回合方向顺序 / 越界放弃 / 已有作物放弃 /
-     场上数量动态周期), 全部 100 个测试通过, shared/backend/frontend 构建通过。
+- [ ] Balance: 沙地的生长周期惩罚调整为 x3
+
+- [ ] Feature: 增加机制 "土地肥力"
+    1. "土地" 地块运行时增加 "肥力" 属性, 初始为 5, 最大值为 10; 仅土地有此选项; 可通过无人机 API 在游戏内查询
+    2. 所有作物去除 "habitats" 属性, 改为 "canPlant" 回调，传入种植所在 Tile, 返回 boolean 表示是否可以种植
+        1. 以前通过 habitats 判断是否能种植在特定种类地块, 现在靠 canPlant 检测 Tile 类型实现
+        2. canPlant 还能用于检查土地肥力是否符合需求, 作物基类不判断，由子类实现
+    3. 所有作物增加 "肥力消耗" 属性, 基类数值为 0, 在收获时若脚下为土地则扣除 "肥力消耗" 的肥力值
+        > 部分作物的 "肥力消耗" 可能为负值, 表示该作物为土地增加肥力, 在 API 边栏显示的时候需要区分
+    4. "沙漠化" 机制修改: 若土地肥力被扣除到 < 0, 则土地转化为沙地
+    5. 增加地块 "盐碱地": 一种新地形, 英文id为 "salt" (据此找贴图); 在上方种植植物, 生长周期 x1.5, 浇水次数 x2 (作物的浇水次数获取代码需要按照生长周期类似的方式重构)
+    5. 增加机制 "盐碱化": 若土地肥力被增加到 > 上限(当前是10), 则土地转化为盐碱地
+
+- [ ] Balance: 作物的浇水时机改为非均匀分布, 在种植时随机选取
+    1. 先计算生长周期和浇水次数, 然后随机选择 n(n=浇水次数) 个位置, 当生长到该周期时缺水
+    2. 随机仅改变缺水时机, 不改变缺水次数
+    3. 该属性对玩家隐藏，无法通过无人机 API 获取
+    4. 游戏 Tooltip 删除 "作物还有多少周期缺水" 的显示
+    5. 游戏回放需要保存每个作物的缺水时机, 以保证回放与游玩的过程和结果相同
+
+- [ ] Enhancement: 游戏界面 Tooltip 展示 Tile 信息时, 若是土地，则带上肥力信息
+
+- [ ] Enhancement: 多人竞技游戏界面 Tooltip 展示 Tile 信息时, 带上 己方/对方半场 信息

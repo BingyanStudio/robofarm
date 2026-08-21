@@ -193,12 +193,12 @@ function tickCrop(world: WorldState, crop: CropData, pos: Position, events: Game
       crop.state = CropState.Grown;
       crop.growthRemaining = 0;
       events.push({ type: 'crop-grow', pos, state: CropState.Grown, cyclesToGrown: 0 });
-      // 成熟特效: 作物成熟时执行其挂接的特效 (多数作物未声明, 无操作)。
-      // 特效函数直接定义在作物自己的文件里 (crops/<type>.ts 的 onMature), 引擎直接调用。
-      cfg.onMature?.({ world, pos, crop, events });
+      // 成熟特效 (onGrown): 作物成熟时执行其挂接的特效 (多数作物未声明, 无操作)。
+      // 特效函数直接定义在作物自己的文件里 (crops/<type>.ts), 引擎直接调用。
+      cfg.onGrown?.({ world, pos, crop, events });
     } else {
-      // 生长特效: 每个生长回合都会执行 (多数作物未声明, 无操作)。
-      cfg.onGrow?.({ world, crop, pos, events });
+      // 生长特效 (growUpdate): 每个生长回合都会执行 (多数作物未声明, 无操作)。
+      cfg.growUpdate?.({ world, crop, pos, events });
 
       if (cfg.thirstInterval !== null) {
         // 缺水触发按种植时记录的"总缺水次数"动态计算, 缺水点在实际生长周期内均匀分布:
@@ -235,11 +235,11 @@ function tickCrop(world: WorldState, crop: CropData, pos: Position, events: Game
     // 缺水: 长期保持 Thirsty, 不枯萎; 生长不推进, 等待浇水后恢复
     events.push({ type: 'crop-grow', pos, state: CropState.Thirsty, cyclesToGrown: 0 });
   } else if (crop.state === CropState.Grown) {
-    // 成熟后每回合特效: 每个作物成熟后每个回合都会执行其挂接的特效
+    // 成熟后每回合特效 (grownUpdate): 每个作物成熟后每个回合都会执行其挂接的特效
     // (多数作物不声明, 无操作)。特效函数直接定义在作物自己的文件里
-    // (crops/<type>.ts 的 onGrown), 引擎直接调用。
+    // (crops/<type>.ts), 引擎直接调用。
     // 如香菇: 按上右下左顺序扩散 1 株小香菇 (CropData.spreadLeft, 到 0 停止)。
-    cfg.onGrown?.({ world, pos, crop, events });
+    cfg.grownUpdate?.({ world, pos, crop, events });
   }
 }
 

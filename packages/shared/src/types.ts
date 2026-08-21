@@ -190,7 +190,7 @@ export interface WorldState {
 // 作物特效上下文 (作物自己的文件里定义特效函数时使用)
 // ---------------------------------------------------------------------------
 
-/** 作物成熟特效 (onMature) 的执行上下文 */
+/** 作物成熟特效 (onGrown: 作物变为 Grown 时执行) 的执行上下文 */
 export interface MaturityEffectContext {
   world: WorldState;
   pos: Position;
@@ -198,7 +198,7 @@ export interface MaturityEffectContext {
   events: GameEvent[];
 }
 
-/** 作物生长特效 (onGrow) 的执行上下文 */
+/** 作物生长特效 (growUpdate: 生长中每回合执行) 的执行上下文 */
 export interface GrowthEffectContext {
   world: WorldState;
   crop: CropData;
@@ -206,7 +206,7 @@ export interface GrowthEffectContext {
   events: GameEvent[];
 }
 
-/** 作物成熟后每回合特效 (onGrown) 的执行上下文 */
+/** 作物成熟后每回合特效 (grownUpdate: Grown 状态下每回合执行) 的执行上下文 */
 export interface GrownEffectContext {
   world: WorldState;
   pos: Position;

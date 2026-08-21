@@ -1,5 +1,5 @@
 // 水仙: 功能性作物, 为周围的作物提供缓慢的浇水支持。
-// 特殊效果 (onGrow) 直接定义在本文件, 引擎直接调用。
+// 特殊效果 (growUpdate) 直接定义在本文件, 引擎直接调用。
 import { CropState, CropType, TileType } from '../types';
 import type { GrowthEffectContext } from '../types';
 import { TILES } from '../registry';
@@ -21,7 +21,7 @@ export class Daffodil extends BaseCrop {
    * 若存在缺水作物则自动浇水 (每回合仅浇水一次), 成熟后无此效果。
    * 浇水效果与普通 Water 一致 (前端渲染淡蓝色特效)。
    */
-  onGrow({ world, pos, events }: GrowthEffectContext): void {
+  growUpdate({ world, pos, events }: GrowthEffectContext): void {
     for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
       const nx = pos[0] + dx;
       const ny = pos[1] + dy;

@@ -1,5 +1,5 @@
 // 香菇: 成熟后按 [上右下左] 顺序扩散 4 株; 场上香菇越多生长越慢。
-// 全部机制 (成熟特效 onMature / 成熟后每回合扩散 onGrown / 动态周期 growCycles 重写)
+// 全部机制 (成熟特效 onGrown / 成熟后每回合扩散 grownUpdate / 动态周期 growCycles 重写)
 // 都定义在本文件, 引擎只负责在对应时机调用回调。
 import { CropState, CropType, Position, Tile, TileType, WorldState } from '../types';
 import type { GameEvent, GrownEffectContext, MaturityEffectContext } from '../types';
@@ -29,12 +29,12 @@ export class Shiitake extends BaseCrop {
   readonly color = '#c0846a';
 
   /** 成熟特效: 进入扩散期, 之后每回合按上右下左顺序扩散 1 株 (共 4 次) */
-  onMature({ crop }: MaturityEffectContext): void {
+  onGrown({ crop }: MaturityEffectContext): void {
     crop.spreadLeft = 4;
   }
 
   /** 成熟后每回合按 上→右→下→左 顺序扩散 1 株小香菇, spreadLeft 到 0 停止 */
-  onGrown({ world, pos, crop, events }: GrownEffectContext): void {
+  grownUpdate({ world, pos, crop, events }: GrownEffectContext): void {
     if (!crop.spreadLeft || crop.spreadLeft <= 0) return;
     this.spawnShiitake(world, pos, 4 - crop.spreadLeft, events);
     crop.spreadLeft -= 1;

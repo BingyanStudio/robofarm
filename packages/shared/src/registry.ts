@@ -94,18 +94,18 @@ export interface CropTypeConfig {
    * 成熟特效: 作物成熟时执行的函数 (定义在作物自己的文件里, 引擎直接调用)。
    * 多数作物不声明 (无特效)。
    */
-  onMature?: (ctx: MaturityEffectContext) => void;
+  onGrown?: (ctx: MaturityEffectContext) => void;
   /**
    * 成熟后每回合特效: 作物处于 Grown 状态时每个回合都会执行的函数
    * (定义在作物自己的文件里, 引擎直接调用)。如香菇的扩散。
    * 多数作物不声明 (无特效)。
    */
-  onGrown?: (ctx: GrownEffectContext) => void;
+  grownUpdate?: (ctx: GrownEffectContext) => void;
   /**
    * 生长特效: 作物生长中的每个回合都会执行的函数 (定义在作物自己的文件里, 引擎直接调用)。
    * 多数作物不声明 (无特效)。
    */
-  onGrow?: (ctx: GrowthEffectContext) => void;
+  growUpdate?: (ctx: GrowthEffectContext) => void;
 }
 
 /**

@@ -21,11 +21,11 @@ export abstract class BaseCrop implements CropTypeConfig {
   abstract readonly color: string;
 
   /** 成熟特效: 作物成熟时执行 (多数作物不声明) */
-  onMature?(ctx: MaturityEffectContext): void;
+  onGrown?(ctx: MaturityEffectContext): void;
   /** 成熟后每回合特效: 作物处于 Grown 状态时每个回合执行 (多数作物不声明, 如香菇扩散) */
-  onGrown?(ctx: GrownEffectContext): void;
+  grownUpdate?(ctx: GrownEffectContext): void;
   /** 生长特效: 生长中每个回合执行 (多数作物不声明) */
-  onGrow?(ctx: GrowthEffectContext): void;
+  growUpdate?(ctx: GrowthEffectContext): void;
 
   /**
    * 实际生长周期: 返回种植在该地块上的实际回合数。

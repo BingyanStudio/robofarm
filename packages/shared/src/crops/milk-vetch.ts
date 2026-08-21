@@ -1,6 +1,6 @@
 // 紫云英: 绿肥植物, 生长时加速周围作物的生长。
-// 特殊效果 (onGrow) 直接定义在本文件, 引擎直接调用。
-import { CropState, CropType, TileType } from '../types';
+// 特殊效果 (growUpdate) 直接定义在本文件, 引擎直接调用。
+import { CropState, CropType, Position, TileType, WorldState } from '../types';
 import type { GrowthEffectContext } from '../types';
 import { BaseCrop } from './base';
 
@@ -15,11 +15,16 @@ export class MilkVetch extends BaseCrop {
   readonly thirstInterval = 40; // 生长中缺水 4 次
   readonly color = '#7e9be8';
 
+  /** 生长特效 (growUpdate): 生长中每回合按 上→右→下→左 加速邻格作物的生长 */
+  growUpdate({ world, pos }: GrowthEffectContext): void {
+    this.accelerateNeighbors(world, pos);
+  }
+
   /**
-   * 生长中每回合按 上→右→下→左 顺序检查周围 Tile,
-   * 若有作物且不缺水 (Growing) 且距离成熟剩余 >= 2 周期, 则其生长时间 -1 周期。
+   * 按 上→右→下→左 顺序检查周围 Tile, 若有作物且不缺水 (Growing)
+   * 且距离成熟剩余 >= 2 周期, 则其生长时间 -1 周期。
    */
-  onGrow({ world, pos }: GrowthEffectContext): void {
+  private accelerateNeighbors(world: WorldState, pos: Position): void {
     for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
       const nx = pos[0] + dx;
       const ny = pos[1] + dy;
