@@ -2,7 +2,7 @@
 // (不允许凭空创造), 有作物的地块不可转换。
 import { InternalOperation, TileType } from '../types';
 import { TILES } from '../registry';
-import { CHANGE_TILE_COST, INITIAL_TILE_FERTILITY } from '../config';
+import { CHANGE_TILE_COST } from '../config';
 import { orthNeighbors, tileAt } from '../maps';
 import { DroneOperation, OpContext, OpField, OpResult, TurnSession } from './base';
 
@@ -32,11 +32,11 @@ export class ChangeTile extends DroneOperation {
       return { ok: false, message: `周围没有 ${TILES[target].name} 地块, 不能凭空创造` };
     }
     drone.energy -= CHANGE_TILE_COST;
-    // 转为土地时带上初始肥力
+    // 转为土地时肥力为 0
     world.map[drone.position[1]][drone.position[0]] = {
       type: target,
       crop: null,
-      ...(target === TileType.Soil ? { fertility: INITIAL_TILE_FERTILITY } : {}),
+      ...(target === TileType.Soil ? { fertility: 0 } : {}),
     };
     events.push({
       type: 'change-tile',

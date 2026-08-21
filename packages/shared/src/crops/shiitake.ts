@@ -26,7 +26,7 @@ export class Shiitake extends BaseCrop {
   readonly fertilityCost = -2;
   readonly value = 40;
   readonly growCyclesBase = 20;
-  readonly thirstCountBase = 1; // 基础 1 次, 实际次数随动态周期增减 (见 thirstCount 重写)
+  readonly thirstCountBase = 1; // 浇水次数固定为 1 次
   readonly color = '#c0846a';
 
   canPlant(tile: Tile): boolean {
@@ -36,11 +36,6 @@ export class Shiitake extends BaseCrop {
   /** 动态生长周期: 基础 20 + 2 × 场上香菇总数 (忽略地块倍率, 香菇只长在土地) */
   growCycles(_tile: Tile, world: WorldState): number {
     return this.growCyclesBase + 2 * countShiitake(world);
-  }
-
-  /** 总缺水次数: 随动态周期增减 (每 growCyclesBase 周期 1 次, 再乘地块浇水倍率) */
-  thirstCount(tile: Tile, world: WorldState): number {
-    return Math.floor(this.growCycles(tile, world) / this.growCyclesBase) * TILES[tile.type].thirstFactor;
   }
 
   /** 成熟特效: 进入扩散期, 之后每回合按上右下左顺序扩散 1 株 (共 4 次) */

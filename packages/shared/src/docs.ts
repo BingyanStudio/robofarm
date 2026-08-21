@@ -161,7 +161,7 @@ export const DOC_OPERATIONS: DocEntry[] = [
         id: 'doc-ChangeTile',
         name: 'ChangeTile',
         def: 'class ChangeTile extends DroneOperation',
-        desc: '将脚下地块转换为指定类型 (soil / water / sand), 消耗 6 能量。前提: 上下左右必须有至少一个与目标类型相同的地块, 不允许凭空创造; 有作物的地块不能转换。',
+        desc: '将脚下地块转换为指定类型 (soil / water / sand), 消耗 4 能量; 转为土地时肥力为 0。前提: 上下左右必须有至少一个与目标类型相同的地块, 不允许凭空创造; 有作物的地块不能转换。',
         params: ['`tileType`: `\'soil\' | \'water\' | \'sand\'` — 目标地块类型'],
         example: 'return new ChangeTile(\'water\');',
     },

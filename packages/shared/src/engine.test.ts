@@ -815,7 +815,7 @@ describe('engine: 水仙 (autoWater) 与 ChangeTile', () => {
     expect(w.map[4][5].crop!.state).toBe(CropState.Growing);
   });
 
-  it('ChangeTile: 消耗 6 能量, 上下左右须有同类型地块, 有作物时不能转换', () => {
+  it('ChangeTile: 消耗 4 能量, 上下左右须有同类型地块, 有作物时不能转换', () => {
     const w = single();
     w.drones[0].energy = 8;
     w.drones[0].position = [3, 3]; // 四周: (2,3)沙地, 其余土地, 无水池
@@ -827,14 +827,22 @@ describe('engine: 水仙 (autoWater) 与 ChangeTile', () => {
     events = stepTurn(w, actions([0, { type: 'changeTile', tileType: TileType.Sand }]));
     expect(eventsOfType(events, 'change-tile')).toHaveLength(1);
     expect(w.map[3][3].type).toBe(TileType.Sand);
-    expect(w.drones[0].energy).toBe(2); // 8 - 6
+    expect(w.drones[0].energy).toBe(4); // 8 - 4
     // 已存在作物 → 不能转换
     placeCrop(w, [3, 3], { type: CropType.Strawberry, state: CropState.Growing, growthRemaining: 3 });
     events = stepTurn(w, actions([0, { type: 'changeTile', tileType: TileType.Soil }]));
     expect(eventsOfType(events, 'invalid-op')).toHaveLength(1);
     // 能量不足
+    w.map[3][3].crop = null;
+    w.drones[0].energy = 2;
     events = stepTurn(w, actions([0, { type: 'changeTile', tileType: TileType.Soil }]));
     expect(eventsOfType(events, 'invalid-op')).toHaveLength(1);
+    // 转为土地时肥力为 0
+    w.drones[0].energy = 8;
+    events = stepTurn(w, actions([0, { type: 'changeTile', tileType: TileType.Soil }]));
+    expect(eventsOfType(events, 'change-tile')).toHaveLength(1);
+    expect(w.map[3][3].type).toBe(TileType.Soil);
+    expect(w.map[3][3].fertility).toBe(0);
   });
 });
 

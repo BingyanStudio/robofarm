@@ -559,7 +559,7 @@ export function createMcpServer(opts: McpServerOptions = {}): Server {
               '  - `new Intercept([x, y])` 竞技模式单格拦截\n' +
               '  - `new InterceptRow()` / `new InterceptCol()` 拦截整行/列 (6 能量)\n' +
               '  - `new Charge()` 原地充能 +5 (能量上限 10)\n' +
-              '  - `new ChangeTile(tileType)` 转换脚下地块为 soil/water/sand (6 能量, 需相邻同类型地块)\n' +
+              '  - `new ChangeTile(tileType)` 转换脚下地块为 soil/water/sand (4 能量, 需相邻同类型地块)\n' +
               '- 可用 API: `getSelf()` (含 water/energy) / `getGame()` (含 money) / `getMap()` / `getTile(p)` / `getCrop(p)` / `getDrone(p)`, 坐标越界返回 null。\n' +
               '- 作物列表 (代码名, 成本/收获/成熟回合/需水/可种地块):\n' + cropSummary() + '\n' +
               '- 机制: 沙漠化 (收获的格相邻有沙地则转化为沙地); 间作 (四方向 ≥2 个不同作物, 收获 +20%); 香菇总周期 = 20 + 2×场上香菇数\n' +

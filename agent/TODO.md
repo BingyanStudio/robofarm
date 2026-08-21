@@ -57,7 +57,14 @@
   改动: renderer.ts updateTooltip — 竞技模式下地块行追加 `己方半场 / 对方半场`
   (屏幕左半即当前视角 (含镜像) 的己方半场, 与半场分割线一致)。
 
-- [ ] Balance: 无人机 ChangeTile 操作能耗降低为 4; 改地块为土地时，土地的肥力为 0
+- [x] Balance: 无人机 ChangeTile 操作能耗降低为 4; 改地块为土地时，土地的肥力为 0
+  改动: config.ts CHANGE_TILE_COST 6→4; ops/change-tile.ts 转土地时 fertility 写 0
+  (不再用初始肥力 5); docs.ts / MCP prompt / AGENTS.md 同步; engine.test.ts 更新
+  能量断言并新增"转土地肥力为 0"断言。
+
+- [x] Balance: 香菇浇水次数固定为 1
+  改动: crops/shiitake.ts 删除 thirstCount 重写 (原随动态周期增减), 仅保留
+  thirstCountBase = 1, 使用基类 thirstCount (1 × 地块浇水倍率)。
 - [x] Refactor: `thirstInterval` 重构为 `thirstCountBase`, 作物属性均按总缺水次数记录
   改动:
   1. CropTypeConfig / BaseCrop: `thirstInterval: number | null` → **`thirstCountBase:

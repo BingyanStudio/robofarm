@@ -141,7 +141,7 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
 - **能量机制**: DroneState.energy (上限 MAX_ENERGY=10, 初始 0), Charge 原地 +5;
   行/列范围操作消耗能量 (收割 4 / 浇灌 3 / 种植 3 / 拦截 6, 常量在 config.ts);
   Teleport 消耗 ceil(欧氏距离) 能量 (尝试时即扣除, 仲裁失败不退还; 竞技模式只能
-  在我方半场内传送, 与移动同走仲裁); ChangeTile 消耗 CHANGE_TILE_COST=6;
+  在我方半场内传送, 与移动同走仲裁); ChangeTile 消耗 CHANGE_TILE_COST=4;
   NewDrone 消耗 NEW_DRONE_COST=4000 金钱 (上限 DRONE_LIMIT: 单人 2 / 竞技 3,
   GameInfo.droneLimit 可查)。
   行/列范围操作覆盖以无人机为中心的 3 格 (interceptZone 记录施法点 center);
@@ -175,8 +175,9 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
 - **动态生长周期**: 作物在 `growCycles(tile, world)` 里重写即可自定义实际周期
   (基类默认按地块 growthFactor, 沙地 ×3; 覆盖则忽略地块倍率), 如香菇的
   growCyclesBase + 2×场上香菇数 (engine/helpers 的 `tryPlantAt` 与香菇扩散都走它)。
-- **ChangeTile**: 消耗 CHANGE_TILE_COST=6, 需上下左右有同类型地块 (orthNeighbors 检查),
-  有作物的地块不可转换; 按操作类方式注册 (ops/change-tile.ts + ops/index.ts)。
+- **ChangeTile**: 消耗 CHANGE_TILE_COST=4, 需上下左右有同类型地块 (orthNeighbors 检查),
+  有作物的地块不可转换; 转为土地时肥力为 0; 按操作类方式注册
+  (ops/change-tile.ts + ops/index.ts)。
 
 ## 引擎语义 (shared/src/engine.ts, 改前必读)
 
