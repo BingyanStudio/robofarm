@@ -70,14 +70,10 @@ export function menuScreen(root: HTMLElement): void {
   mountMenuShowcase(showcase);
 
   // Entrance animation: stagger the menu box children (logo, hero, grid, MCP strip) on first open.
-  // The logo cluster (logo + its glow, and the gray tagline) ends 32px higher than the other rows.
-  // The offset is applied here (not CSS) so it survives the gsap inline transform.
   const items = Array.from(box.children);
-  const isLogoCluster = (el: Element): boolean =>
-    el.classList.contains('menu-logo-wrap') || el.classList.contains('menu-tagline');
   gsap.fromTo(
     items,
     { opacity: 0, y: 18 },
-    { opacity: 1, y: (_i: number, el: Element) => (isLogoCluster(el) ? -32 : 0), duration: 0.5, stagger: 0.08, ease: 'power3.out' }
+    { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: 'power3.out' }
   );
 }
