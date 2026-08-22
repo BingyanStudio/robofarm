@@ -55,6 +55,10 @@ interface TileFx {
 export interface RenderOptions {
   /** Render from a mirrored view (combat mode P2's local perspective). */
   mirror?: boolean;
+  /** Multiply the auto-fit scale (e.g. 0.9 to show the map 10% smaller on the menu showcase). */
+  fitFactor?: number;
+  /** Disable wheel-zoom / drag-pan / hover tooltip (menu showcase backdrop). */
+  interactive?: boolean;
 }
 
 export class Renderer {
@@ -82,13 +86,17 @@ export class Renderer {
   private chargeFx = new Map<number, number>();
   /** Scene enter/exit animation (whole-map tile rotate + drone drop, 0.2s + tile stagger). */
   private sceneAnim: { type: 'enter' | 'exit'; start: number; resolve: () => void } | null = null;
+  /** Persistent fade applied after a scene animation completes (0 = faded out, 1 = faded in; null = no scene).
+   *  Keeps the map invisible after the exit animation so the reset + enter sequence has no flash frame. */
+  private sceneFade: number | null = null;
   private rafId: number | null = null;
   /** Loaded sprites (null before loading finishes, with procedural draw as fallback). */
   private sprites: Sprites | null = null;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, opts: RenderOptions = {}) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d')!;
+    this.opts = opts;
     // Canvas size follows layout: it may not be mounted on the DOM yet at construction (size 0),
     // so ResizeObserver fills it in once layout is resolved, without waiting for window resize.
     if (typeof ResizeObserver !== 'undefined') {
@@ -102,6 +110,14 @@ export class Renderer {
       this.sprites = s;
       this.draw();
     });
+    // Non-interactive canvases (menu showcase) skip zoom/pan/hover so the backdrop stays fixed.
+    if (this.opts.interactive !== false) {
+      this.attachInteraction(canvas);
+    }
+  }
+
+  /** Wheel-zoom / drag-pan / hover-tooltip handlers for interactive game canvases. */
+  private attachInteraction(canvas: HTMLCanvasElement): void {
     canvas.addEventListener('wheel', (e) => {
       e.preventDefault();
       const factor = Math.exp(-e.deltaY * 0.0012);
@@ -176,7 +192,7 @@ export class Renderer {
   }
 
   setOptions(opts: RenderOptions): void {
-    this.opts = opts;
+    this.opts = { ...this.opts, ...opts };
     this.draw();
   }
 
@@ -188,7 +204,7 @@ export class Renderer {
     const w = this.state.map[0].length * TILE;
     const h = this.state.map.length * TILE;
     // On first render fill the canvas as much as possible (leave ~3% margin), no longer capped at 1.6x.
-    this.scale = Math.min(this.canvas.width / w, this.canvas.height / h, 8) * 0.97;
+    this.scale = Math.min(this.canvas.width / w, this.canvas.height / h, 8) * 0.97 * (this.opts.fitFactor ?? 1);
     this.ox = (this.canvas.width - w * this.scale) / 2;
     this.oy = (this.canvas.height - h * this.scale) / 2;
     this.didFit = true; // Auto-fit only once, then preserve the user's zoom/pan.
@@ -209,6 +225,7 @@ export class Renderer {
     this.didFit = false;
     this.animations.clear();
     this.finishScene();
+    this.sceneFade = null;
     if (this.rafId !== null) {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
@@ -217,12 +234,13 @@ export class Renderer {
   }
 
   /**
-   * Scene enter animation: tiles rotate in from -90° to 0° (top-left → bottom-right, Cubic, 0.2s each)
-   * while drones drop in from 0.5 tile above their spawn, all fading in simultaneously.
-   * Resolves when the animation completes.
+   * Scene enter animation: tiles rotate in from -90° to 0° and scale up 0 → 1
+   * (top-left → bottom-right, Cubic, 0.2s each) while drones drop in from 0.5 tile above their spawn,
+   * all fading in simultaneously. Resolves when the animation completes.
    */
   playSceneEnter(): Promise<void> {
     this.finishScene(); // Replace any running scene animation (its waiter resolves immediately).
+    this.sceneFade = null;
     return new Promise((resolve) => {
       this.sceneAnim = { type: 'enter', start: performance.now(), resolve };
       this.ensureLoop();
@@ -230,12 +248,14 @@ export class Renderer {
   }
 
   /**
-   * Scene exit animation: tiles rotate out from 0° to +90° (top-left → bottom-right, Cubic, 0.2s each)
-   * while drones lift 0.5 tile above their cell, all fading out simultaneously.
+   * Scene exit animation: tiles rotate out from 0° to +90° and scale down 1 → 0
+   * (top-left → bottom-right, Cubic, 0.2s each) while drones lift 0.5 tile above their cell, all fading out
+   * simultaneously. After it completes the map stays invisible until the next enter animation.
    * Resolves when the animation completes.
    */
   playSceneExit(): Promise<void> {
     this.finishScene(); // Replace any running scene animation (its waiter resolves immediately).
+    this.sceneFade = null;
     return new Promise((resolve) => {
       this.sceneAnim = { type: 'exit', start: performance.now(), resolve };
       this.ensureLoop();
@@ -249,6 +269,14 @@ export class Renderer {
       this.sceneAnim = null;
       resolve();
     }
+  }
+
+  /** Keep the canvas fully faded out (map invisible) until the next scene animation starts.
+   *  Bridges the initial render to the deferred enter animation without a full-opacity flash frame. */
+  holdSceneFadeOut(): void {
+    this.finishScene();
+    this.sceneFade = 0;
+    this.draw();
   }
 
   /** Add a move transition animation for a drone (from → to, absolute coordinates). */
@@ -288,8 +316,16 @@ export class Renderer {
         else alive = true;
       }
       if (this.sceneAnim) {
-        if (now - this.sceneAnim.start >= SCENE_TOTAL_MS) this.finishScene();
-        else alive = true;
+        if (now - this.sceneAnim.start >= SCENE_TOTAL_MS) {
+          // Animation finished: keep the final fade state so the map stays invisible after an
+          // exit until the next enter animation starts (prevents a full-opacity flash frame).
+          const scene = this.sceneAnim;
+          this.sceneAnim = null;
+          this.sceneFade = scene.type === 'enter' ? 1 : 0;
+          scene.resolve();
+        } else {
+          alive = true;
+        }
       }
       this.draw();
       this.rafId = alive ? requestAnimationFrame(step) : null;
@@ -326,6 +362,7 @@ export class Renderer {
 
   /** Update the top-right info panel: Tile / drone / crop three sections. */
   private updateTooltip(): void {
+    if (this.opts.interactive === false) return; // Menu showcase backdrop: no hover tooltip.
     const tip = this.ensureTooltip();
     if (!this.state || !this.hoverPos) {
       tip.style.display = 'none';
@@ -420,8 +457,9 @@ export class Renderer {
         const px = this.ox + x * TILE * this.scale;
         const py = this.oy + y * TILE * this.scale;
         const s = TILE * this.scale;
-        // Scene animation: tiles rotate in/out sequentially (top-left → bottom-right diagonal order) while fading.
+        // Scene animation: tiles rotate in/out, scale 0↔1 and fade sequentially (top-left → bottom-right diagonal order).
         let angle = 0;
+        let scale = 1;
         let alpha = 1;
         if (scene) {
           const delay = ((x + y) / Math.max(1, w + h - 2)) * SCENE_STAGGER_MS;
@@ -429,18 +467,25 @@ export class Renderer {
           const p = easeInOutCubic(t);
           if (scene.type === 'enter') {
             angle = (-Math.PI / 2) * (1 - p);
+            scale = p;
             alpha = p;
           } else {
             angle = (Math.PI / 2) * p;
+            scale = 1 - p;
             alpha = 1 - p;
           }
+        } else if (this.sceneFade !== null && this.sceneFade < 1) {
+          // Persist the post-exit invisible state until the next enter animation.
+          alpha = this.sceneFade;
         }
-        if (angle !== 0 || alpha !== 1) {
+        if (alpha <= 0) continue;
+        if (angle !== 0 || scale !== 1 || alpha !== 1) {
           const cx = px + s / 2;
           const cy = py + s / 2;
           ctx.save();
           ctx.translate(cx, cy);
           ctx.rotate(angle);
+          ctx.scale(scale, scale);
           ctx.translate(-cx, -cy);
           ctx.globalAlpha = alpha;
           this.drawTile(tile, px, py, s);
@@ -509,6 +554,12 @@ export class Renderer {
         ctx.save();
         ctx.translate(0, lift * TILE * this.scale);
         ctx.globalAlpha = alpha;
+        this.drawDrone(d, dx, dy);
+        ctx.restore();
+      } else if (this.sceneFade !== null && this.sceneFade < 1) {
+        // Persist the post-exit invisible state until the next enter animation.
+        ctx.save();
+        ctx.globalAlpha = this.sceneFade;
         this.drawDrone(d, dx, dy);
         ctx.restore();
       } else {

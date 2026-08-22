@@ -25,15 +25,13 @@
 }
 
 /* Children share one column width (max ~380px), so hero / nav rows / MCP card are mutually aligned. */
-.menu-box > *:not(.menu-logo-wrap) {
+.menu-box > * {
   width: min(380px, 100%);
   flex: none;
 }
 
 .menu-logo-wrap {
   position: relative;
-  width: fit-content;
-  margin: 0 auto;
 }
 
 /* Soft blurred halo behind the logo, tinted with the accent green. */
@@ -57,10 +55,14 @@
   }
 }
 
+/* Logo shares the column width with the buttons below and is centered on the same axis,
+   so it lines up exactly over the hero / nav rows (the logo box also has transparent margins). */
 .menu-logo {
-  width: min(350px, 100%);
-  height: auto;
   display: block;
+  width: 100%;
+  max-width: 350px;
+  height: auto;
+  margin: 0 auto;
   position: relative;
   z-index: 1;
 }
@@ -212,7 +214,7 @@
   object-fit: contain;
 }
 
-/* Right column (70%): gameplay showcase canvas. */
+/* Right column (70%): gameplay showcase canvas. Edge-to-edge backdrop: no border / rounded frame. */
 .menu-showcase {
   flex: 1 1 70%;
   min-width: 0;
@@ -228,8 +230,6 @@
   width: 100%;
   height: 100%;
   display: block;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
 }
 
 /* Turn / money overlay on the showcase (mirrors the in-game status chip). */

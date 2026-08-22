@@ -1,7 +1,7 @@
 // Main menu.
 import { el, button } from '../ui/ui';
 import { showUpdateLog } from '../docs/version';
-import { mcpCollapse } from '../docs/api-manual';
+// import { mcpCollapse } from '../docs/api-manual'; // MCP Card temporarily hidden (see agent/TODO.md)
 import { mountMenuShowcase } from '../core/menu-showcase';
 import gsap from 'gsap';
 
@@ -42,7 +42,7 @@ export function menuScreen(root: HTMLElement): void {
     el('div', { class: 'menu-tagline', text: '基于 TypeScript 编程的回合制农场经营游戏' }),
     hero,
     grid,
-    el('div', { class: 'menu-mcp' }, [mcpCollapse('Agent 接入')]),
+    // el('div', { class: 'menu-mcp' }, [mcpCollapse('Agent 接入')]), // MCP Card temporarily hidden (see agent/TODO.md)
     el('div', { class: 'menu-footer' }, [
       el('a', {
         class: 'menu-powered',

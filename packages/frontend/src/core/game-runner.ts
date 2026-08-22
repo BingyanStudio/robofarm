@@ -111,6 +111,8 @@ export class GameRunner {
     this.snapshots = [preview];
     this.view.apply([{ type: 'snapshot', state: preview }]);
     this.statusText.textContent = `回合 0 / ${DEFAULT_MAX_TURNS}`;
+    // Hold the map invisible so the deferred enter animation (below) is the first thing shown.
+    this.renderer.holdSceneFadeOut();
 
     // Scene enter animation on first load. Deferred until the layout is mounted and the canvas
     // has a real size (double rAF: ResizeObserver runs before the first paint after mount).

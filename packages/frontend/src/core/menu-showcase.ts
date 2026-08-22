@@ -4,11 +4,9 @@
 import { Renderer } from './renderer';
 import { GameView } from './game-layout';
 import { el, sleep } from '../ui/ui';
-import { replayEvents, createSingleWorld, snapshotOf } from '@robofarm/shared';
+import { replayEvents, createSingleWorld, snapshotOf, TURN_INTERVAL_MS } from '@robofarm/shared';
 import type { GameEvent, ReplayFile } from '@robofarm/shared';
 
-/** Showcase playback speed (ms per turn). */
-const SHOWCASE_TURN_MS = 70;
 /** Pause after the replay finishes before looping back. */
 const SHOWCASE_END_DELAY_MS = 2000;
 
@@ -57,7 +55,8 @@ export function mountMenuShowcase(host: HTMLElement): void {
   const status = el('span', { class: 'menu-showcase-status', text: '' });
   host.append(canvas, status);
 
-  const renderer = new Renderer(canvas);
+  // Non-interactive backdrop: fixed 10%-smaller initial zoom, no wheel-zoom / drag-pan / hover tooltip.
+  const renderer = new Renderer(canvas, { interactive: false, fitFactor: 0.9 });
   const view = new GameView({
     renderer,
     onStatus: () => undefined,
@@ -69,6 +68,8 @@ export function mountMenuShowcase(host: HTMLElement): void {
   const maxTurns = 500;
   const initial = snapshotOf(createSingleWorld(maxTurns));
   view.apply([{ type: 'snapshot', state: initial }]);
+  // Hold the map invisible until the size-wait below finishes and the enter animation starts.
+  renderer.holdSceneFadeOut();
 
   const alive = (): boolean => canvas.isConnected;
 
@@ -99,7 +100,7 @@ export function mountMenuShowcase(host: HTMLElement): void {
       const snap = data.groups[i].find((e): e is Extract<GameEvent, { type: 'snapshot' }> => e.type === 'snapshot')?.state;
       const money = snap?.players[0]?.money ?? 0;
       status.textContent = `回合 ${i + 1} / ${data.groups.length} · 金钱 ${money}`;
-      await sleep(SHOWCASE_TURN_MS);
+      await sleep(TURN_INTERVAL_MS); // Normal game pacing (same as the in-game default speed).
     }
     // 3. Finished: pause, then exit → reset to turn 0 → enter → replay.
     status.textContent = '对局结束';
