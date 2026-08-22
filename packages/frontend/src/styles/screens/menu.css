@@ -7,9 +7,9 @@
   overflow: hidden;
 }
 
-/* Left column (30%): logo / tagline / hero / nav / MCP card. */
+/* Left column (35%): logo / tagline / hero / nav / MCP card. */
 .menu-box {
-  flex: 0 0 30%;
+  flex: 0 0 35%;
   min-width: 0;
   min-height: 0;
   text-align: center;
@@ -214,9 +214,9 @@
   object-fit: contain;
 }
 
-/* Right column (70%): gameplay showcase canvas. Edge-to-edge backdrop: no border / rounded frame. */
+/* Right column (65%): gameplay showcase canvas. Edge-to-edge backdrop: no border / rounded frame. */
 .menu-showcase {
-  flex: 1 1 70%;
+  flex: 1 1 65%;
   min-width: 0;
   min-height: 0;
   position: relative;
@@ -232,14 +232,22 @@
   display: block;
 }
 
-/* Turn / money overlay on the showcase (mirrors the in-game status chip). */
+/* Turn / money overlay on the showcase: inset matches the host padding so it aligns
+   with the canvas (the container) top-left corner instead of floating off it. */
 .menu-showcase-status {
   position: absolute;
-  top: 30px;
-  left: 30px;
+  top: 20px;
+  left: 20px;
   background: rgba(0, 0, 0, 0.55);
   padding: 6px 12px;
   border-radius: var(--radius);
   font-size: 14px;
   pointer-events: none;
+}
+
+/* Hover tooltip on the showcase: same 20px inset as the status chip, aligned with the
+   canvas top-right corner (the shared .render-tooltip 10px/12px would land in the padding). */
+.menu-showcase .render-tooltip {
+  top: 20px;
+  right: 20px;
 }

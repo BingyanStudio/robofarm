@@ -20,6 +20,7 @@ const COLORS = {
   p2: theme.p2,
   bounty: theme.bounty,
   waterPip: theme.waterPip,
+  energy: theme.energy,
   intercept: theme.interceptMark,
 };
 
@@ -668,7 +669,7 @@ export class Renderer {
   }
 
   private drawDrone(
-    d: { id: number; player: number; water: number; bounty: number },
+    d: { id: number; player: number; water: number; energy: number; bounty: number },
     x: number,
     y: number
   ): void {
@@ -708,11 +709,30 @@ export class Renderer {
         ctx.fill();
       }
     }
-    // Water storage (drawn along the lower edge of the scaled body).
+    // Water storage: blue pips with a black outline, drawn along the lower edge of the scaled body.
     for (let i = 0; i < d.water; i++) {
-      ctx.fillStyle = COLORS.waterPip;
+      const wx = cx - s * 0.18 + i * s * 0.09;
+      const wy = cy + s * 0.21;
       ctx.beginPath();
-      ctx.arc(cx - s * 0.18 + i * s * 0.09, cy + s * 0.21, s * 0.035, 0, Math.PI * 2);
+      ctx.arc(wx, wy, s * 0.035, 0, Math.PI * 2);
+      ctx.fillStyle = COLORS.waterPip;
+      ctx.fill();
+      ctx.strokeStyle = theme.droneIdStroke; // black outline
+      ctx.lineWidth = Math.max(1, s * 0.02);
+      ctx.stroke();
+    }
+    // Energy: yellow diamonds (0..MAX_ENERGY) centered below the water pips.
+    for (let i = 0; i < d.energy; i++) {
+      const ex = cx - ((d.energy - 1) * s * 0.09) / 2 + i * s * 0.09;
+      const ey = cy + s * 0.31;
+      const r = s * 0.045;
+      ctx.beginPath();
+      ctx.moveTo(ex, ey - r);
+      ctx.lineTo(ex + r, ey);
+      ctx.lineTo(ex, ey + r);
+      ctx.lineTo(ex - r, ey);
+      ctx.closePath();
+      ctx.fillStyle = COLORS.energy;
       ctx.fill();
     }
     // Crop-stealing bounty pool (top-right of the body).

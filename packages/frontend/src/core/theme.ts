@@ -38,6 +38,7 @@ export const theme = {
   // Drone accessory markers
   bounty: cssVar('--color-bounty', '#f5c042'),
   waterPip: cssVar('--color-water-pip', '#4aace0'),
+  energy: cssVar('--color-energy', '#e8c34a'),
   interceptMark: cssVar('--color-intercept-mark', '#f5d148'),
 
   // Tile effect colors (independent of alpha)
