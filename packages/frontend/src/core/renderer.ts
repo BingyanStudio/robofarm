@@ -57,8 +57,10 @@ export interface RenderOptions {
   mirror?: boolean;
   /** Multiply the auto-fit scale (e.g. 0.9 to show the map 10% smaller on the menu showcase). */
   fitFactor?: number;
-  /** Disable wheel-zoom / drag-pan / hover tooltip (menu showcase backdrop). */
+  /** Disable all pointer/wheel interaction including hover tooltips. */
   interactive?: boolean;
+  /** Disable wheel-zoom / drag-pan while keeping hover tooltips (menu showcase backdrop). */
+  allowZoom?: boolean;
 }
 
 export class Renderer {
@@ -116,28 +118,31 @@ export class Renderer {
     }
   }
 
-  /** Wheel-zoom / drag-pan / hover-tooltip handlers for interactive game canvases. */
+  /** Wheel-zoom / drag-pan / hover-tooltip handlers for interactive game canvases.
+   *  allowZoom:false keeps hover tooltips but disables zooming and panning. */
   private attachInteraction(canvas: HTMLCanvasElement): void {
-    canvas.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      const factor = Math.exp(-e.deltaY * 0.0012);
-      const rect = canvas.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
-      this.scale = Math.min(6, Math.max(0.2, this.scale * factor));
-      // Zoom anchored at the cursor.
-      const wx = (mx - this.ox) / this.scale;
-      const wy = (my - this.oy) / this.scale;
-      this.ox = mx - wx * this.scale;
-      this.oy = my - wy * this.scale;
-      this.draw();
-    });
-    canvas.addEventListener('pointerdown', (e) => {
-      this.dragging = true;
-      this.lastX = e.clientX;
-      this.lastY = e.clientY;
-      canvas.setPointerCapture(e.pointerId);
-    });
+    if (this.opts.allowZoom !== false) {
+      canvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const factor = Math.exp(-e.deltaY * 0.0012);
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        this.scale = Math.min(6, Math.max(0.2, this.scale * factor));
+        // Zoom anchored at the cursor.
+        const wx = (mx - this.ox) / this.scale;
+        const wy = (my - this.oy) / this.scale;
+        this.ox = mx - wx * this.scale;
+        this.oy = my - wy * this.scale;
+        this.draw();
+      });
+      canvas.addEventListener('pointerdown', (e) => {
+        this.dragging = true;
+        this.lastX = e.clientX;
+        this.lastY = e.clientY;
+        canvas.setPointerCapture(e.pointerId);
+      });
+    }
     canvas.addEventListener('pointermove', (e) => {
       const rect = canvas.getBoundingClientRect();
       const mx = e.clientX - rect.left;

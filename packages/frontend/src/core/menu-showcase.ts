@@ -55,8 +55,8 @@ export function mountMenuShowcase(host: HTMLElement): void {
   const status = el('span', { class: 'menu-showcase-status', text: '' });
   host.append(canvas, status);
 
-  // Non-interactive backdrop: fixed 10%-smaller initial zoom, no wheel-zoom / drag-pan / hover tooltip.
-  const renderer = new Renderer(canvas, { interactive: false, fitFactor: 0.9 });
+  // Backdrop: fixed 10%-smaller initial zoom; zoom/pan disabled but hover tooltips re-enabled.
+  const renderer = new Renderer(canvas, { allowZoom: false, fitFactor: 0.9 });
   const view = new GameView({
     renderer,
     onStatus: () => undefined,
