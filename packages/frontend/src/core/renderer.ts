@@ -721,7 +721,7 @@ export class Renderer {
       ctx.lineWidth = Math.max(1, s * 0.02);
       ctx.stroke();
     }
-    // Energy: yellow diamonds (0..MAX_ENERGY) centered below the water pips.
+    // Energy: yellow diamonds (0..MAX_ENERGY) centered below the water pips, with a black outline.
     for (let i = 0; i < d.energy; i++) {
       const ex = cx - ((d.energy - 1) * s * 0.09) / 2 + i * s * 0.09;
       const ey = cy + s * 0.31;
@@ -734,6 +734,9 @@ export class Renderer {
       ctx.closePath();
       ctx.fillStyle = COLORS.energy;
       ctx.fill();
+      ctx.strokeStyle = theme.droneIdStroke; // black outline
+      ctx.lineWidth = Math.max(1, s * 0.02);
+      ctx.stroke();
     }
     // Crop-stealing bounty pool (top-right of the body).
     if (d.bounty > 0) {
