@@ -2,6 +2,7 @@
 import { el, button } from '../ui/ui';
 import { showUpdateLog } from '../docs/version';
 import { mcpCollapse } from '../docs/api-manual';
+import { mountMenuShowcase } from '../core/menu-showcase';
 import gsap from 'gsap';
 
 export function menuScreen(root: HTMLElement): void {
@@ -24,7 +25,7 @@ export function menuScreen(root: HTMLElement): void {
     ]),
   ]);
 
-  // Remaining entries laid out below the two hero buttons (simulate has moved into the "multiplayer" page)
+  // Remaining entries stacked one per row below the hero buttons (simulate has moved into the "multiplayer" page)
   const grid = el('div', { class: 'menu-grid' }, [
     button('观战', () => (location.hash = '#/spectate'), { class: 'btn' }),
     button('回放', () => (location.hash = '#/replay'), { class: 'btn' }),
@@ -32,6 +33,7 @@ export function menuScreen(root: HTMLElement): void {
     button('更新日志', () => showUpdateLog(), { class: 'btn' }),
   ]);
 
+  // Left column (30%): logo / tagline / hero / nav / MCP card; right column (70%): gameplay showcase canvas.
   const box = el('div', { class: 'menu-box' }, [
     el('div', { class: 'menu-logo-wrap' }, [
       el('img', { class: 'menu-logo', src: '/sprites/logo.svg', alt: 'RoboFarm' }),
@@ -61,7 +63,11 @@ export function menuScreen(root: HTMLElement): void {
       ]),
     ]),
   ]);
-  root.append(box);
+
+  const showcase = el('div', { class: 'menu-showcase' });
+  const menuRoot = el('div', { class: 'menu-root' }, [box, showcase]);
+  root.append(menuRoot);
+  mountMenuShowcase(showcase);
 
   // Entrance animation: stagger the menu box children (logo, hero, grid, MCP strip) on first open.
   const items = Array.from(box.children);

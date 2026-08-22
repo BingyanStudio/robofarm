@@ -80,10 +80,12 @@
   background: var(--accent-hover);
 }
 
-/* Menu hero buttons (two large centered actions) — flat, hard-edged, no gradient. */
+/* Menu hero buttons (two large square actions side by side) — flat, hard-edged, no gradient.
+   Square shape comes from aspect-ratio; the flex parent (menu-hero) distributes the column width. */
 .btn-hero {
-  width: 220px;
-  height: 150px;
+  flex: 1 1 0;
+  min-width: 0;
+  aspect-ratio: 1 / 1;
   display: flex;
   flex-direction: column;
   align-items: center;

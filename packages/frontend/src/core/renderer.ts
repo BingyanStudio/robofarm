@@ -34,6 +34,17 @@ const FX = {
 /** Effect duration (milliseconds). */
 const FX_DURATION = 200;
 
+/** Scene enter/exit animation: per-element duration and tile stagger spread (milliseconds, Cubic easing). */
+const SCENE_ANIM_MS = 200;
+const SCENE_STAGGER_MS = 120;
+/** Scene enter/exit animation total time (last tile's delay + its own duration). */
+const SCENE_TOTAL_MS = SCENE_ANIM_MS + SCENE_STAGGER_MS;
+
+/** Cubic ease-in-out. */
+function easeInOutCubic(t: number): number {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
 interface TileFx {
   type: keyof typeof FX;
   x: number;
@@ -69,6 +80,8 @@ export class Renderer {
   private fx = new Map<string, TileFx>();
   /** Charge effect: drone id → start time (0.2s green tint). */
   private chargeFx = new Map<number, number>();
+  /** Scene enter/exit animation (whole-map tile rotate + drone drop, 0.2s + tile stagger). */
+  private sceneAnim: { type: 'enter' | 'exit'; start: number; resolve: () => void } | null = null;
   private rafId: number | null = null;
   /** Loaded sprites (null before loading finishes, with procedural draw as fallback). */
   private sprites: Sprites | null = null;
@@ -195,11 +208,47 @@ export class Renderer {
     this.state = null;
     this.didFit = false;
     this.animations.clear();
+    this.finishScene();
     if (this.rafId !== null) {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
     }
     this.draw();
+  }
+
+  /**
+   * Scene enter animation: tiles rotate in from -90° to 0° (top-left → bottom-right, Cubic, 0.2s each)
+   * while drones drop in from 0.5 tile above their spawn, all fading in simultaneously.
+   * Resolves when the animation completes.
+   */
+  playSceneEnter(): Promise<void> {
+    this.finishScene(); // Replace any running scene animation (its waiter resolves immediately).
+    return new Promise((resolve) => {
+      this.sceneAnim = { type: 'enter', start: performance.now(), resolve };
+      this.ensureLoop();
+    });
+  }
+
+  /**
+   * Scene exit animation: tiles rotate out from 0° to +90° (top-left → bottom-right, Cubic, 0.2s each)
+   * while drones lift 0.5 tile above their cell, all fading out simultaneously.
+   * Resolves when the animation completes.
+   */
+  playSceneExit(): Promise<void> {
+    this.finishScene(); // Replace any running scene animation (its waiter resolves immediately).
+    return new Promise((resolve) => {
+      this.sceneAnim = { type: 'exit', start: performance.now(), resolve };
+      this.ensureLoop();
+    });
+  }
+
+  /** End the running scene animation (if any) and resolve its waiter. */
+  private finishScene(): void {
+    if (this.sceneAnim) {
+      const resolve = this.sceneAnim.resolve;
+      this.sceneAnim = null;
+      resolve();
+    }
   }
 
   /** Add a move transition animation for a drone (from → to, absolute coordinates). */
@@ -236,6 +285,10 @@ export class Renderer {
       }
       for (const [cid, start] of this.chargeFx) {
         if (now - start >= FX_DURATION) this.chargeFx.delete(cid);
+        else alive = true;
+      }
+      if (this.sceneAnim) {
+        if (now - this.sceneAnim.start >= SCENE_TOTAL_MS) this.finishScene();
         else alive = true;
       }
       this.draw();
@@ -354,8 +407,12 @@ export class Renderer {
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     if (!this.state) return;
     const { map, drones } = this.state;
+    const scene = this.sceneAnim;
+    const sceneNow = performance.now();
 
     // Tiles
+    const w = map[0].length;
+    const h = map.length;
     for (let y = 0; y < map.length; y++) {
       for (let x = 0; x < map[y].length; x++) {
         const dx = this.rx(x);
@@ -363,8 +420,36 @@ export class Renderer {
         const px = this.ox + x * TILE * this.scale;
         const py = this.oy + y * TILE * this.scale;
         const s = TILE * this.scale;
-        this.drawTile(tile, px, py, s);
-        if (tile.crop) this.drawCrop(tile.crop, px, py, s);
+        // Scene animation: tiles rotate in/out sequentially (top-left → bottom-right diagonal order) while fading.
+        let angle = 0;
+        let alpha = 1;
+        if (scene) {
+          const delay = ((x + y) / Math.max(1, w + h - 2)) * SCENE_STAGGER_MS;
+          const t = Math.min(1, Math.max(0, (sceneNow - scene.start - delay) / SCENE_ANIM_MS));
+          const p = easeInOutCubic(t);
+          if (scene.type === 'enter') {
+            angle = (-Math.PI / 2) * (1 - p);
+            alpha = p;
+          } else {
+            angle = (Math.PI / 2) * p;
+            alpha = 1 - p;
+          }
+        }
+        if (angle !== 0 || alpha !== 1) {
+          const cx = px + s / 2;
+          const cy = py + s / 2;
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(angle);
+          ctx.translate(-cx, -cy);
+          ctx.globalAlpha = alpha;
+          this.drawTile(tile, px, py, s);
+          if (tile.crop) this.drawCrop(tile.crop, px, py, s);
+          ctx.restore();
+        } else {
+          this.drawTile(tile, px, py, s);
+          if (tile.crop) this.drawCrop(tile.crop, px, py, s);
+        }
       }
     }
 
@@ -413,7 +498,22 @@ export class Renderer {
     // Drones (drawn last, on the top layer).
     for (const d of drones) {
       const pos = this.animatedPosition(d.id, d.position);
-      this.drawDrone(d, this.rx(pos[0]), pos[1]);
+      const dx = this.rx(pos[0]);
+      const dy = pos[1];
+      // Scene animation: drones drop in from / lift out to 0.5 tile above their cell while fading.
+      if (scene) {
+        const t = Math.min(1, Math.max(0, (sceneNow - scene.start) / SCENE_ANIM_MS));
+        const p = easeInOutCubic(t);
+        const lift = scene.type === 'enter' ? -0.5 * (1 - p) : -0.5 * p;
+        const alpha = scene.type === 'enter' ? p : 1 - p;
+        ctx.save();
+        ctx.translate(0, lift * TILE * this.scale);
+        ctx.globalAlpha = alpha;
+        this.drawDrone(d, dx, dy);
+        ctx.restore();
+      } else {
+        this.drawDrone(d, dx, dy);
+      }
     }
 
     // Hover highlight.

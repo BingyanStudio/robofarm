@@ -112,6 +112,12 @@ export class GameRunner {
     this.view.apply([{ type: 'snapshot', state: preview }]);
     this.statusText.textContent = `回合 0 / ${DEFAULT_MAX_TURNS}`;
 
+    // Scene enter animation on first load. Deferred until the layout is mounted and the canvas
+    // has a real size (double rAF: ResizeObserver runs before the first paint after mount).
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => void this.renderer.playSceneEnter());
+    });
+
     this.btnStartStop = button('开始', () => void this.onStartStop(), { class: 'btn btn-start' });
     this.btnPause = button('暂停', () => this.togglePause());
     this.btnStep = button('步进', () => void this.onStep());
@@ -199,8 +205,14 @@ export class GameRunner {
     this.updatePauseButton();
   }
 
-  /** Stop the game and allow editing code (back to initial map preview). */
-  stopForEdit(): void {
+  /** Stop the game and allow editing code (back to initial map preview).
+   *  Plays the scene exit animation on the current state, resets, then replays the enter animation. */
+  async stopForEdit(): Promise<void> {
+    // Halt turn progression first so the exit animation isn't interrupted by new snapshots.
+    this.playing = false;
+    if (this.timer) clearTimeout(this.timer);
+    this.timer = null;
+    await this.renderer.playSceneExit();
     this.stopGame();
     this.opts.setEditorLocked(false);
     const preview = snapshotOf(this.opts.previewWorld());
@@ -211,6 +223,7 @@ export class GameRunner {
     this.statusText.textContent = `回合 0 / ${DEFAULT_MAX_TURNS}`;
     this.syncProgress();
     this.log('[系统] 游戏已停止, 可以修改代码');
+    void this.renderer.playSceneEnter();
   }
 
   /** Combined start/stop button: red "停止" while a match is running, otherwise green "开始"; disabled while compiling. */
@@ -246,7 +259,7 @@ export class GameRunner {
   private async onStartStop(): Promise<void> {
     if (this.compiling) return; // Disallow re-click while compiling.
     if (this.controller && !this.finished) {
-      this.stopForEdit();
+      await this.stopForEdit();
       return;
     }
     this.compiling = true;

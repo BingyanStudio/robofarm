@@ -1,0 +1,9090 @@
+{
+  "mode": "single",
+  "maxTurns": 500,
+  "players": [
+    "玩家"
+  ],
+  "version": "2.1.0",
+  "seed": 582542279,
+  "result": {
+    "type": "finished",
+    "money": [
+      22311
+    ]
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "grape"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 2,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 3,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "collectWater"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 4,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 5,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "strawberry"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 6,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              2
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 7,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "strawberry"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 8,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              2
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 9,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "strawberry"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 10,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 11,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 12,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "strawberry"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 13,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 14,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "strawberry"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 15,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              2
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 16,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "strawberry"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 17,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 18,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 19,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "strawberry"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 20,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 21,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 22,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "strawberry"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 23,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 24,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "strawberry"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 25,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 26,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 27,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 28,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "grape"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 29,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 30,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 31,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "strawberry"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 32,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 33,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 34,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "strawberry"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 35,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              2
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 36,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "strawberry"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 37,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 38,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 39,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "strawberry"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 40,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 41,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 42,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "grape"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 43,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 44,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 45,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "strawberry"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 46,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 47,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 48,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "wheat"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 49,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 50,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 51,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 52,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 53,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "wheat"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 54,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 55,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "strawberry"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 56,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 57,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 58,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 59,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "wheat"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 60,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 61,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 62,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "grape"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 63,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 64,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 65,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 66,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 67,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 68,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "collectWater"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 69,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 70,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 71,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 72,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 73,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "collectWater"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 74,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 75,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "strawberry"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 76,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 77,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "strawberry"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 78,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 79,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 80,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 81,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "wheat"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 82,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 83,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 84,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 85,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 86,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 87,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 88,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 89,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 90,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 91,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 92,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 93,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 94,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 95,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 96,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 97,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 98,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 99,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 100,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "lotus"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 101,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "collectWater"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 102,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 103,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 104,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 105,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 106,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 107,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "collectWater"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 108,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 109,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "lotus"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 110,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 111,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 112,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 113,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 114,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "wheat"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 115,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 116,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 117,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "wheat"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 118,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 119,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 120,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 121,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 122,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 123,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 124,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 125,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "collectWater"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 126,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 127,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "lotus"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 128,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 129,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 130,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 131,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 132,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 133,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 134,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 135,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 136,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 137,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 138,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 139,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 140,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 141,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 142,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 143,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 144,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 145,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "collectWater"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 146,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 147,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 148,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 149,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 150,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 151,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 152,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 153,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "daffodil"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 154,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 155,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 156,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 157,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 158,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "daffodil"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 159,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "collectWater"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 160,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 161,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 162,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 163,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 164,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 165,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "daffodil"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 166,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 167,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 168,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 169,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 170,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "collectWater"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 171,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 172,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 173,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 174,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 175,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 176,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 177,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 178,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 179,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 180,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 181,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 182,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 183,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 184,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 185,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 186,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 187,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "collectWater"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 188,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 189,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 190,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 191,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 192,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 193,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 194,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 195,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 196,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 197,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 198,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 199,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 200,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 201,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 202,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 203,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "collectWater"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 204,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 205,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 206,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 207,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 208,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 209,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "collectWater"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 210,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 211,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 212,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 213,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 214,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 215,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 216,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 217,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 218,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 219,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 220,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 221,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 222,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 223,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 224,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 225,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 226,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 227,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 228,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 229,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 230,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 231,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 232,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 233,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 234,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 235,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "daffodil"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 236,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 237,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 238,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 239,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 240,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 241,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "daffodil"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 242,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "collectWater"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 243,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 244,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 245,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 246,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 247,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 248,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 249,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "daffodil"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 250,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 251,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 252,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 253,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 254,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 255,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 256,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 257,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 258,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 259,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 260,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 261,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "newDrone",
+            "at": [
+              2,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 262,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "cactus"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 263,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 264,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 265,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 266,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "melon"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 267,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              3
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 268,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "collectWater"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 269,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 270,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 271,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              3
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 272,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 273,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "collectWater"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 274,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "collectWater"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 275,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 276,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 277,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 278,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "lotus"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 279,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "grape"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 280,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 281,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 282,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        },
+        {
+          "id": 1,
+          "op": null
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 283,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              6
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 284,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 285,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 286,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              6
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 287,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 288,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 289,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "collectWater"
+          }
+        },
+        {
+          "id": 1,
+          "op": null
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 290,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": null
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 291,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 292,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              3
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 293,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 294,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 295,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              3
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 296,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 297,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 298,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              3
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "wheat"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 299,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 300,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 301,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 302,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 303,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "daffodil"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 304,
+      "drones": [
+        {
+          "id": 0,
+          "op": null
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 305,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "daffodil"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 306,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": null
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 307,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "daffodil"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 308,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 309,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 310,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 311,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 312,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              3
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 313,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 314,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 315,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 316,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 317,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 318,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 319,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "melon"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 320,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 321,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": null
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 322,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "melon"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "collectWater"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 323,
+      "drones": [
+        {
+          "id": 0,
+          "op": null
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 324,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 325,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 326,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 327,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 328,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 329,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 330,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              3
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 331,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 332,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "melon"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 333,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 334,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "cactus"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 335,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "daffodil"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 336,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 337,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 338,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 339,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 340,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 341,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 342,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 343,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              3
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 344,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 345,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 346,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "collectWater"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 347,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "collectWater"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 348,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              6
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 349,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 350,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 351,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 352,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 353,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 354,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              3
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 355,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              3
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 356,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 357,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "melon"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "daffodil"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 358,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              3
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 359,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 360,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 361,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 362,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 363,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 364,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "collectWater"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 365,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 366,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 367,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": null
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 368,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 369,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              3
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 370,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 371,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "collectWater"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 372,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 373,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 374,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 375,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "melon"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 376,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 377,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": null
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 378,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 379,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 380,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 381,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 382,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 383,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "daffodil"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 384,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 385,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 386,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "melon"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 387,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 388,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 389,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "daffodil"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "melon"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 390,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 391,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "collectWater"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 392,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 393,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 394,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 395,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 396,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              6
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 397,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 398,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 399,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 400,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              6
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 401,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              6
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 402,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 403,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 404,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 405,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "collectWater"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 406,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              6
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 407,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 408,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 409,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 410,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 411,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              3
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 412,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 413,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 414,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 415,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "daffodil"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 416,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 417,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "melon"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 418,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 419,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 420,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 421,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "daffodil"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 422,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 423,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              6
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 424,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              6
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 425,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 426,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 427,
+      "drones": [
+        {
+          "id": 0,
+          "op": null
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 428,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              6
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 429,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 430,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "collectWater"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 431,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 432,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "collectWater"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 433,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 434,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 435,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 436,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 437,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 438,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 439,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 440,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              6
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 441,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "collectWater"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 442,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              6
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 443,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 444,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 445,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 446,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 447,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 448,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 449,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 450,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              3
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 451,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 452,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              3
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 453,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 454,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 455,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 456,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 457,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 458,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 459,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 460,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "daffodil"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 461,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 462,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 463,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 464,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "daffodil"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 465,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 466,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 467,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 468,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 469,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 470,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": null
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 471,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              6
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 472,
+      "drones": [
+        {
+          "id": 0,
+          "op": null
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 473,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 474,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 475,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 476,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "daffodil"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 477,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "collectWater"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 478,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 479,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              6
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 480,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 481,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 482,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 483,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "melon"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              6,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 484,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 485,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "water"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              3
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 486,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 487,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              4
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 488,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 489,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "milk_vetch"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 490,
+      "drones": [
+        {
+          "id": 0,
+          "op": null
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "water"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 491,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              6
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": null
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 492,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 493,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 494,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              6
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              6
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 495,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": null
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 496,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 497,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              4,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 498,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "harvest"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              3,
+              4
+            ]
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 499,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "plant",
+            "crop": "pumpkin"
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "harvest"
+          }
+        }
+      ],
+      "output": []
+    },
+    {
+      "round": 500,
+      "drones": [
+        {
+          "id": 0,
+          "op": {
+            "type": "move",
+            "to": [
+              5,
+              5
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "op": {
+            "type": "move",
+            "to": [
+              2,
+              5
+            ]
+          }
+        }
+      ],
+      "output": []
+    }
+  ]
+}

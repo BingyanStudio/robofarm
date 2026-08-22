@@ -1,21 +1,39 @@
-/* Main menu / start screen. */
+/* Main menu / start screen. Layout: left 30% navigation column + right 70% gameplay showcase canvas. */
 
-.menu-box {
+.menu-root {
   flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+/* Left column (30%): logo / tagline / hero / nav / MCP card. */
+.menu-box {
+  flex: 0 0 30%;
+  min-width: 0;
   min-height: 0;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: safe center;
-  gap: 18px;
-  padding: 24px 40px;
+  gap: 14px;
+  padding: 24px 20px;
   overflow-y: auto;
+  overflow-x: hidden;
   position: relative;
+}
+
+/* Children share one column width (max ~380px), so hero / nav rows / MCP card are mutually aligned. */
+.menu-box > *:not(.menu-logo-wrap) {
+  width: min(380px, 100%);
+  flex: none;
 }
 
 .menu-logo-wrap {
   position: relative;
+  width: fit-content;
+  margin: 0 auto;
 }
 
 /* Soft blurred halo behind the logo, tinted with the accent green. */
@@ -40,8 +58,8 @@
 }
 
 .menu-logo {
-  height: 135px;
-  width: auto;
+  width: min(350px, 100%);
+  height: auto;
   display: block;
   position: relative;
   z-index: 1;
@@ -82,25 +100,27 @@
   margin-top: -6px;
 }
 
-.menu-hero {
-  display: flex;
-  gap: 40px;
-  justify-content: center;
-  align-items: stretch;
-}
-
+/* Tagline sits right below the logo's visible text (the logo SVG has a transparent band under the
+   letters, so pull it up with a negative margin instead of leaving a large gap). */
 .menu-tagline {
   color: var(--text-muted);
   font-weight: 700;
   font-size: 15px;
-  margin-top: -6px;
+  margin-top: -38px;
 }
 
+/* Two square hero buttons side by side; each square via aspect-ratio within the shared column width. */
+.menu-hero {
+  display: flex;
+  gap: 14px;
+  align-items: stretch;
+}
+
+/* Nav buttons: one per row, width matches the hero pair (shared column width). */
 .menu-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  width: min(660px, 90vw);
+  grid-template-columns: 1fr;
+  gap: 10px;
 }
 
 .menu-grid .btn {
@@ -110,7 +130,6 @@
 
 /* MCP card on the main menu (collapsible, collapsed by default). */
 .menu-mcp {
-  width: min(660px, 90vw);
   text-align: left;
   margin-bottom: 0;
   padding: 8px 12px;
@@ -183,6 +202,7 @@
   margin-top: 8px;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
 }
 
@@ -190,4 +210,36 @@
   width: 18px;
   height: 18px;
   object-fit: contain;
+}
+
+/* Right column (70%): gameplay showcase canvas. */
+.menu-showcase {
+  flex: 1 1 70%;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.menu-showcase-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+/* Turn / money overlay on the showcase (mirrors the in-game status chip). */
+.menu-showcase-status {
+  position: absolute;
+  top: 30px;
+  left: 30px;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  pointer-events: none;
 }
