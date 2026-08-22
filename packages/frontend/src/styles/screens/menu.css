@@ -232,12 +232,12 @@
   display: block;
 }
 
-/* Turn / money overlay on the showcase: inset matches the host padding so it aligns
-   with the canvas (the container) top-left corner instead of floating off it. */
+/* Turn / money overlay on the showcase: inset keeps a comfortable gap from the canvas
+   (30px from the host = 10px inside the canvas edge), symmetric with the tooltip. */
 .menu-showcase-status {
   position: absolute;
-  top: 20px;
-  left: 20px;
+  top: 30px;
+  left: 30px;
   background: rgba(0, 0, 0, 0.55);
   padding: 6px 12px;
   border-radius: var(--radius);
@@ -245,9 +245,9 @@
   pointer-events: none;
 }
 
-/* Hover tooltip on the showcase: same 20px inset as the status chip, aligned with the
-   canvas top-right corner (the shared .render-tooltip 10px/12px would land in the padding). */
+/* Hover tooltip on the showcase: same 30px inset as the status chip (10px inside the canvas
+   edge, symmetric); the shared .render-tooltip 10px/12px would land in the host padding. */
 .menu-showcase .render-tooltip {
-  top: 20px;
-  right: 20px;
+  top: 30px;
+  right: 30px;
 }
