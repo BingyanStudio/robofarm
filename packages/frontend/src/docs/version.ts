@@ -19,6 +19,15 @@ export interface UpdateEntry {
 /** Update log (from newest to oldest) */
 export const UPDATE_LOG: UpdateEntry[] = [
     {
+        version: '2.1.1',
+        title: 'v2.1.1',
+        items: [
+            '## Bug 修复',
+            '- 修复南瓜和西瓜种植条件限制错误的问题',
+            '- 修复西瓜种植条件文档错误的问题',
+        ],
+    },
+    {
         version: '2.1.0',
         title: 'v2.1.0',
         items: [
