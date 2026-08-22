@@ -111,11 +111,13 @@
   margin-top: -38px;
 }
 
-/* Two square hero buttons side by side; each square via aspect-ratio within the shared column width. */
+/* Two square hero buttons side by side; each square via aspect-ratio within the shared column width.
+   Extra 2px on top of the 14px column gap → 16px spacing from the logo/tagline cluster above. */
 .menu-hero {
   display: flex;
   gap: 14px;
   align-items: stretch;
+  margin-top: 2px;
 }
 
 /* Nav buttons: one per row, width matches the hero pair (shared column width). */
