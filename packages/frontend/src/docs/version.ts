@@ -19,6 +19,19 @@ export interface UpdateEntry {
 /** Update log (from newest to oldest) */
 export const UPDATE_LOG: UpdateEntry[] = [
     {
+        version: '2.2.0',
+        title: 'v2.2.0',
+        items: [
+            '## 视觉',
+            '- 增加了游戏界面淡入-淡出的特效',
+            '- 无人机的储水显示, 现在拥有黑色描边，可以看得更清晰',
+            '- 增加了无人机的能量显示',
+            '## UI',
+            '- 重构了主菜单 UI 的布局',
+            '- 主菜单增加游戏玩法演示',
+        ],
+    },
+    {
         version: '2.1.1',
         title: 'v2.1.1',
         items: [
