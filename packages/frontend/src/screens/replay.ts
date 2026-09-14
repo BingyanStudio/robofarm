@@ -58,6 +58,9 @@ function groupByTurn(events: GameEvent[]): GameEvent[][] {
 export function replayScreen(root: HTMLElement, params: URLSearchParams): void {
   root.replaceChildren();
   const id = params.get('id');
+  const singleId = params.get('single');
+  const run = params.get('run');
+  const autoPlay = params.get('autoplay') === '1';
   const host = el('div', { class: 'replay-page' }, [el('p', { class: 'hint', text: '加载回放中…' })]);
   setTopActions([button('导入回放记录', () => pickAndImport(), { class: 'btn btn-small' })]);
   root.append(host);
@@ -88,7 +91,7 @@ export function replayScreen(root: HTMLElement, params: URLSearchParams): void {
     fileInput.click();
   }
 
-  if (!id) {
+  if (!id && !singleId) {
     // No replay selected: a polished centered empty state; keep the top-right "import replay" unchanged
     host.replaceChildren(
       el('div', { class: 'replay-empty' }, [
@@ -106,7 +109,10 @@ export function replayScreen(root: HTMLElement, params: URLSearchParams): void {
   }
 
   void (async () => {
-    const res = await api.get(`/combat/replay/${id}`);
+    const url = singleId
+      ? `/single/replay/${singleId}${run != null ? `?run=${run}` : ''}`
+      : `/combat/replay/${id}`;
+    const res = await api.get(url);
     if (res.status !== 200) {
       host.replaceChildren(el('p', { text: res.data?.error ?? '回放加载失败' }));
       return;
@@ -116,21 +122,22 @@ export function replayScreen(root: HTMLElement, params: URLSearchParams): void {
       host.replaceChildren(el('p', { text: '回放数据无法识别' }));
       return;
     }
-    startPlayback(data, host);
+    startPlayback(data, host, autoPlay);
   })();
 }
 
-function startPlayback(data: ReplayData, host: HTMLElement): void {
+function startPlayback(data: ReplayData, host: HTMLElement, autoPlay = false): void {
   const groups = groupByTurn(data.events);
   const endEvent = data.events.find((e) => e.type === 'end');
-  buildPlayer(data, groups, endEvent, host);
+  buildPlayer(data, groups, endEvent, host, autoPlay);
 }
 
 function buildPlayer(
   data: ReplayData,
   groups: GameEvent[][],
   endEvent: GameEvent | undefined,
-  host: HTMLElement
+  host: HTMLElement,
+  autoPlay = false
 ): void {
   const maxTurns = data.config.maxTurns;
   host.replaceChildren();
@@ -261,4 +268,5 @@ function buildPlayer(
   }
 
   render();
+  if (autoPlay) togglePlay();
 }

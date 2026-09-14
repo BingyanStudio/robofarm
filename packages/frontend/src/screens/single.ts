@@ -417,35 +417,40 @@ export function singleScreen(root: HTMLElement): void {
                 } else toast(res.data?.error ?? '统计加载失败');
               })();
             }, { class: 'btn btn-small' }),
-            button('下载回放', () => {
+            button('回放', () => {
               void (async () => {
                 const runs = r.runs ?? [];
-                // 多局验证: 弹窗让玩家选择下载哪一局的回放
-                if (runs.length > 1) {
-                  const body = el('div', {}, [
-                    el('p', { text: '该次提交在固定的 5 个随机种子下各验证一局, 请选择要下载哪一局的回放:' }),
-                    el('div', { class: 'list' }, runs.map((s, i) =>
-                      el('div', { class: 'list-row' }, [
-                        el('span', { text: `第 ${i + 1} 局 (得分 ${s})` }),
-                        el('span', { class: 'row-actions' }, [
-                          button('下载', () => {
-                            void (async () => {
-                              m.close();
-                              const res = await api.get(`/single/replay/${r.id}?run=${i}`);
-                              if (res.status === 200) downloadJson(res.data, `robofarm-replay-single-${r.id}-run${i + 1}.json`);
-                              else toast(res.data?.error ?? '回放下载失败');
-                            })();
-                          }, { class: 'btn btn-small' }),
-                        ]),
-                      ])
-                    )),
-                  ]);
-                  const m = modal('下载回放', body);
-                  return;
-                }
-                const res = await api.get(`/single/replay/${r.id}`);
-                if (res.status === 200) downloadJson(res.data, `robofarm-replay-single-${r.id}.json`);
-                else toast(res.data?.error ?? '回放下载失败');
+                // 多局验证: 弹窗让玩家选择观看/下载哪一局的回放; 旧式单局记录只有一行
+                const entries: { label: string; run: number | null }[] = runs.length > 1
+                  ? runs.map((s, i) => ({ label: `第 ${i + 1} 局 (得分 ${s})`, run: i }))
+                  : [{ label: '回放', run: null }];
+                const body = el('div', {}, [
+                  el('p', {
+                    text: runs.length > 1
+                      ? '该次提交在固定的 5 个随机种子下各验证一局, 请选择要观看或下载哪一局的回放:'
+                      : '请选择观看或下载该局回放:',
+                  }),
+                  el('div', { class: 'list' }, entries.map(({ label, run }) =>
+                    el('div', { class: 'list-row' }, [
+                      el('span', { text: label }),
+                      el('span', { class: 'row-actions' }, [
+                        button('观看', () => {
+                          m.close();
+                          location.hash = `#/replay?single=${r.id}${run != null ? `&run=${run}` : ''}&autoplay=1`;
+                        }, { class: 'btn btn-small' }),
+                        button('下载', () => {
+                          void (async () => {
+                            const res = await api.get(`/single/replay/${r.id}${run != null ? `?run=${run}` : ''}`);
+                            if (res.status === 200) {
+                              downloadJson(res.data, `robofarm-replay-single-${r.id}${run != null ? `-run${run + 1}` : ''}.json`);
+                            } else toast(res.data?.error ?? '回放下载失败');
+                          })();
+                        }, { class: 'btn btn-small' }),
+                      ]),
+                    ])
+                  )),
+                ]);
+                const m = modal('回放', body);
               })();
             }, { class: 'btn btn-small' }),
             button('分享', () => {
