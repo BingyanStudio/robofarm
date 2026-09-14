@@ -19,6 +19,20 @@ export interface UpdateEntry {
 /** Update log (from newest to oldest) */
 export const UPDATE_LOG: UpdateEntry[] = [
     {
+        version: '2.3.0',
+        title: 'v2.3.0',
+        items: [
+            '## 回放',
+            '单人模式 "我的成绩" 中的 "下载回放" 改为 "回放": 5 局验证成绩逐局列出, 每局提供 "观看" 与 "下载" 两个按钮',
+            '"观看" 直接跳转到回放界面并自动开始播放',
+            '回放播放器: 速度倍率按钮移动到进度条左侧',
+            '## Bug 修复',
+            '修复从弹窗内跳转页面后弹窗不消失的问题',
+            '## 开发',
+            '根脚本改用 npm run-script 派发工作区任务, 使 npm 与 bun 均可正常执行 (修复 bun 下脚本无限重入卡死)',
+        ],
+    },
+    {
         version: '2.2.0',
         title: 'v2.2.0',
         items: [
