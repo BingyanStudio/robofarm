@@ -81,6 +81,8 @@ function route(): void {
   bar.classList.toggle('menu-route', key === 'menu');
   // Clear the previous screen's top-bar actions before loading the next screen.
   setTopActions([]);
+  // 移除上一屏幕遗留的弹窗 (例如在弹窗内点击跳转, route 不会自动关闭它)
+  document.querySelectorAll('.modal-overlay').forEach((node) => node.remove());
   content.replaceChildren();
   const loader = NAVIGATE[key] ?? NAVIGATE.menu;
   void loader(params);
