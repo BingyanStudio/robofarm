@@ -25,6 +25,10 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
 - `npm run package` — 构建 + 打包出独立部署目录 `release/` (见下文"发布版打包")。
 - `npm run dev:backend` (tsx watch, 端口 3001) / `npm run dev:frontend` (vite, 5173, 已代理 /auth /single /combat /ws)。
 - 未配置 `GITHUB_CLIENT_ID` 时后端进入开发模式, 所有请求自动以 `local-dev` 登录。
+- 也可用 bun (仓库含 `bun.lock`): `bun install` / `bun run build` / `bun run test` / `bun run package`。
+  根 `package.json` 的工作区派发必须写 `npm run-script ... -w <pkg>` 而非 `npm run ...` —— bun 会把
+  脚本里的 `npm run` 改写为 `bun run`, 而 bun 不认 npm 的 `-w`, 会无限重入卡死; `run-script` 别名
+  可同时被 npm 与 bun 正常执行 (改根脚本时勿改回 `npm run`)。
 
 ## 发布版打包 (scripts/package.mjs)
 
