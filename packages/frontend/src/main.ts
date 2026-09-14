@@ -27,9 +27,6 @@ app.append(content);
 // Global right-hand API manual sidebar (available on all screens, collapsed by default)
 const openManual = mountApiManual();
 
-// Version check: auto-expand API manual on first visit, show update log on upgrade/unrecognized version
-checkVersionOnLoad(openManual);
-
 // Runtime config: esbuild.wasm may be deployed elsewhere (ESBUILD_WASM_URL from backend .env).
 // When set, browser compilation loads from that URL; otherwise keep same-origin /esbuild.wasm.
 // 进入页面即后台预热编译器 (下载 esbuild.wasm), 首次编译直接 await 该下载, 不再临时等待。
@@ -90,3 +87,8 @@ function route(): void {
 
 window.addEventListener('hashchange', route);
 route();
+
+// Version check: auto-expand API manual on first visit, show update log on upgrade/unrecognized version.
+// MUST run after the initial route(): route() sweeps leftover .modal-overlay nodes, which would
+// otherwise delete the update-log modal the moment it is appended.
+checkVersionOnLoad(openManual);

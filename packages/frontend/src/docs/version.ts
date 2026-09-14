@@ -19,6 +19,14 @@ export interface UpdateEntry {
 /** Update log (from newest to oldest) */
 export const UPDATE_LOG: UpdateEntry[] = [
     {
+        version: '2.3.1',
+        title: 'v2.3.1',
+        items: [
+            '## Bug 修复',
+            '修复更新日志弹窗不显示的问题: 页面启动时的路由初始化会清除屏幕上遗留的弹窗, 版本检查原先在路由初始化之前执行, 更新日志弹窗刚创建即被清除; 现改为路由初始化之后执行',
+        ],
+    },
+    {
         version: '2.3.0',
         title: 'v2.3.0',
         items: [
