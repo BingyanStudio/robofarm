@@ -28,8 +28,6 @@ export const UPDATE_LOG: UpdateEntry[] = [
             '回放播放器: 速度倍率按钮移动到进度条左侧',
             '## Bug 修复',
             '修复从弹窗内跳转页面后弹窗不消失的问题',
-            '## 开发',
-            '根脚本改用 npm run-script 派发工作区任务, 使 npm 与 bun 均可正常执行 (修复 bun 下脚本无限重入卡死)',
         ],
     },
     {
