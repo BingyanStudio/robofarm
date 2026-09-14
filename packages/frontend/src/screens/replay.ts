@@ -199,7 +199,7 @@ function buildPlayer(
   });
   const progress = el('div', { class: 'replay-progress' }, [progressTrack, progressLabel]);
 
-  const controls = el('div', { class: 'replay-controls' }, [btnBack, btnStepBack, btnPlay, btnStep, progress, btnSpeed]);
+  const controls = el('div', { class: 'replay-controls' }, [btnBack, btnStepBack, btnPlay, btnStep, btnSpeed, progress]);
 
   // Stack players + status into a single overlay top-left (consistent with the game page overlay).
   const overlay = el('div', { class: 'replay-overlay' }, [playersLine, status]);
