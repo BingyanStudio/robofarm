@@ -1,8 +1,10 @@
 // 后端玩家程序运行器: 每个玩家程序一个 worker_threads。
 // - 内存限制: worker 的 resourceLimits (超出即 worker 报错 → 程序判负)
-// - 时间限制: worker 内用 vm.runInContext 的 timeout 打断同步死循环
-// - 隔离: vm.createContext 只暴露注入的 API + console + performance,
-//   玩家代码无法访问 Node 的 require / process / 网络等
+// - 时间限制: worker 内用 vm.runInContext 的 timeout 打断同步死循环 (含
+//   microtaskMode='afterEvaluate' 覆盖的异步/Promise 死循环); 此外这里还有
+//   一个每回合看门狗, 超时即 terminate worker, 作为最终兜底。
+// - 隔离: vm 上下文不注入任何宿主对象 (见 runner.worker.ts), 玩家无法经
+//   constructor 链取得主 realm 的 Function → 无法访问 Node 的 process / require。
 import { Worker } from 'node:worker_threads';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
@@ -12,6 +14,7 @@ import { TIMEOUT_MS } from '@robofarm/shared';
 interface PendingRequest {
   resolve: (r: PlayerTurnResult) => void;
   reject: (e: Error) => void;
+  timer: ReturnType<typeof setTimeout>;
 }
 
 /**
@@ -95,6 +98,7 @@ export class NodeProgram implements PlayerProgram {
     const pending = this.pending.get(seq);
     if (!pending) return;
     this.pending.delete(seq);
+    clearTimeout(pending.timer);
     if (msg.type === 'result') {
       pending.resolve({
         operation: (msg.operation as PlayerTurnResult['operation']) ?? null,
@@ -131,7 +135,10 @@ export class NodeProgram implements PlayerProgram {
   }
 
   private failAll(e: Error): void {
-    for (const [, p] of this.pending) p.reject(e);
+    for (const [, p] of this.pending) {
+      clearTimeout(p.timer);
+      p.reject(e);
+    }
     this.pending.clear();
   }
 
@@ -139,7 +146,14 @@ export class NodeProgram implements PlayerProgram {
     if (this.disposed) return Promise.reject(new Error('程序已终止'));
     const seq = ++this.seq;
     return new Promise((resolve, reject) => {
-      this.pending.set(seq, { resolve, reject });
+      // 看门狗: worker 内 vm timeout 已覆盖同步与微任务死循环; 这里兜底任何
+      // 逃逸出 vm 超时机制的情况 (超时即 terminate worker, 程序判负)。
+      const timer = setTimeout(() => {
+        this.pending.delete(seq);
+        this.dispose();
+        reject(new Error(`程序执行超时 (超过 ${TIMEOUT_MS}ms), 已终止`));
+      }, TIMEOUT_MS + 100);
+      this.pending.set(seq, { resolve, reject, timer });
       this.worker.postMessage({ type: 'turn', seq, droneId, view });
     });
   }

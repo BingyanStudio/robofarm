@@ -5,7 +5,7 @@ export { TIMEOUT_MS, LOAD_TIMEOUT_MS, MAX_WATER, MAX_LOG_LINES, MAX_LOGS_PER_TUR
 export type { Position, InternalOperation, TileInfo, CropInfo, DroneInfo, GameInfo, PlayerView, SnapshotState } from './types';
 export { TileType, CropType, CropState } from './types';
 export type { CropData, Tile, DroneState, WorldState, GameEvent, GameResult, GameMode, Frame } from './types';
-export { normalizeOp } from './ops';
+export { normalizeOp, OP_CLASSES } from './ops';
 export type { NormalizeResult } from './ops';
 export { TILES, CROPS, isCropType, cropConfig, cropInfo } from './registry';
 export type { TileTypeConfig, CropTypeConfig } from './registry';
