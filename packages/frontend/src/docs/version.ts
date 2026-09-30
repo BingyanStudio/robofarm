@@ -19,6 +19,14 @@ export interface UpdateEntry {
 /** Update log (from newest to oldest) */
 export const UPDATE_LOG: UpdateEntry[] = [
     {
+        version: '2.3.2',
+        title: 'v2.3.2',
+        items: [
+            '## 安全',
+            '修复服务器端代码执行沙箱的安全漏洞 (理论上玩家程序可逃逸沙箱访问服务器)',
+        ],
+    },
+    {
         version: '2.3.1',
         title: 'v2.3.1',
         items: [
