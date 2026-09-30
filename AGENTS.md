@@ -79,12 +79,21 @@ scripts/          verify-browser-sandbox.js 等开发辅助脚本
 2. **沙箱**: `packages/frontend/src/player-worker.ts` 用 `new Function(...参数表, 代码)`
    执行, 参数表把注入的 API 与要屏蔽的危险全局 (fetch/setTimeout/process 等)
    作为形参遮蔽。`packages/backend/src/runner/runner.worker.ts` 用
-   `vm.createContext(sandbox)` + `vm.runInContext` 执行, timeout 打断死循环。
+   `vm.createContext` + `vm.runInContext` 执行。
+   **后端沙箱为安全边界, 勿直接向上下文注入宿主对象**: 那会经
+   `getSelf.constructor.constructor` 等 constructor 链泄漏主 realm 的 `Function`
+   (→ `process` → RCE)。现改为在上下文内用 bootstrap 脚本定义 API / 操作类 /
+   console / performance (上下文 realm 对象, 类型/字段由 `OP_CLASSES` 推导), 宿主
+   实现仅经闭包持有, API 返回值深拷贝为上下文对象, 宿主异常转为上下文 Error;
+   同时 `codeGeneration: { strings: false, wasm: false }` 禁止上下文内动态代码,
+   上下文全局对象原型置空。
 3. **API**: `shared/src/player-api.ts` 的 `playerApiFactory(getView)` 前后端共用,
    每回合宿主传入 PlayerView 快照, API 函数只读快照 → 天然一致。
 4. **超时语义 (重要)**: 单次 run() 限 `TIMEOUT_MS = 400ms`。超时/报错/内存超限
    → **该玩家程序被判死, 整局游戏以 error 结果提前结束** (不是跳过回合)。
-   前端靠宿主侧看门狗 terminate worker; 后端靠 vm timeout, 超时后同样终止 worker。
+   前端靠宿主侧看门狗 terminate worker; 后端用 `microtaskMode: 'afterEvaluate'`
+   让微任务排空并计入 timeout (覆盖异步/Promise 死循环), 另有每回合宿主看门狗
+   在 `NodeProgram.runTurn` 兜底 terminate worker。
 
 ## 核心设计: 竞技模式坐标镜像
 
